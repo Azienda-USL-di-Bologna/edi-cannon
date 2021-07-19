@@ -38,7 +38,7 @@ INSERT INTO scripta.docs_list
             )
             VALUES
             (
-                        %(id_azienda)s,
+                        (select id from baborg.aziende where codice = %(codice_azienda)s),
                         %(guid_documento)s,
                         %(tipologia)s, --  id_azienda, guid_documento, tipologia
                         %(open_command)s,
