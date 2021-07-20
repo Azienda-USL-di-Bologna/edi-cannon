@@ -42,7 +42,8 @@ STATI = {
     "Bozza_Ricezione": "REDAZIONE",
     "Ricezione": "REDAZIONE",
     "FIRMA": 'FIRMA',
-    "NUMERAZIONE": 'FINE'
+    "NUMERAZIONE": 'FINE',
+    "AVVIA_SPEDIZIONI": 'SPEDIZIONE'
 }
 
 
