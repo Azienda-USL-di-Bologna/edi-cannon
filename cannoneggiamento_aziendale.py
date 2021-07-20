@@ -10,6 +10,7 @@ import traceback
 import psycopg2
 import doc_list_data_retriever
 import internauta_data_manager as idm
+from logging.handlers import TimedRotatingFileHandler
 log = None
 
 def try_lock(conn):
@@ -108,14 +109,14 @@ def search_and_work(conn, codice_azienda):
 
 
 def main(azienda, host, user, password, db):
-    filename = "edi_cannon_" + str(azienda) + ".log"
-    logging.basicConfig(
-        filename=filename,
-        level=logging.INFO,
-        format='%(asctime)s %(message)s',
-        datefmt='%Y-%m-%d %I:%M:%S %p'
-    )
+    file_di_log = "./ribaltorg.log"
+    filename = "log\edi_cannon_" + str(azienda) + ".log"
     log = logging.getLogger("cannoneggiamento_aziendale")
+    fmt = logging.Formatter('%(asctime)s %(message)s', datefmt='%Y-%m-%d %I:%M:%S %p')
+    hnd = TimedRotatingFileHandler(filename, when='midnight', interval=1, backupCount=7)
+    hnd.setFormatter(fmt)
+    log.addHandler(hnd)
+    log.setLevel(logging.INFO)
 
     while True:
         try:
