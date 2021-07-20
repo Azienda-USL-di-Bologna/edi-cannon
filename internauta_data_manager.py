@@ -41,7 +41,8 @@ STATI = {
     "Fine_Entrata": "FINE",
     "Bozza_Ricezione": "REDAZIONE",
     "Ricezione": "REDAZIONE",
-    "FIRMA": 'FIRMA'
+    "FIRMA": 'FIRMA',
+    "NUMERAZIONE": 'FINE'
 }
 
 
