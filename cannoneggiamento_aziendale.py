@@ -109,8 +109,8 @@ def search_and_work(conn, codice_azienda):
 
 
 def main(azienda, host, user, password, db):
-    file_di_log = "./ribaltorg.log"
-    filename = "log\edi_cannon_" + str(azienda) + ".log"
+
+    filename = ".log\edi_cannon_" + str(azienda) + ".log"
     log = logging.getLogger("cannoneggiamento_aziendale")
     fmt = logging.Formatter('%(asctime)s %(message)s', datefmt='%Y-%m-%d %I:%M:%S %p')
     hnd = TimedRotatingFileHandler(filename, when='midnight', interval=1, backupCount=7)
