@@ -125,7 +125,7 @@ def search_and_work(conn, codice_azienda):
                         else:
                             log.info("dopo la devo cancellare, quindi skippo l'upsert di " + str(r['id_oggetto']))
                         # TO_DO: Cancelliamo le righe già fatte da cannoneggiamenti_argo se è andato tutto ok?
-                            #delete_cannoneggiamenti_done(r, conn, codice_azienda)
+                            delete_cannoneggiamenti_done(r, conn, codice_azienda)
                 elif r['tipo_oggetto'] == "fascicolo":
                   pass
             except Exception as ex:
