@@ -93,6 +93,18 @@ def erroro(conn, codice_azienda, ex):
         # non faccio nulla
         pass
 
+
+def getnome(conn, id_fascicolo, parlante):
+    c = conn.cursor(cursor_factory=psycopg2.extras.DictCursor)
+    query = """select nome_fascicolo, numerazione_gerarchica from gd.fascicoligd where id_fascicolo = %(id_fascicolo)s"""
+    c.execute(query, {'idFascicolo': id_fascicolo})
+    result = c.fetchone()
+    if(parlante):
+        return result['numerazione_gerarchica']
+    else:
+        return result['nome_fascicolo']
+
+
 def search_and_work(conn, codice_azienda):
     log = logging.getLogger("cannoneggiamento_aziendale")
     log.info("Eseguo search_and_work....")
@@ -106,6 +118,8 @@ def search_and_work(conn, codice_azienda):
     c = conn.cursor(cursor_factory=psycopg2.extras.DictCursor)
     c.execute(qSel)
     rows = c.fetchall()
+    c.execute("select val_parametro::int  <> 0 from bds_tools.parametri_pubblici pp where pp.nome_parametro = 'fascicoliParlanti'")
+    parlante = c.fetchone()
     if rows is not None and len(rows) > 0:
         for r in rows:
             try:
@@ -125,9 +139,15 @@ def search_and_work(conn, codice_azienda):
                         else:
                             log.info("dopo la devo cancellare, quindi skippo l'upsert di " + str(r['id_oggetto']))
                         # TO_DO: Cancelliamo le righe già fatte da cannoneggiamenti_argo se è andato tutto ok?
-                            delete_cannoneggiamenti_done(r, conn, codice_azienda)
+              #              delete_cannoneggiamenti_done(r, conn, codice_azienda)
                 elif r['tipo_oggetto'] == "fascicolo":
-                  pass
+                    nome = getnome(conn, r['id_oggetto'],parlante)
+
+                    qupdate = """select update_nome_fascicolo_from_idfascicoloargo(%(id_fascicolo)s,%(nome)s)"""
+                    c.execute(qupdate, {'nome': nome,
+                                       'id_fascicolo': r['id_oggetto']})
+                    c.commit()
+
             except Exception as ex:
                 print("Erroro!  search_and_work")
                 log.error("ERRORE! SEARCH_AND_WORK")
