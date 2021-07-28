@@ -7,7 +7,18 @@ from db_connection import DB_INTERNAUTI
 from datetime import datetime
 import queries_cannone as qc
 import logging
-
+def update_nome_fascicoli(nome, id_oggetto):
+    log = logging.getLogger("cannoneggiamento_aziendale")
+    conn = get_internauta_conn()
+    c = conn.cursor(cursor_factory=psycopg2.extras.DictCursor)
+    qupdate = """select scripta.update_nome_fascicolo_from_idfascicoloargo(%(id_fascicolo)s,%(nome)s)"""
+    try:
+        c.execute(qupdate, {'nome': nome,
+                        'id_fascicolo': id_oggetto})
+        c.commit()
+    except Exception as ex:
+        log.error("Query fallita")
+        log.error(ex)
 
 def delete_doc_list_row_by_guid_and_azienda(guid_documento, codice_azienda):
     log = logging.getLogger("cannoneggiamento_aziendale")

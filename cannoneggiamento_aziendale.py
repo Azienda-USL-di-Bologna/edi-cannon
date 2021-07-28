@@ -94,14 +94,17 @@ def erroro(conn, codice_azienda, ex):
         pass
 
 
-def getnome(conn, id_fascicolo, parlante):
+def get_nome(conn, id_fascicolo, parlante):
+    log = logging.getLogger("cannoneggiamento_aziendale")
     c = conn.cursor(cursor_factory=psycopg2.extras.DictCursor)
-    query = """select nome_fascicolo, numerazione_gerarchica from gd.fascicoligd where id_fascicolo = %(id_fascicolo)s"""
-    c.execute(query, {'idFascicolo': id_fascicolo})
+    query = """select nome_fascicolo from gd.fascicoligd where id_fascicolo = %(id_fascicolo)s"""
+    c.execute(query, {'id_fascicolo': id_fascicolo})
     result = c.fetchone()
     if(parlante):
-        return result['numerazione_gerarchica']
+        log.info("get_nome : stringa vuota")
+        return ''
     else:
+        log.info("get_nome " + result['nome_fascicolo'])
         return result['nome_fascicolo']
 
 
@@ -141,12 +144,9 @@ def search_and_work(conn, codice_azienda):
                         # TO_DO: Cancelliamo le righe già fatte da cannoneggiamenti_argo se è andato tutto ok?
               #              delete_cannoneggiamenti_done(r, conn, codice_azienda)
                 elif r['tipo_oggetto'] == "fascicolo":
-                    nome = getnome(conn, r['id_oggetto'],parlante)
+                    nome = get_nome(conn, r['id_oggetto'],parlante)
+                    idm.update_nome_fascicoli(nome, r['id_oggetto'])
 
-                    qupdate = """select update_nome_fascicolo_from_idfascicoloargo(%(id_fascicolo)s,%(nome)s)"""
-                    c.execute(qupdate, {'nome': nome,
-                                       'id_fascicolo': r['id_oggetto']})
-                    c.commit()
 
             except Exception as ex:
                 print("Erroro!  search_and_work")
