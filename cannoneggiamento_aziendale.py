@@ -100,7 +100,7 @@ def get_nome(conn, id_fascicolo, parlante):
     query = """select nome_fascicolo from gd.fascicoligd where id_fascicolo = %(id_fascicolo)s"""
     c.execute(query, {'id_fascicolo': id_fascicolo})
     result = c.fetchone()
-    if(parlante):
+    if parlante is True:
         log.info("get_nome : stringa vuota")
         return ''
     else:
