@@ -15,7 +15,7 @@ def update_nome_fascicoli(nome, id_oggetto):
     try:
         c.execute(qupdate, {'nome': nome,
                         'id_fascicolo': id_oggetto})
-        c.commit()
+        conn.commit()
     except Exception as ex:
         log.error("Query fallita")
         log.error(ex)
