@@ -100,7 +100,7 @@ def get_nome(conn, id_fascicolo, parlante):
     query = """select nome_fascicolo from gd.fascicoligd where id_fascicolo = %(id_fascicolo)s"""
     c.execute(query, {'id_fascicolo': id_fascicolo})
     result = c.fetchone()
-    if parlante is True:
+    if parlante:
         log.info("get_nome : stringa vuota")
         return ''
     else:
@@ -122,7 +122,7 @@ def search_and_work(conn, codice_azienda):
     c.execute(qSel)
     rows = c.fetchall()
     c.execute("select val_parametro::int  <> 0 from bds_tools.parametri_pubblici pp where pp.nome_parametro = 'fascicoliParlanti'")
-    parlante = c.fetchone()
+    parlante = c.fetchone()[0]
     if rows is not None and len(rows) > 0:
         for r in rows:
             try:
