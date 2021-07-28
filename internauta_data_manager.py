@@ -11,7 +11,7 @@ def update_nome_fascicoli(nome, id_oggetto):
     log = logging.getLogger("cannoneggiamento_aziendale")
     conn = get_internauta_conn()
     c = conn.cursor(cursor_factory=psycopg2.extras.DictCursor)
-    qupdate = """select scripta.update_nome_fascicolo_from_idfascicoloargo(%(id_fascicolo)s,%(nome)s)"""
+    qupdate = """select scripta.update_nome_fascicolo_from_idfascicoloargo(%(nome)s,%(id_fascicolo)s)"""
     try:
         c.execute(qupdate, {'nome': nome,
                         'id_fascicolo': id_oggetto})
