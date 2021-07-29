@@ -52,10 +52,12 @@ STATI = {
     "Fine_Entrata": "FINE",
     "SMISTAMENTO": "SMISTAMENTO",
     "Bozza_Ricezione": "REDAZIONE",
+    "Bozza": "REDAZIONE",
     "Ricezione": "REDAZIONE",
     "FIRMA": 'FIRMA',
     "NUMERAZIONE": 'NUMERAZIONE',
     "Registrazione_Protocollo": 'REGISTRAZIONE_PROTOCOLLO',
+    "Fine_Emergenza_In": "FINE",
     "AVVIA_SPEDIZIONI": 'AVVIA_SPEDIZIONI'
 }
 
