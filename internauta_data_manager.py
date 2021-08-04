@@ -115,8 +115,10 @@ def upsert_doc_list_data(codice_azienda, json_data):
             'data_inserimento_riga': datetime.now(),
             'persone_vedenti': None if json_data['persone_vedenti'] is None else Json(json_data['persone_vedenti']),
             'id_mezzo_ricezione': json_data['id_mezzo_ricezione'],
-            'id_strutture_firmatari': json_data['id_strutture_firmatari'],
-            'sulla_scrivania_di': json_data['sulla_scrivania_di']
+            'id_strutture_segreteria': json_data['id_strutture_segreteria'],
+            'sulla_scrivania_di': json_data['sulla_scrivania_di'],
+            'id_applicazione': json_data['id_applicazione'],
+            'version': json_data['version']
         })
         log.info(c.query)
         conn.commit()
