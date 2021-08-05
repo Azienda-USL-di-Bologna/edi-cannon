@@ -72,7 +72,7 @@ INSERT INTO scripta.docs_list
                         %(persone_vedenti)s,
                         (select id from scripta.mezzi where descrizione = %(id_mezzo_ricezione)s),
                         %(id_strutture_segreteria)s,
-                        %(sulla_scrivania_di)s --  persone_vedenti, id_mezzo_ricezione, id_strutture_firmatari, sulla_scrivania_di,
+                        %(sulla_scrivania_di)s, --  persone_vedenti, id_mezzo_ricezione, id_strutture_firmatari, sulla_scrivania_di,
                         %(version)s,
                         %(id_applicazione)s  -- version, id_applicazione
             )
@@ -110,6 +110,6 @@ set    open_command = excluded.open_command,
        id_mezzo_ricezione = excluded.id_mezzo_ricezione ,
        id_strutture_segreteria = excluded.id_strutture_segreteria ,
        sulla_scrivania_di = excluded.sulla_scrivania_di,
-       version = excluded.version,
+       version = excluded.version ,
        id_applicazione = excluded.id_applicazione
 """
