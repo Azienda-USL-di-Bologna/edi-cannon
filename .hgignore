@@ -7,3 +7,5 @@ __pycache__/
 db_connection.py
 edi_cannon.log
 edi_cannon_azienda.log
+venv/
+log/
