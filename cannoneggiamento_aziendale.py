@@ -10,7 +10,7 @@ import traceback
 import psycopg2
 import psycopg2.extras
 from psycopg2.extras import Json
-import doc_list_data_retriever
+import argo_data_retriever
 import internauta_data_manager as idm
 from logging.handlers import TimedRotatingFileHandler
 log = None
@@ -129,20 +129,28 @@ def search_and_work(conn, codice_azienda):
                 log.info(r)
                 log.info("Tipologia %s" % str(r['tipo_oggetto']))
                 set_guids_in_esecuzione(r, conn)
-                if r['tipo_oggetto'] == "pico":
-                    if r['operazione'] == "DELETE":
-                        log.info("cancello!")
-                        idm.delete_doc_list_row_by_guid_and_azienda(r['id_oggetto'], codice_azienda)
+
+                if r['operazione'] == "DELETE":
+                    log.info("cancello!")
+                    idm.delete_doc_list_row_by_guid_and_azienda(r['id_oggetto'], codice_azienda)
+                elif r['tipo_oggetto'] == "pico":
+                    if not got_delete_too(r, rows):
+                        pico_data = argo_data_retriever.get_pico_document_by_guid(conn, r['id_oggetto'])
+                        json_data = pico_data[0]
+                        if json_data is not None:
+                            idm.upsert_doc_list_data(codice_azienda, json_data)
                     else:
-                        if not got_delete_too(r, rows):
-                            pico_data = doc_list_data_retriever.get_edi_data_from_pico(conn, r['id_oggetto'])
-                            json_data = pico_data[0]
-                            if json_data is not None:
-                                idm.upsert_doc_list_data(codice_azienda, json_data)
-                        else:
-                            log.info("dopo la devo cancellare, quindi skippo l'upsert di " + str(r['id_oggetto']))
-                        # TO_DO: Cancelliamo le righe già fatte da cannoneggiamenti_argo se è andato tutto ok?
-                        delete_cannoneggiamenti_done(r, conn)
+                        log.info("dopo la devo cancellare, quindi skippo l'upsert di " + str(r['id_oggetto']))
+                    delete_cannoneggiamenti_done(r, conn)
+                elif r['tipo_oggetto'] == "dete":
+                    if not got_delete_too(r, rows):
+                        dete_data = argo_data_retriever.get_dete_document_by_guid(conn, r['id_oggetto'])
+                        json_data = dete_data[0]
+                        if json_data is not None:
+                            idm.upsert_doc_list_data(codice_azienda, json_data)
+                    else:
+                        log.info("dopo la devo cancellare, quindi skippo l'upsert di " + str(r['id_oggetto']))
+                    delete_cannoneggiamenti_done(r, conn)
                 elif r['tipo_oggetto'] == "fascicolo":
                     nome = get_nome(conn, r['id_oggetto'],parlante)
                     idm.update_nome_fascicoli(nome, r['id_oggetto'])

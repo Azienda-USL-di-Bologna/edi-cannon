@@ -7,6 +7,7 @@ from db_connection import DB_INTERNAUTI
 from datetime import datetime
 import queries_cannone as qc
 import logging
+
 def update_nome_fascicoli(nome, id_oggetto):
     log = logging.getLogger("cannoneggiamento_aziendale")
     conn = get_internauta_conn()
@@ -40,27 +41,34 @@ def delete_doc_list_row_by_guid_and_azienda(guid_documento, codice_azienda):
     conn.commit()
 
 
+
 STATI = {
     "None": None,
-    "PARERI": 'PARERE',
     "REDAZIONE": 'REDAZIONE',
+    "Redazione": 'REDAZIONE',
+    "Bozza_Redazione": "REDAZIONE",
+    "Bozza_Ricezione": "REDAZIONE",
+    "Bozza": "REDAZIONE",
+    "Ricezione": "REDAZIONE",
+    "PARERI": 'PARERE',
+    "Pareri": 'PARERE',
+    "Visti": "VISTA",
+    "Approvazione": 'FIRMA',
+    "FIRMA": 'FIRMA',
+    "Firma": 'FIRMA',
     "SPEDIZIONE_MANUALE": 'SPEDIZIONE_MANUALE',
     "ASPETTA_SPEDIZIONI": 'ASPETTA_SPEDIZIONI',
     "CONTROLLO_SEGRETERIA": 'CONTROLLO_SEGRETERIA',
     "FINE": 'FINE',
+    "Fine": 'FINE',
+    "Fine_Emergenza_In": "FINE",
     "ATTENDI_JOBS": 'ATTENDI_JOBS',
     "Fine_Entrata": "FINE",
     "SMISTAMENTO": "SMISTAMENTO",
-    "Bozza_Ricezione": "REDAZIONE",
-    "Bozza": "REDAZIONE",
-    "Ricezione": "REDAZIONE",
-    "FIRMA": 'FIRMA',
     "NUMERAZIONE": 'NUMERAZIONE',
     "Registrazione_Protocollo": 'REGISTRAZIONE_PROTOCOLLO',
-    "Fine_Emergenza_In": "FINE",
     "AVVIA_SPEDIZIONI": 'AVVIA_SPEDIZIONI'
 }
-
 
 def get_internauta_conn():
     log = logging.getLogger("cannoneggiamento_aziendale")

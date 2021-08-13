@@ -42,39 +42,39 @@ INSERT INTO scripta.docs_list
             (
                         (select id from baborg.aziende where codice = %(codice_azienda)s),
                         %(guid_documento)s,
-                        %(tipologia)s, --  id_azienda, guid_documento, tipologia
+                        %(tipologia)s, 
                         %(open_command)s,
-                        %(command_type)s, --  open_command,command_type
-                        (select id from baborg.persone where codice_fiscale = %(id_persona_responsabile_procedimento)s),
+                        %(command_type)s,
+                        %(id_persona_responsabile_procedimento)s,
                         %(id_persona_redattrice)s,
-                        %(id_struttura_registrazione)s, --  id_persona_responsabile_procedimento, id_persona_redattrice, id_struttura_registrazione
+                        %(id_struttura_registrazione)s,
                         %(numero_proposta)s,
                         %(anno_proposta)s,
                         %(numero_registrazione)s,
-                        %(anno_registrazione)s, --  numero_proposta, anno_proposta, numero_registrazione, anno_registrazione
+                        %(anno_registrazione)s,
                         %(data_creazione)s,
                         %(data_registrazione)s,
-                        %(data_pubblicazione)s, --  data_creazione, data_registrazione, data_pubblicazione,
+                        %(data_pubblicazione)s,
                         %(oggetto)s,
                         %(fascicolazioni)s::jsonb,
-                        %(classificazioni)s, --  oggetto, fascicolazioni, classificazioni,
+                        %(classificazioni)s,
                         %(firmatari)s,
                         %(destinatari)s,
-                        %(mittente)s, --  firmatari, destinatari,  mittente,
+                        %(mittente)s,
                         %(stato)s,
                         %(visibilita_limitata)s,
                         %(riservato)s,
-                        %(annullato)s, --  stato, visibilita_limitata, riservato ,annullato,
+                        %(annullato)s, 
                         %(protocollo_esterno)s,
                         %(mail_collegio)s,
-                        %(stato_ufficio_atti)s,    --  protocollo_esterno,mail_collegio, stato_ufficio_atti,
-                        %(data_inserimento_riga)s, --  data_inserimento_riga,
+                        %(stato_ufficio_atti)s,
+                        %(data_inserimento_riga)s,
                         %(persone_vedenti)s,
                         (select id from scripta.mezzi where descrizione = %(id_mezzo_ricezione)s),
                         %(id_strutture_segreteria)s,
-                        %(sulla_scrivania_di)s, --  persone_vedenti, id_mezzo_ricezione, id_strutture_firmatari, sulla_scrivania_di,
+                        %(sulla_scrivania_di)s,
                         %(version)s,
-                        %(id_applicazione)s  -- version, id_applicazione
+                        %(id_applicazione)s 
             )
 ON conflict
             (
