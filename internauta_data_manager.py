@@ -7,10 +7,10 @@ from db_connection import DB_INTERNAUTI
 from datetime import datetime
 import queries_cannone as qc
 import logging
-log = None
+log = logging.getLogger("cannoneggiamento_aziendale")
+
 
 def update_nome_fascicoli(nome, id_oggetto):
-    log = logging.getLogger("cannoneggiamento_aziendale")
     log.info("update_nome_fascicoli")
     qupdate = """select scripta.update_nome_fascicolo_from_idfascicoloargo(%(nome)s,%(id_fascicolo)s)"""
     try:
@@ -26,7 +26,7 @@ def update_nome_fascicoli(nome, id_oggetto):
         log.error(c.query)
 
 def delete_doc_list_row_by_guid_and_azienda(guid_documento, codice_azienda):
-    log = logging.getLogger("cannoneggiamento_aziendale")
+    #log = logging.getLogger("cannoneggiamento_aziendale")
     conn = get_internauta_conn()
     log.info("delete_doc_list_row_by_guid_and_azienda di guid " + str(guid_documento) + " con azienda " + str(codice_azienda))
     qDel = """
@@ -80,7 +80,7 @@ STATI = {
 
 
 def get_internauta_conn():
-    log = logging.getLogger("cannoneggiamento_aziendale")
+    #log = logging.getLogger("cannoneggiamento_aziendale")
     log.info("mi connetto a internauta")
     try:
         conn = psycopg2.connect(
@@ -96,7 +96,7 @@ def get_internauta_conn():
 
 
 def upsert_doc_list_data(codice_azienda, json_data):
-    log = logging.getLogger("cannoneggiamento_aziendale")
+    #log = logging.getLogger("cannoneggiamento_aziendale")
     conn = get_internauta_conn()
     c = conn.cursor(cursor_factory=psycopg2.extras.DictCursor)
     try:

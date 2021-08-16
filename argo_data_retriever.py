@@ -1,5 +1,5 @@
 import logging
-log = None
+log = logging.getLogger("cannoneggiamento_aziendale")
 
 def get_pico_document_by_guid(conn, guid):
     log = logging.getLogger("cannoneggiamento_aziendale")

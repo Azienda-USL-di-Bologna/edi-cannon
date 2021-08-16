@@ -13,7 +13,8 @@ from psycopg2.extras import Json
 import argo_data_retriever
 import internauta_data_manager as idm
 from logging.handlers import TimedRotatingFileHandler
-log = None
+
+log = logging.getLogger("cannoneggiamento_aziendale")
 
 def try_lock(conn):
     q = "select pg_try_advisory_lock(2243247306)"
@@ -39,6 +40,7 @@ def got_delete_too(row, rows):
 
 
 def set_guids_in_esecuzione(row, conn):
+    #log = logging.getLogger("cannoneggiamento_aziendale")
     qUpdate = """ update esportazioni.cannoneggiamenti
     set in_esecuzione = true
     where id in %s """
@@ -48,7 +50,7 @@ def set_guids_in_esecuzione(row, conn):
 
 
 def set_guids_in_error(row, conn, codice_azienda, ex):
-    log = logging.getLogger("cannoneggiamento_aziendale")
+    #log = logging.getLogger("cannoneggiamento_aziendale")
     log.info('setto guid in errore')
     qError = """ update esportazioni.cannoneggiamenti
     set in_error = true
@@ -61,7 +63,7 @@ def set_guids_in_error(row, conn, codice_azienda, ex):
 
 
 def delete_cannoneggiamenti_done(row, conn):
-    log = logging.getLogger("cannoneggiamento_aziendale")
+    #log = logging.getLogger("cannoneggiamento_aziendale")
     log.info("delete_cannoneggiamenti_done")
     qDel = """ delete from esportazioni.cannoneggiamenti
     where id in %s """
@@ -102,7 +104,7 @@ def erroro(conn, codice_azienda, ex):
 
 
 def get_nome(conn, id_fascicolo, parlante):
-    log = logging.getLogger("cannoneggiamento_aziendale")
+    #log = logging.getLogger("cannoneggiamento_aziendale")
     if parlante:
         log.info("get_nome : stringa vuota")
         return ''
@@ -120,7 +122,7 @@ def get_nome(conn, id_fascicolo, parlante):
 
 
 def search_and_work(conn, codice_azienda):
-    log = logging.getLogger("cannoneggiamento_aziendale")
+    #log = logging.getLogger("cannoneggiamento_aziendale")
     log.info("Eseguo search_and_work....")
     qSel = """
         select distinct id_oggetto, tipo_oggetto, operazione, array_agg(id) as id_list
@@ -179,16 +181,17 @@ def search_and_work(conn, codice_azienda):
         raise ex
 
 
-def main(azienda, host, user, password, db):
-
+def setta_log(azienda):
     filename = "log/edi_cannon_" + str(azienda) + ".log"
-    log = logging.getLogger("cannoneggiamento_aziendale")
     fmt = logging.Formatter('%(asctime)s %(message)s', datefmt='%Y-%m-%d %I:%M:%S %p')
     hnd = TimedRotatingFileHandler(filename, when='midnight', interval=1, backupCount=7)
     hnd.setFormatter(fmt)
     log.addHandler(hnd)
     log.setLevel(logging.INFO)
 
+
+def main(azienda, host, user, password, db):
+    setta_log(azienda)
     while True:
         try:
             conn = psycopg2.connect(
