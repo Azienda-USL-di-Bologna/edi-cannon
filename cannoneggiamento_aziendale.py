@@ -44,9 +44,15 @@ def set_guids_in_esecuzione(row, conn):
     qUpdate = """ update esportazioni.cannoneggiamenti
     set in_esecuzione = true
     where id in %s """
-    c = conn.cursor(cursor_factory=psycopg2.extras.DictCursor)
-    log.info(qUpdate % str(tuple(i for i in row['id_list'])))
-    c.execute(qUpdate, (tuple(i for i in row['id_list']),))
+    try:
+        c = conn.cursor(cursor_factory=psycopg2.extras.DictCursor)
+        c.execute(qUpdate, (tuple(i for i in row['id_list']),))
+        conn.commit()
+        log.info("set_guids_in_esecuzione eseguita con successo")
+    except Exception as ex:
+        log.error("errore nel set_guids_in_esecuzione")
+        log.error(c.query)
+        raise ex
 
 
 def set_guids_in_error(row, conn, codice_azienda, ex):
@@ -139,7 +145,6 @@ def search_and_work(conn, codice_azienda):
         if rows is not None and len(rows) > 0:
             for r in rows:
                 try:
-                    log.info(r)
                     log.info("Tipologia %s" % str(r['tipo_oggetto']))
                     set_guids_in_esecuzione(r, conn)
 

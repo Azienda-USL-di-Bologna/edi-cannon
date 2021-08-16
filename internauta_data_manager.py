@@ -25,6 +25,7 @@ def update_nome_fascicoli(nome, id_oggetto):
         log.error(ex)
         log.error(c.query)
 
+
 def delete_doc_list_row_by_guid_and_azienda(guid_documento, codice_azienda):
     #log = logging.getLogger("cannoneggiamento_aziendale")
     conn = get_internauta_conn()
