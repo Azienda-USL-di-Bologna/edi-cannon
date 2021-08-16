@@ -7,39 +7,47 @@ from db_connection import DB_INTERNAUTI
 from datetime import datetime
 import queries_cannone as qc
 import logging
+log = None
 
 def update_nome_fascicoli(nome, id_oggetto):
     log = logging.getLogger("cannoneggiamento_aziendale")
-    conn = get_internauta_conn()
-    c = conn.cursor(cursor_factory=psycopg2.extras.DictCursor)
+    log.info("update_nome_fascicoli")
     qupdate = """select scripta.update_nome_fascicolo_from_idfascicoloargo(%(nome)s,%(id_fascicolo)s)"""
     try:
+        conn = get_internauta_conn()
+        c = conn.cursor(cursor_factory=psycopg2.extras.DictCursor)
         c.execute(qupdate, {'nome': nome,
                         'id_fascicolo': id_oggetto})
         conn.commit()
+        log.info("update_nome_fascicoli eseguita con successo")
     except Exception as ex:
-        log.error("Query fallita")
+        log.error("update_nome_fascicoli fallita")
         log.error(ex)
+        log.error(c.query)
 
 def delete_doc_list_row_by_guid_and_azienda(guid_documento, codice_azienda):
     log = logging.getLogger("cannoneggiamento_aziendale")
     conn = get_internauta_conn()
-    log.info("guid " + str(guid_documento) + " azienda " + str(codice_azienda))
+    log.info("delete_doc_list_row_by_guid_and_azienda di guid " + str(guid_documento) + " con azienda " + str(codice_azienda))
     qDel = """
         delete from scripta.docs_list 
         where guid_documento = %(guid_documento)s 
         and id_azienda = (select id from baborg.aziende where codice = %(codice_azienda)s)
     """
-
-    c = conn.cursor(cursor_factory=psycopg2.extras.DictCursor)
-    c.execute(qDel, {
-        "guid_documento": guid_documento,
-        "codice_azienda": codice_azienda
-    })
-    log.info(c.query)
-    c.close()
-    conn.commit()
-
+    try:
+        c = conn.cursor(cursor_factory=psycopg2.extras.DictCursor)
+        c.execute(qDel, {
+            "guid_documento": guid_documento,
+            "codice_azienda": codice_azienda
+        })
+        c.close()
+        conn.commit()
+        log.info("delete_doc_list_row_by_guid_and_azienda eseguita con successo")
+    except Exception as ex:
+        conn.rollback()
+        log.error("delete_doc_list_row_by_guid_and_azienda fallita")
+        log.error(c.query)
+        raise ex
 
 
 STATI = {
@@ -69,6 +77,7 @@ STATI = {
     "Registrazione_Protocollo": 'REGISTRAZIONE_PROTOCOLLO',
     "AVVIA_SPEDIZIONI": 'AVVIA_SPEDIZIONI'
 }
+
 
 def get_internauta_conn():
     log = logging.getLogger("cannoneggiamento_aziendale")
@@ -128,12 +137,11 @@ def upsert_doc_list_data(codice_azienda, json_data):
             'id_applicazione': json_data['id_applicazione'],
             'version': json_data['version']
         })
-        log.info(c.query)
         conn.commit()
-
+        log.info(f"upsert_doc_list_data eseguita con successo per documento con guid: {json_data['guid_documento']}")
     except Exception as ex:
         conn.rollback()
-        log.error("errore in upsert_doc_list_data")
+        log.error(f"errore in upsert_doc_list_data per guid {json_data['guid_documento']}")
         log.error(ex)
         log.error(c.query)
         raise ex

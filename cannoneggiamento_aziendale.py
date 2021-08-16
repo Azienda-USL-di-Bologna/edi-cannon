@@ -43,7 +43,7 @@ def set_guids_in_esecuzione(row, conn):
     set in_esecuzione = true
     where id in %s """
     c = conn.cursor(cursor_factory=psycopg2.extras.DictCursor)
-    print(qUpdate % str(tuple(i for i in row['id_list'])))
+    log.info(qUpdate % str(tuple(i for i in row['id_list'])))
     c.execute(qUpdate, (tuple(i for i in row['id_list']),))
 
 
@@ -54,21 +54,28 @@ def set_guids_in_error(row, conn, codice_azienda, ex):
     set in_error = true
     where id in %s """
     c = conn.cursor(cursor_factory=psycopg2.extras.DictCursor)
-    print(qError % str(tuple(i for i in row[3])))
+    log.error(qError % str(tuple(i for i in row[3])))
     c.execute(qError, (tuple(i for i in row[3]),))
     conn.commit()
     erroro(conn, codice_azienda, ex)
+
 
 def delete_cannoneggiamenti_done(row, conn):
     log = logging.getLogger("cannoneggiamento_aziendale")
     log.info("delete_cannoneggiamenti_done")
     qDel = """ delete from esportazioni.cannoneggiamenti
     where id in %s """
-    c = conn.cursor(cursor_factory=psycopg2.extras.DictCursor)
-    print(qDel % str(tuple(i for i in row['id_list'])))
-    c.execute(qDel, (tuple(i for i in row['id_list']),))
-    log.info(c.query)
-    conn.commit()
+    try:
+        c = conn.cursor(cursor_factory=psycopg2.extras.DictCursor)
+        log.info(qDel % str(tuple(i for i in row['id_list'])))
+        c.execute(qDel, (tuple(i for i in row['id_list']),))
+        log.info("delete_cannoneggiamenti_done eseguita con successo")
+        conn.commit()
+    except Exception as ex:
+        log.error("delete_cannoneggiamenti_done fallita")
+        log.error(c.query)
+        raise ex
+
 
 def erroro(conn, codice_azienda, ex):
     c = conn.cursor(cursor_factory=psycopg2.extras.DictCursor)
@@ -96,73 +103,80 @@ def erroro(conn, codice_azienda, ex):
 
 def get_nome(conn, id_fascicolo, parlante):
     log = logging.getLogger("cannoneggiamento_aziendale")
-    c = conn.cursor(cursor_factory=psycopg2.extras.DictCursor)
-    query = """select nome_fascicolo from gd.fascicoligd where id_fascicolo = %(id_fascicolo)s"""
-    c.execute(query, {'id_fascicolo': id_fascicolo})
-    result = c.fetchone()
     if parlante:
         log.info("get_nome : stringa vuota")
         return ''
     else:
-        log.info("get_nome " + result['nome_fascicolo'])
-        return result['nome_fascicolo']
+        try:
+            c = conn.cursor(cursor_factory=psycopg2.extras.DictCursor)
+            query = """select nome_fascicolo from gd.fascicoligd where id_fascicolo = %(id_fascicolo)s"""
+            c.execute(query, {'id_fascicolo': id_fascicolo})
+            result = c.fetchone()
+            log.info("get_nome: " + result['nome_fascicolo'])
+            return result['nome_fascicolo']
+        except Exception as ex:
+            log.error("get_nome errore nel reperimento del nome")
+            raise ex
 
 
 def search_and_work(conn, codice_azienda):
     log = logging.getLogger("cannoneggiamento_aziendale")
     log.info("Eseguo search_and_work....")
-
     qSel = """
         select distinct id_oggetto, tipo_oggetto, operazione, array_agg(id) as id_list
         from esportazioni.cannoneggiamenti
         where in_esecuzione = false
         group by id_oggetto, tipo_oggetto, operazione
     """
-    c = conn.cursor(cursor_factory=psycopg2.extras.DictCursor)
-    c.execute(qSel)
-    rows = c.fetchall()
-    c.execute("select val_parametro::int  <> 0 from bds_tools.parametri_pubblici pp where pp.nome_parametro = 'fascicoliParlanti'")
-    parlante = c.fetchone()[0]
-    if rows is not None and len(rows) > 0:
-        for r in rows:
-            try:
-                log.info(r)
-                log.info("Tipologia %s" % str(r['tipo_oggetto']))
-                set_guids_in_esecuzione(r, conn)
+    try:
+        c = conn.cursor(cursor_factory=psycopg2.extras.DictCursor)
+        c.execute(qSel)
+        rows = c.fetchall()
+        c.execute("select val_parametro::int  <> 0 from bds_tools.parametri_pubblici pp where pp.nome_parametro = 'fascicoliParlanti'")
+        parlante = c.fetchone()[0]
+        if rows is not None and len(rows) > 0:
+            for r in rows:
+                try:
+                    log.info(r)
+                    log.info("Tipologia %s" % str(r['tipo_oggetto']))
+                    set_guids_in_esecuzione(r, conn)
 
-                if r['operazione'] == "DELETE":
-                    log.info("cancello!")
-                    idm.delete_doc_list_row_by_guid_and_azienda(r['id_oggetto'], codice_azienda)
-                elif r['tipo_oggetto'] == "pico":
-                    if not got_delete_too(r, rows):
-                        pico_data = argo_data_retriever.get_pico_document_by_guid(conn, r['id_oggetto'])
-                        json_data = pico_data[0]
-                        if json_data is not None:
-                            idm.upsert_doc_list_data(codice_azienda, json_data)
-                    else:
-                        log.info("dopo la devo cancellare, quindi skippo l'upsert di " + str(r['id_oggetto']))
-                    delete_cannoneggiamenti_done(r, conn)
-                elif r['tipo_oggetto'] == "dete":
-                    if not got_delete_too(r, rows):
-                        dete_data = argo_data_retriever.get_dete_document_by_guid(conn, r['id_oggetto'])
-                        json_data = dete_data[0]
-                        if json_data is not None:
-                            idm.upsert_doc_list_data(codice_azienda, json_data)
-                    else:
-                        log.info("dopo la devo cancellare, quindi skippo l'upsert di " + str(r['id_oggetto']))
-                    delete_cannoneggiamenti_done(r, conn)
-                elif r['tipo_oggetto'] == "fascicolo":
-                    nome = get_nome(conn, r['id_oggetto'],parlante)
-                    idm.update_nome_fascicoli(nome, r['id_oggetto'])
+                    if r['operazione'] == "DELETE":
+                        log.info("cancello!")
+                        idm.delete_doc_list_row_by_guid_and_azienda(r['id_oggetto'], codice_azienda)
+                    elif r['tipo_oggetto'] == "pico":
+                        if not got_delete_too(r, rows):
+                            pico_data = argo_data_retriever.get_pico_document_by_guid(conn, r['id_oggetto'])
+                            json_data = pico_data[0]
+                            if json_data is not None:
+                                idm.upsert_doc_list_data(codice_azienda, json_data)
+                        else:
+                            log.info("dopo la devo cancellare, quindi skippo l'upsert di " + str(r['id_oggetto']))
+                        delete_cannoneggiamenti_done(r, conn)
+                    elif r['tipo_oggetto'] == "dete":
+                        if not got_delete_too(r, rows):
+                            dete_data = argo_data_retriever.get_dete_document_by_guid(conn, r['id_oggetto'])
+                            json_data = dete_data[0]
+                            if json_data is not None:
+                                idm.upsert_doc_list_data(codice_azienda, json_data)
+                        else:
+                            log.info("dopo la devo cancellare, quindi skippo l'upsert di " + str(r['id_oggetto']))
+                        delete_cannoneggiamenti_done(r, conn)
+                    elif r['tipo_oggetto'] == "fascicolo":
+                        nome = get_nome(conn, r['id_oggetto'], parlante)
+                        idm.update_nome_fascicoli(nome, r['id_oggetto'])
 
+                except Exception as ex:
+                    log.error("ERRORE! SEARCH_AND_WORK")
+                    log.error(ex)
+                    errore = ex.args[0]
+                    set_guids_in_error(r, conn, codice_azienda, errore)
 
-            except Exception as ex:
-                print("Erroro!  search_and_work")
-                log.error("ERRORE! SEARCH_AND_WORK")
-                print(ex)
-                log.error(ex)
-                errore = ex.args[0]
-                set_guids_in_error(r, conn, codice_azienda, errore)
+    except Exception as ex:
+        log.error("SEARCH_AND_WORK errore nel reperimento delle righe o del parametro nome parlante")
+        log.error(c.query)
+        log.error(ex)
+        raise ex
 
 
 def main(azienda, host, user, password, db):
