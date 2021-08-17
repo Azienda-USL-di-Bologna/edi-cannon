@@ -76,7 +76,12 @@ STATI = {
     "SMISTAMENTO": "SMISTAMENTO",
     "NUMERAZIONE": 'NUMERAZIONE',
     "Registrazione_Protocollo": 'REGISTRAZIONE_PROTOCOLLO',
-    "AVVIA_SPEDIZIONI": 'AVVIA_SPEDIZIONI'
+    "AVVIA_SPEDIZIONI": 'AVVIA_SPEDIZIONI',
+    "Ufficio_Atti": "UFFICIO_ATTI",
+    "Direttore_Generale": "DG",
+    "Direttore_Amministrativo": "DA",
+    "Direttore_Scientifico": "DSC",
+    "Direttore_Sanitario": "DS"
 }
 
 STATI_UFFICIO_ATTI = {
