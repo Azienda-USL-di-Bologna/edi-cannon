@@ -79,6 +79,13 @@ STATI = {
     "AVVIA_SPEDIZIONI": 'AVVIA_SPEDIZIONI'
 }
 
+STATI_UFFICIO_ATTI = {
+    "None": None,
+    "sospesa": "SOSPESA",
+    "Elaborata": "ELABORATA",
+    "da_valutare": "DA_VALUTARE"
+}
+
 
 def get_internauta_conn():
     #log = logging.getLogger("cannoneggiamento_aziendale")
@@ -129,7 +136,7 @@ def upsert_doc_list_data(codice_azienda, json_data):
             'annullato': True if json_data['annullato'] != 0 else False,
             'protocollo_esterno': json_data['protocollo_esterno'],
             'mail_collegio': json_data['mail_collegio'],
-            'stato_ufficio_atti': json_data['stato_ufficio_atti'],
+            'stato_ufficio_atti': STATI_UFFICIO_ATTI[str(json_data['stato_ufficio_atti'])],
             'data_inserimento_riga': datetime.now(),
             'persone_vedenti': None if json_data['persone_vedenti'] is None else Json(json_data['persone_vedenti']),
             'id_mezzo_ricezione': json_data['id_mezzo_ricezione'],
