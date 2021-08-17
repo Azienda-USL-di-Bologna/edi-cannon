@@ -169,6 +169,15 @@ def search_and_work(conn, codice_azienda):
                         else:
                             log.info("dopo la devo cancellare, quindi skippo l'upsert di " + str(r['id_oggetto']))
                         delete_cannoneggiamenti_done(r, conn)
+                    elif r['tipo_oggetto'] == "deli":
+                        if not got_delete_too(r, rows):
+                            deli_data = argo_data_retriever.get_deli_document_by_guid(conn, r['id_oggetto'])
+                            json_data = deli_data[0]
+                            if json_data is not None:
+                                idm.upsert_doc_list_data(codice_azienda, json_data)
+                        else:
+                            log.info("dopo la devo cancellare, quindi skippo l'upsert di " + str(r['id_oggetto']))
+                        delete_cannoneggiamenti_done(r, conn)
                     elif r['tipo_oggetto'] == "fascicolo":
                         nome = get_nome(conn, r['id_oggetto'], parlante)
                         idm.update_nome_fascicoli(nome, r['id_oggetto'])
