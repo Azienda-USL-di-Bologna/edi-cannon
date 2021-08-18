@@ -151,6 +151,7 @@ def search_and_work(conn, codice_azienda):
                     if r['operazione'] == "DELETE":
                         log.info("cancello!")
                         idm.delete_doc_list_row_by_guid_and_azienda(r['id_oggetto'], codice_azienda)
+                        delete_cannoneggiamenti_done(r, conn)
                     elif r['tipo_oggetto'] == "pico":
                         if not got_delete_too(r, rows):
                             pico_data = argo_data_retriever.get_pico_document_by_guid(conn, r['id_oggetto'])
@@ -181,6 +182,7 @@ def search_and_work(conn, codice_azienda):
                     elif r['tipo_oggetto'] == "fascicolo":
                         nome = get_nome(conn, r['id_oggetto'], parlante)
                         idm.update_nome_fascicoli(nome, r['id_oggetto'])
+                        delete_cannoneggiamenti_done(r, conn)
 
                 except Exception as ex:
                     log.error("ERRORE! SEARCH_AND_WORK")
