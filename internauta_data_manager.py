@@ -62,7 +62,7 @@ STATI = {
     "PARERI": 'PARERE',
     "Pareri": 'PARERE',
     "Visti": "VISTA",
-    "Approvazione": 'FIRMA',
+    "Approvazione": 'APPROVAZIONE',
     "FIRMA": 'FIRMA',
     "Firma": 'FIRMA',
     "SPEDIZIONE_MANUALE": 'SPEDIZIONE_MANUALE',
