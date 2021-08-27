@@ -17,7 +17,7 @@ def update_nome_fascicoli(nome, id_oggetto):
         conn = get_internauta_conn()
         c = conn.cursor(cursor_factory=psycopg2.extras.DictCursor)
         c.execute(qupdate, {'nome': nome,
-                        'id_fascicolo': id_oggetto})
+                            'id_fascicolo': id_oggetto})
         conn.commit()
         log.info("update_nome_fascicoli eseguita con successo")
     except Exception as ex:
