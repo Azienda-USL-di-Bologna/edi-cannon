@@ -161,6 +161,24 @@ def search_and_work(conn, codice_azienda):
                         else:
                             log.info("dopo la devo cancellare, quindi skippo l'upsert di " + str(r['id_oggetto']))
                         delete_cannoneggiamenti_done(r, conn)
+                    elif r['tipo_oggetto'] == "pico_pe":
+                        if not got_delete_too(r, rows):
+                            pico_data = argo_data_retriever.get_pico_pe_document_by_guid(conn, r['id_oggetto'])
+                            json_data = pico_data[0]
+                            if json_data is not None:
+                                idm.upsert_doc_list_data(codice_azienda, json_data)
+                        else:
+                            log.info("dopo la devo cancellare, quindi skippo l'upsert di " + str(r['id_oggetto']))
+                        delete_cannoneggiamenti_done(r, conn)
+                    elif r['tipo_oggetto'] == "pico_pu":
+                        if not got_delete_too(r, rows):
+                            pico_data = argo_data_retriever.get_pico_pu_document_by_guid(conn, r['id_oggetto'])
+                            json_data = pico_data[0]
+                            if json_data is not None:
+                                idm.upsert_doc_list_data(codice_azienda, json_data)
+                        else:
+                            log.info("dopo la devo cancellare, quindi skippo l'upsert di " + str(r['id_oggetto']))
+                        delete_cannoneggiamenti_done(r, conn)
                     elif r['tipo_oggetto'] == "dete":
                         if not got_delete_too(r, rows):
                             dete_data = argo_data_retriever.get_dete_document_by_guid(conn, r['id_oggetto'])
