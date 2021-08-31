@@ -81,7 +81,8 @@ STATI = {
     "Direttore_Generale": "DG",
     "Direttore_Amministrativo": "DA",
     "Direttore_Scientifico": "DSC",
-    "Direttore_Sanitario": "DS"
+    "Direttore_Sanitario": "DS",
+    "Direttore_Affari_Generali_Legali": "DAGL"
 }
 
 STATI_UFFICIO_ATTI = {
