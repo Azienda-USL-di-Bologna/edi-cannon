@@ -21,7 +21,7 @@ def update_nome_fascicoli(nome, id_oggetto):
         conn.commit()
         log.info("update_nome_fascicoli eseguita con successo")
     except Exception as ex:
-        log.error("update_nome_fascicoli fallita")
+        log.error("update_nome_fascicoli fallita ")
         log.error(ex)
         log.error(c.query)
 
