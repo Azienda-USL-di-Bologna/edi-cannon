@@ -23,9 +23,12 @@ def update_nome_fascicoli(nome, id_oggetto):
         conn.commit()
         log.info("update_nome_fascicoli eseguita con successo")
     except Exception as ex:
+        conn.rollback()
         log.error("update_nome_fascicoli fallita ")
         log.error(ex)
         log.error(c.query)
+        raise ex
+
 
 
 def delete_doc_list_row_by_guid_and_azienda(guid_documento, codice_azienda):
