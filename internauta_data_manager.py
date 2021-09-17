@@ -12,18 +12,23 @@ log = logging.getLogger("cannoneggiamento_aziendale")
 
 def update_nome_fascicoli(nome, id_oggetto):
     log.info("update_nome_fascicoli")
-    qupdate = """select scripta.update_nome_fascicolo_from_idfascicoloargo(%(nome)s,%(id_fascicolo)s)"""
+    qupdate = """select scripta.update_nome_fascicolo_from_id_fascicolo_radice_argo(%(nome)s,%(id_fascicolo)s)"""
     try:
         conn = get_internauta_conn()
         c = conn.cursor(cursor_factory=psycopg2.extras.DictCursor)
-        c.execute(qupdate, {'nome': nome,
-                            'id_fascicolo': id_oggetto})
+        c.execute(qupdate, {
+            'nome': nome,
+            'id_fascicolo': id_oggetto
+        })
         conn.commit()
         log.info("update_nome_fascicoli eseguita con successo")
     except Exception as ex:
+        conn.rollback()
         log.error("update_nome_fascicoli fallita ")
         log.error(ex)
         log.error(c.query)
+        raise ex
+
 
 
 def delete_doc_list_row_by_guid_and_azienda(guid_documento, codice_azienda):
@@ -67,6 +72,7 @@ STATI = {
     "Firma": 'FIRMA',
     "SPEDIZIONE_MANUALE": 'SPEDIZIONE_MANUALE',
     "ASPETTA_SPEDIZIONI": 'ASPETTA_SPEDIZIONI',
+    "ASPETTA_SPEDIZIONE": 'ASPETTA_SPEDIZIONI',
     "CONTROLLO_SEGRETERIA": 'CONTROLLO_SEGRETERIA',
     "FINE": 'FINE',
     "Fine": 'FINE',
