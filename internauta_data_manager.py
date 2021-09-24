@@ -95,6 +95,7 @@ STATI_UFFICIO_ATTI = {
     "None": None,
     "sospesa": "SOSPESA",
     "Elaborata": "ELABORATA",
+    "Non Rilevante": "NON_RILEVANTE",
     "da_valutare": "DA_VALUTARE"
 }
 
