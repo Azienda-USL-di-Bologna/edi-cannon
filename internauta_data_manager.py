@@ -36,7 +36,7 @@ def delete_doc_list_row_by_guid_and_azienda(guid_documento, codice_azienda):
     conn = get_internauta_conn()
     log.info("delete_doc_list_row_by_guid_and_azienda di guid " + str(guid_documento) + " con azienda " + str(codice_azienda))
     qDel = """
-        delete from scripta.docs_list 
+        delete from scripta.docs_details 
         where guid_documento = %(guid_documento)s 
         and id_azienda = (select id from baborg.aziende where codice = %(codice_azienda)s)
     """
@@ -151,13 +151,24 @@ def upsert_doc_list_data(codice_azienda, json_data):
             'mail_collegio': json_data['mail_collegio'],
             'stato_ufficio_atti': STATI_UFFICIO_ATTI[str(json_data['stato_ufficio_atti'])],
             'data_inserimento_riga': datetime.now(),
-            'persone_vedenti': None if json_data['persone_vedenti'] is None else Json(json_data['persone_vedenti']),
+            #'persone_vedenti': None if json_data['persone_vedenti'] is None else Json(json_data['persone_vedenti']),
             'id_mezzo_ricezione': json_data['id_mezzo_ricezione'],
             'id_strutture_segreteria': json_data['id_strutture_segreteria'],
             'sulla_scrivania_di': None if json_data['sulla_scrivania_di'] is None else Json(json_data['sulla_scrivania_di']),
             'id_applicazione': json_data['id_applicazione'],
             'version': json_data['version']
         })
+        c.execute(qc.delete_persone_vedenti, {
+            "guid_documento": json_data['guid_documento']
+        })
+        if json_data['persone_vedenti'] is not None:
+            c.execute(qc.insert_persone_vedenti, {
+                "guid_documento": json_data['guid_documento'],
+                "id_persona": json_data['persone_vedenti']["idPersona"],
+                "mio_documento": json_data['persone_vedenti']['mioDocumento'],
+                "piena_visibilita": json_data['persone_vedenti']['pienaVisibilita'],
+                "modalita_apertura": json_data['persone_vedenti']['modalitaApertura']
+            })
         conn.commit()
         log.info(f"upsert_doc_list_data eseguita con successo per documento con guid: {json_data['guid_documento']}")
     except Exception as ex:
