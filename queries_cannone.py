@@ -113,7 +113,7 @@ set    open_command = excluded.open_command,
 delete_persone_vedenti = """
     DELETE FROM scripta.persone_vedenti pv
     USING scripta.docs_details dd
-    WHERE dd.id_doc_detail = dd.id
+    WHERE pv.id_doc_detail = dd.id
     AND dd.guid_documento = %(guid_documento)s
 """
 insert_persone_vedenti = """
