@@ -7,6 +7,9 @@ from db_connection import DB_INTERNAUTI
 from datetime import datetime
 import queries_cannone as qc
 import logging
+from io import StringIO
+import traceback
+import sys
 log = logging.getLogger("cannoneggiamento_aziendale")
 
 
@@ -161,14 +164,15 @@ def upsert_doc_list_data(codice_azienda, json_data):
         c.execute(qc.delete_persone_vedenti, {
             "guid_documento": json_data['guid_documento']
         })
-        if json_data['persone_vedenti'] is not None:
-            c.execute(qc.insert_persone_vedenti, {
-                "guid_documento": json_data['guid_documento'],
-                "id_persona": json_data['persone_vedenti']["idPersona"],
-                "mio_documento": json_data['persone_vedenti']['mioDocumento'],
-                "piena_visibilita": json_data['persone_vedenti']['pienaVisibilita'],
-                "modalita_apertura": json_data['persone_vedenti']['modalitaApertura']
-            })
+        if json_data['persone_vedenti'] is not None and len(json_data['persone_vedenti']) > 0:
+            for persona_vedente in json_data['persone_vedenti']:
+                c.execute(qc.insert_persone_vedenti, {
+                    "guid_documento": json_data['guid_documento'],
+                    "id_persona": persona_vedente["idPersona"],
+                    "mio_documento": persona_vedente['mioDocumento'],
+                    "piena_visibilita": persona_vedente['pienaVisibilita'],
+                    "modalita_apertura": persona_vedente['modalitaApertura']
+                })
         conn.commit()
         log.info(f"upsert_doc_list_data eseguita con successo per documento con guid: {json_data['guid_documento']}")
     except Exception as ex:
@@ -176,4 +180,9 @@ def upsert_doc_list_data(codice_azienda, json_data):
         log.error(f"errore in upsert_doc_list_data per guid {json_data['guid_documento']}")
         log.error(ex)
         log.error(c.query)
+
+        output = StringIO()
+        traceback.print_exception(*sys.exc_info(), limit=None, file=output)
+        log.critical(output.getvalue())
+        traceback.print_exception(*sys.exc_info())
         raise ex
