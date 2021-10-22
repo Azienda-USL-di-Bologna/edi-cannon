@@ -166,15 +166,12 @@ def upsert_doc_list_data(codice_azienda, json_data):
         })
         if json_data['persone_vedenti'] is not None and len(json_data['persone_vedenti']) > 0:
             for persona_vedente in json_data['persone_vedenti']:
-                log.info("insertisco persona vedente")
-                log.info(str(persona_vedente))
-                log.info("moda %s" % persona_vedente['modalitaApertura'])
                 c.execute(qc.insert_persone_vedenti, {
                     "guid_documento": json_data['guid_documento'],
                     "id_persona": persona_vedente["idPersona"],
                     "mio_documento": persona_vedente['mioDocumento'],
                     "piena_visibilita": persona_vedente['pienaVisibilita'],
-                    "modalita_apertura": persona_vedente['modalitaApertura']
+                    "modalita_apertura": persona_vedente['modalitaApertura'] if ('modalitaApertura' in persona_vedente) else None
                 })
         conn.commit()
         log.info(f"upsert_doc_list_data eseguita con successo per documento con guid: {json_data['guid_documento']}")
