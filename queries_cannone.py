@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 insert_doc = """
-INSERT INTO scripta.docs_list
+INSERT INTO scripta.docs_details
             (
                         id_azienda,
                         guid_documento,
@@ -31,7 +31,6 @@ INSERT INTO scripta.docs_list
                         mail_collegio,
                         stato_ufficio_atti,
                         data_inserimento_riga,
-                        persone_vedenti,
                         id_mezzo_ricezione,
                         id_strutture_segreteria,
                         sulla_scrivania_di,
@@ -69,7 +68,6 @@ INSERT INTO scripta.docs_list
                         %(mail_collegio)s,
                         %(stato_ufficio_atti)s,
                         %(data_inserimento_riga)s,
-                        %(persone_vedenti)s,
                         (select id from scripta.mezzi where descrizione = %(id_mezzo_ricezione)s),
                         %(id_strutture_segreteria)s,
                         %(sulla_scrivania_di)s,
@@ -106,10 +104,26 @@ set    open_command = excluded.open_command,
        protocollo_esterno = excluded.protocollo_esterno ,
        mail_collegio = excluded.mail_collegio,
        stato_ufficio_atti = excluded.stato_ufficio_atti,
-       persone_vedenti = excluded.persone_vedenti,
        id_mezzo_ricezione = excluded.id_mezzo_ricezione,
        id_strutture_segreteria = excluded.id_strutture_segreteria,
        sulla_scrivania_di = excluded.sulla_scrivania_di,
        version = excluded.version ,
        id_applicazione = excluded.id_applicazione
+"""
+delete_persone_vedenti = """
+    DELETE FROM scripta.persone_vedenti pv
+    USING scripta.docs_details dd
+    WHERE pv.id_doc_detail = dd.id
+    AND dd.guid_documento = %(guid_documento)s
+"""
+insert_persone_vedenti = """
+    INSERT INTO scripta.persone_vedenti 
+        (id_doc_detail, id_persona, mio_documento, piena_visibilita, modalita_apertura) 
+    VALUES(
+        (SELECT id FROM scripta.docs_details WHERE guid_documento = %(guid_documento)s), 
+        %(id_persona)s, 
+        %(mio_documento)s, 
+        %(piena_visibilita)s, 
+        %(modalita_apertura)s
+    )
 """
