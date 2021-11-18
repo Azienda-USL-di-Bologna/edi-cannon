@@ -171,7 +171,9 @@ def upsert_doc_list_data(codice_azienda, json_data):
                     "id_persona": persona_vedente["idPersona"],
                     "mio_documento": persona_vedente['mioDocumento'],
                     "piena_visibilita": persona_vedente['pienaVisibilita'],
-                    "modalita_apertura": persona_vedente['modalitaApertura'] if ('modalitaApertura' in persona_vedente) else None
+                    "modalita_apertura": persona_vedente['modalitaApertura'] if ('modalitaApertura' in persona_vedente) else None,
+                    "data_creazione": json_data['data_creazione'],
+                    "data_registrazione": json_data['data_registrazione']
                 })
         conn.commit()
         log.info(f"upsert_doc_list_data eseguita con successo per documento con guid: {json_data['guid_documento']}")

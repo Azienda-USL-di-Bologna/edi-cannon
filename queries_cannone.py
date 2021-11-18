@@ -118,12 +118,15 @@ delete_persone_vedenti = """
 """
 insert_persone_vedenti = """
     INSERT INTO scripta.persone_vedenti 
-        (id_doc_detail, id_persona, mio_documento, piena_visibilita, modalita_apertura) 
+        (id_doc_detail, id_persona, mio_documento, piena_visibilita, 
+        modalita_apertura, data_creazione, data_registrazione) 
     VALUES(
         (SELECT id FROM scripta.docs_details WHERE guid_documento = %(guid_documento)s), 
         %(id_persona)s, 
         %(mio_documento)s, 
         %(piena_visibilita)s, 
-        %(modalita_apertura)s
+        %(modalita_apertura)s,
+        %(data_creazione)s,
+        %(data_registrazione)s
     )
 """
