@@ -3,7 +3,7 @@
 import psycopg2
 import psycopg2.extras
 from psycopg2.extras import Json
-from db_connection import DB_INTERNAUTI
+
 from datetime import datetime
 import queries_cannone as qc
 import logging
@@ -13,11 +13,10 @@ import sys
 log = logging.getLogger("cannoneggiamento_aziendale")
 
 
-def update_nome_fascicoli(nome, id_oggetto):
+def update_nome_fascicoli(nome, id_oggetto, conn, id_azienda):
     log.info("update_nome_fascicoli")
     qupdate = """select scripta.update_nome_fascicolo_from_id_fascicolo_radice_argo(%(nome)s,%(id_fascicolo)s)"""
     try:
-        conn = get_internauta_conn()
         c = conn.cursor(cursor_factory=psycopg2.extras.DictCursor)
         c.execute(qupdate, {
             'nome': nome,
@@ -34,20 +33,14 @@ def update_nome_fascicoli(nome, id_oggetto):
 
 
 
-def delete_doc_list_row_by_guid_and_azienda(guid_documento, codice_azienda):
+def delete_doc_list_row_by_guid_and_azienda(guid_documento, codice_azienda, conn, id_azienda):
     #log = logging.getLogger("cannoneggiamento_aziendale")
-    conn = get_internauta_conn()
     log.info("delete_doc_list_row_by_guid_and_azienda di guid " + str(guid_documento) + " con azienda " + str(codice_azienda))
-    qDel = """
-        delete from scripta.docs_details 
-        where guid_documento = %(guid_documento)s 
-        and id_azienda = (select id from baborg.aziende where codice = %(codice_azienda)s)
-    """
     try:
         c = conn.cursor(cursor_factory=psycopg2.extras.DictCursor)
-        c.execute(qDel, {
+        c.execute(qc.delete_doc_detail, {
             "guid_documento": guid_documento,
-            "codice_azienda": codice_azienda
+            "id_azienda": id_azienda
         })
         c.close()
         conn.commit()
@@ -103,29 +96,12 @@ STATI_UFFICIO_ATTI = {
 }
 
 
-def get_internauta_conn():
+def upsert_doc_list_data(codice_azienda, json_data, conn, id_azienda):
     #log = logging.getLogger("cannoneggiamento_aziendale")
-    log.info("mi connetto a internauta")
-    try:
-        conn = psycopg2.connect(
-            user=DB_INTERNAUTI['user'],
-            password=DB_INTERNAUTI['password'],
-            host=DB_INTERNAUTI['host'],
-            database=DB_INTERNAUTI['database']
-        )
-        return conn
-    except Exception as ex:
-        log.error("Non sono riuscito a connettermi ad internauta")
-        log.error(ex)
-
-
-def upsert_doc_list_data(codice_azienda, json_data):
-    #log = logging.getLogger("cannoneggiamento_aziendale")
-    conn = get_internauta_conn()
     c = conn.cursor(cursor_factory=psycopg2.extras.DictCursor)
     try:
         c.execute(qc.insert_doc, {
-            'codice_azienda': codice_azienda,
+            'id_azienda': id_azienda,
             'guid_documento': json_data['guid_documento'],
             'tipologia': json_data['tipologia'],
             'open_command': json_data['url'],
@@ -162,7 +138,9 @@ def upsert_doc_list_data(codice_azienda, json_data):
             'version': json_data['version']
         })
         c.execute(qc.delete_persone_vedenti, {
-            "guid_documento": json_data['guid_documento']
+            "guid_documento": json_data['guid_documento'],
+            "id_azienda": id_azienda,
+            'data_creazione': json_data['data_creazione']
         })
         if json_data['persone_vedenti'] is not None and len(json_data['persone_vedenti']) > 0:
             for persona_vedente in json_data['persone_vedenti']:
@@ -173,7 +151,8 @@ def upsert_doc_list_data(codice_azienda, json_data):
                     "piena_visibilita": persona_vedente['pienaVisibilita'],
                     "modalita_apertura": persona_vedente['modalitaApertura'] if ('modalitaApertura' in persona_vedente) else None,
                     "data_creazione": json_data['data_creazione'],
-                    "data_registrazione": json_data['data_registrazione']
+                    "data_registrazione": json_data['data_registrazione'],
+                    "id_azienda": id_azienda
                 })
         conn.commit()
         log.info(f"upsert_doc_list_data eseguita con successo per documento con guid: {json_data['guid_documento']}")

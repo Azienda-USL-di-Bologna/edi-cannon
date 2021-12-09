@@ -13,6 +13,7 @@ from psycopg2.extras import Json
 import argo_data_retriever
 import internauta_data_manager as idm
 from logging.handlers import TimedRotatingFileHandler
+from db_connection import DB_INTERNAUTI
 
 log = logging.getLogger("cannoneggiamento_aziendale")
 
@@ -126,6 +127,21 @@ def get_nome(conn, id_fascicolo, parlante):
             log.error("get_nome errore nel reperimento del nome")
             raise ex
 
+def get_internauta_conn():
+    #log = logging.getLogger("cannoneggiamento_aziendale")
+    log.info("mi connetto a internauta")
+    try:
+        conn = psycopg2.connect(
+            user=DB_INTERNAUTI['user'],
+            password=DB_INTERNAUTI['password'],
+            host=DB_INTERNAUTI['host'],
+            database=DB_INTERNAUTI['database']
+        )
+        return conn
+    except Exception as ex:
+        log.error("Non sono riuscito a connettermi ad internauta")
+        log.error(ex)
+        
 
 def search_and_work(conn, codice_azienda):
     #log = logging.getLogger("cannoneggiamento_aziendale")
@@ -142,6 +158,14 @@ def search_and_work(conn, codice_azienda):
         rows = c.fetchall()
         c.execute("select val_parametro::int  <> 0 from bds_tools.parametri_pubblici pp where pp.nome_parametro = 'fascicoliParlanti'")
         parlante = c.fetchone()[0]
+        
+        conn_internauta = get_internauta_conn()
+        cursor_internauta = conn_internauta.cursor(cursor_factory=psycopg2.extras.DictCursor)
+        cursor_internauta.execute("select id from baborg.aziende where codice = %(codice_azienda)s", {
+            "codice_azienda": codice_azienda
+        })
+        id_azienda = cursor_internauta.fetchone()["id"]
+        
         if rows is not None and len(rows) > 0:
             for r in rows:
                 try:
@@ -150,14 +174,14 @@ def search_and_work(conn, codice_azienda):
 
                     if r['operazione'] == "DELETE":
                         log.info("cancello!")
-                        idm.delete_doc_list_row_by_guid_and_azienda(r['id_oggetto'], codice_azienda)
+                        idm.delete_doc_list_row_by_guid_and_azienda(r['id_oggetto'], codice_azienda, conn_internauta, id_azienda)
                         delete_cannoneggiamenti_done(r, conn)
                     elif r['tipo_oggetto'] == "pico":
                         if not got_delete_too(r, rows):
                             pico_data = argo_data_retriever.get_pico_document_by_guid(conn, r['id_oggetto'])
                             json_data = pico_data[0]
                             if json_data is not None:
-                                idm.upsert_doc_list_data(codice_azienda, json_data)
+                                idm.upsert_doc_list_data(codice_azienda, json_data, conn_internauta, id_azienda)
                         else:
                             log.info("dopo la devo cancellare, quindi skippo l'upsert di " + str(r['id_oggetto']))
                         delete_cannoneggiamenti_done(r, conn)
@@ -166,7 +190,7 @@ def search_and_work(conn, codice_azienda):
                             pico_data = argo_data_retriever.get_pico_pe_document_by_guid(conn, r['id_oggetto'])
                             json_data = pico_data[0]
                             if json_data is not None:
-                                idm.upsert_doc_list_data(codice_azienda, json_data)
+                                idm.upsert_doc_list_data(codice_azienda, json_data, conn_internauta, id_azienda)
                         else:
                             log.info("dopo la devo cancellare, quindi skippo l'upsert di " + str(r['id_oggetto']))
                         delete_cannoneggiamenti_done(r, conn)
@@ -175,7 +199,7 @@ def search_and_work(conn, codice_azienda):
                             pico_data = argo_data_retriever.get_pico_pu_document_by_guid(conn, r['id_oggetto'])
                             json_data = pico_data[0]
                             if json_data is not None:
-                                idm.upsert_doc_list_data(codice_azienda, json_data)
+                                idm.upsert_doc_list_data(codice_azienda, json_data, conn_internauta, id_azienda)
                         else:
                             log.info("dopo la devo cancellare, quindi skippo l'upsert di " + str(r['id_oggetto']))
                         delete_cannoneggiamenti_done(r, conn)
@@ -184,7 +208,7 @@ def search_and_work(conn, codice_azienda):
                             dete_data = argo_data_retriever.get_dete_document_by_guid(conn, r['id_oggetto'])
                             json_data = dete_data[0]
                             if json_data is not None:
-                                idm.upsert_doc_list_data(codice_azienda, json_data)
+                                idm.upsert_doc_list_data(codice_azienda, json_data, conn_internauta, id_azienda)
                         else:
                             log.info("dopo la devo cancellare, quindi skippo l'upsert di " + str(r['id_oggetto']))
                         delete_cannoneggiamenti_done(r, conn)
@@ -193,13 +217,13 @@ def search_and_work(conn, codice_azienda):
                             deli_data = argo_data_retriever.get_deli_document_by_guid(conn, r['id_oggetto'])
                             json_data = deli_data[0]
                             if json_data is not None:
-                                idm.upsert_doc_list_data(codice_azienda, json_data)
+                                idm.upsert_doc_list_data(codice_azienda, json_data, conn_internauta, id_azienda)
                         else:
                             log.info("dopo la devo cancellare, quindi skippo l'upsert di " + str(r['id_oggetto']))
                         delete_cannoneggiamenti_done(r, conn)
                     elif r['tipo_oggetto'] == "fascicolo":
                         nome = get_nome(conn, r['id_oggetto'], parlante)
-                        idm.update_nome_fascicoli(nome, r['id_oggetto'])
+                        idm.update_nome_fascicoli(nome, r['id_oggetto'], conn_internauta, id_azienda)
                         delete_cannoneggiamenti_done(r, conn)
 
                 except Exception as ex:
