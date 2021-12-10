@@ -39,7 +39,7 @@ INSERT INTO scripta.docs_details
             )
             VALUES
             (
-                        (select id from baborg.aziende where codice = %(codice_azienda)s),
+                        %(id_azienda)s,
                         %(guid_documento)s,
                         %(tipologia)s, 
                         %(open_command)s,
@@ -76,7 +76,7 @@ INSERT INTO scripta.docs_details
             )
 ON conflict
             (
-                        guid_documento
+                        guid_documento, id_azienda, data_creazione
             )
             do UPDATE
 set    open_command = excluded.open_command,
@@ -115,18 +115,33 @@ delete_persone_vedenti = """
     USING scripta.docs_details dd
     WHERE pv.id_doc_detail = dd.id
     AND dd.guid_documento = %(guid_documento)s
+    AND pv.id_azienda = %(id_azienda)s
+    AND dd.id_azienda = %(id_azienda)s
+    AND pv.data_creazione = %(data_creazione)s
+    AND dd.data_creazione = %(data_creazione)s
 """
 insert_persone_vedenti = """
     INSERT INTO scripta.persone_vedenti 
         (id_doc_detail, id_persona, mio_documento, piena_visibilita, 
-        modalita_apertura, data_creazione, data_registrazione) 
+        modalita_apertura, data_creazione, data_registrazione, id_azienda) 
     VALUES(
-        (SELECT id FROM scripta.docs_details WHERE guid_documento = %(guid_documento)s), 
+        (   SELECT dd.id 
+            FROM scripta.docs_details dd
+            WHERE dd.guid_documento = %(guid_documento)s
+            AND dd.id_azienda = %(id_azienda)s
+            AND dd.data_creazione = %(data_creazione)s
+        ), 
         %(id_persona)s, 
         %(mio_documento)s, 
         %(piena_visibilita)s, 
         %(modalita_apertura)s,
         %(data_creazione)s,
-        %(data_registrazione)s
+        %(data_registrazione)s,
+        %(id_azienda)s
     )
+"""
+delete_doc_detail = """
+    delete from scripta.docs_details 
+    where guid_documento = %(guid_documento)s 
+    and id_azienda = %(id_azienda)s
 """
