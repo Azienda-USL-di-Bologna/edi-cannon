@@ -84,7 +84,8 @@ STATI = {
     "Direttore_Amministrativo": "DA",
     "Direttore_Scientifico": "DSC",
     "Direttore_Sanitario": "DS",
-    "Direttore_Affari_Generali_Legali": "DAGL"
+    "Direttore_Affari_Generali_Legali": "DAGL",
+    "ANNULLATO": "ANNULLATO"
 }
 
 STATI_UFFICIO_ATTI = {
@@ -122,7 +123,7 @@ def upsert_doc_list_data(codice_azienda, json_data, conn, id_azienda):
             'firmatari': None if json_data['firmatari'] is None else Json(json_data['firmatari']),
             'destinatari': None if json_data['destinatari'] is None else Json(json_data['destinatari']),
             'mittente': json_data['mittente'],
-            'stato': STATI[str(json_data['stato'])],
+            'stato': "ANNULLATO" if json_data['annullato'] != 0 else STATI[str(json_data['stato'])],
             'visibilita_limitata': True if json_data['visibilita_limitata'] != 0 else False,
             'riservato': True if json_data['riservato'] != 0 else False,
             'annullato': True if json_data['annullato'] != 0 else False,
