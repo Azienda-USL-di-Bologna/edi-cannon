@@ -13,7 +13,7 @@ from psycopg2.extras import Json
 import argo_data_retriever
 import internauta_data_manager as idm
 from logging.handlers import TimedRotatingFileHandler
-from db_connection import DB_INTERNAUTI
+from db_connection import DB_INTERNAUTI, db_minirepo
 
 log = logging.getLogger("cannoneggiamento_aziendale")
 
@@ -26,6 +26,12 @@ def try_lock(conn):
 
 def take_lock(conn):
     q = "select pg_advisory_lock(2243247306)"
+    c = conn.cursor(cursor_factory=psycopg2.extras.DictCursor)
+    c.execute(q)
+    return c.fetchone()[0]
+
+def unlock(conn):
+    q = "select pg_advisory_unlock(2243247306)"
     c = conn.cursor(cursor_factory=psycopg2.extras.DictCursor)
     c.execute(q)
     return c.fetchone()[0]
@@ -141,7 +147,22 @@ def get_internauta_conn():
     except Exception as ex:
         log.error("Non sono riuscito a connettermi ad internauta")
         log.error(ex)
-        
+
+
+def get_minirepo_conn():
+    log.info("mi connetto a minirepo")
+    try:
+        minio_conn = psycopg2.connect(
+            user=db_minirepo['user'],
+            password=db_minirepo['password'],
+            host=db_minirepo['host'],
+            database=db_minirepo['database']
+        )
+        return minio_conn
+    except Exception as ex:
+        log.error("Non sono riuscito a connettermi ad internauta")
+        log.error(ex)
+
 
 def search_and_work(conn, codice_azienda):
     #log = logging.getLogger("cannoneggiamento_aziendale")
@@ -289,3 +310,8 @@ def main(azienda, host, user, password, db):
             traceback.print_exception(*sys.exc_info(), limit=None, file=output)
             log.error(output.getvalue())
             time.sleep(10)
+        finally:
+            try:
+                unlock(conn)
+            except:
+                pass

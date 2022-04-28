@@ -1,4 +1,5 @@
 #!/usr/bin/python3
+import os
 
 import psycopg2
 import psycopg2.extras
@@ -10,6 +11,9 @@ import logging
 from io import StringIO
 import traceback
 import sys
+
+import cannoneggiamento_aziendale
+
 log = logging.getLogger("cannoneggiamento_aziendale")
 
 
@@ -38,9 +42,8 @@ def delete_doc_list_row_by_guid_and_azienda(guid_documento, codice_azienda, conn
     log.info("delete_doc_list_row_by_guid_and_azienda di guid " + str(guid_documento) + " con azienda " + str(codice_azienda))
     try:
         c = conn.cursor(cursor_factory=psycopg2.extras.DictCursor)
-        c.execute(qc.delete_doc_detail, {
-            "guid_documento": guid_documento,
-            "id_azienda": id_azienda
+        c.execute(qc.delete_doc, {
+            "guid_documento": guid_documento
         })
         c.close()
         conn.commit()
@@ -155,6 +158,61 @@ def upsert_doc_list_data(codice_azienda, json_data, conn, id_azienda):
                     "data_registrazione": json_data['data_registrazione'],
                     "id_azienda": id_azienda
                 })
+        if json_data['allegati'] is not None and len(json_data['allegati']) > 0:
+            mongo_uuids = []
+            for allegato in json_data['allegati']:
+                uid_repository = allegato['uid_repository']
+                if uid_repository['uid_pdf'] is not None:
+                    mongo_uuids += [uid_repository['uid_pdf']]
+                if uid_repository['uid_firmato'] is not None:
+                    mongo_uuids += [uid_repository['uid_firmato']]
+                if uid_repository['uid_originale'] is not None:
+                    mongo_uuids += [uid_repository['uid_originale']]
+            if not mongo_uuids == []:
+                minio_conn = cannoneggiamento_aziendale.get_minirepo_conn()
+                m = minio_conn.cursor(cursor_factory=psycopg2.extras.DictCursor)
+                m.execute(qc.query_minio, {
+                    "mongo_uuids": mongo_uuids
+                })
+                uuids_map = m.fetchone()['res']
+                for key in uuids_map.keys():
+                    obj = uuids_map[key]
+                    obj['estensione'] = os.path.splitext(obj['nome'])[1][1:]
+                    obj['dataCreazione'] = json_data['data_creazione']
+                    obj['mimeType'] = None
+                minio_conn.close()
+
+            for allegato in json_data['allegati']:
+                allegato['dettagli'] = {}
+                uid_repository = allegato['uid_repository']
+                if uid_repository['uid_pdf'] is not None:
+                    uid_pdf = uid_repository['uid_pdf']
+                    dettaglio_pdf = uuids_map[uid_pdf]
+                    allegato['dettagli']['convertitoPdf'] = dettaglio_pdf
+                if uid_repository['uid_firmato'] is not None:
+                    uid_firmato = uid_repository['uid_firmato']
+                    dettaglio_firmato = uuids_map[uid_firmato]
+                    allegato['dettagli']['originaleFirmato'] = dettaglio_firmato
+                    allegato['firmato'] = True
+                else:
+                    allegato['firmato'] = False
+                if uid_repository['uid_originale'] is not None:
+                    uid = uid_repository['uid_originale']
+                    dettaglio_originale = uuids_map[uid]
+                    allegato['dettagli']['originale'] = dettaglio_originale
+
+                c.execute(qc.insert_allegati_doc, {
+                          "nome": allegato['nome'],
+                          "tipo": allegato['tipo_allegato'],
+                          "principale": allegato['principale'],
+                          "firmato": allegato['firmato'],
+                          "ordinale": allegato['ordinale'],
+                          "guid_documento": json_data['guid_documento'],
+                          "id_allegato_padre": allegato['id_allegato_padre'],
+                          "data_inserimento": allegato['data_inserimento'],
+                          "dettagli": Json(allegato['dettagli']),
+                          "id_esterno": allegato['id_allegato_argo']})
+
         conn.commit()
         log.info(f"upsert_doc_list_data eseguita con successo per documento con guid: {json_data['guid_documento']}")
     except Exception as ex:
