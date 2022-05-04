@@ -1,7 +1,43 @@
 # -*- coding: utf-8 -*-
 insert_doc = """
+with insert_to_docs as (
+    INSERT INTO scripta.docs 
+                (           oggetto,
+                            id_persona_creazione,
+                            data_creazione,
+                            id_azienda,
+                            tipologia,
+                            visibilita,
+                            id_esterno
+                )
+                VALUES
+            (               %(oggetto)s,
+                            %(id_persona_redattrice)s,
+                            %(data_creazione)s,
+                            %(id_azienda)s,
+                            %(tipologia)s,
+                            CASE
+                               WHEN %(riservato)s = true
+                                    THEN 'RISERVATO'::scripta.visibilita_doc
+                               WHEN %(visibilita_limitata)s  = true
+                                   THEN 'LIMITATA'::scripta.visibilita_doc
+                               else 'NORMALE'::scripta.visibilita_doc
+                            END,
+                            %(guid_documento)s
+                )
+                ON conflict
+                (
+                            id_esterno
+                )
+                do UPDATE
+    set    oggetto = excluded.oggetto,
+           id_persona_creazione = excluded.id_persona_creazione, 
+           data_creazione = excluded.data_creazione,
+           tipologia = excluded.tipologia
+   RETURNING id
+)         
 INSERT INTO scripta.docs_details
-            (
+            (           id,
                         id_azienda,
                         guid_documento,
                         tipologia,
@@ -38,7 +74,7 @@ INSERT INTO scripta.docs_details
                         id_applicazione
             )
             VALUES
-            (
+            (           (select id from insert_to_docs),
                         %(id_azienda)s,
                         %(guid_documento)s,
                         %(tipologia)s, 
@@ -109,6 +145,7 @@ set    open_command = excluded.open_command,
        sulla_scrivania_di = excluded.sulla_scrivania_di,
        version = excluded.version ,
        id_applicazione = excluded.id_applicazione
+returning id
 """
 delete_persone_vedenti = """
     DELETE FROM scripta.persone_vedenti pv
@@ -140,8 +177,64 @@ insert_persone_vedenti = """
         %(id_azienda)s
     )
 """
-delete_doc_detail = """
-    delete from scripta.docs_details 
-    where guid_documento = %(guid_documento)s 
-    and id_azienda = %(id_azienda)s
+delete_doc = """
+    delete from scripta.docs 
+    where id_esterno = %(guid_documento)s
+"""
+
+insert_allegati_doc = """
+    INSERT INTO scripta.allegati
+        (nome, tipo, principale, firmato, ordinale, id_doc, id_allegato_padre, data_inserimento, version, dettagli, id_esterno)
+    VALUES 
+        ( 
+        %(nome)s,
+        %(tipo)s,
+        CASE
+            when %(principale)s != 0 then true::boolean
+            else false::boolean
+        END,
+        %(firmato)s,
+        %(ordinale)s,
+        (   SELECT id
+            FROM scripta.docs_details
+            WHERE guid_documento = %(guid_documento)s
+        ),
+        (   SELECT a.id 
+            FROM scripta.allegati a 
+            WHERE a.id_esterno = %(id_allegato_padre)s
+        ),
+        %(data_inserimento)s,
+        now(),
+        %(dettagli)s,
+        %(id_esterno)s
+        )
+        ON conflict
+            (
+                        id_esterno, tipo
+            )
+            do UPDATE
+set    nome = excluded.nome,
+       tipo = excluded.tipo,
+       principale = excluded.principale,
+       firmato = excluded.firmato,
+       ordinale = excluded.ordinale,
+       id_doc = excluded.id_doc,
+       id_allegato_padre = excluded.id_allegato_padre,
+       data_inserimento = excluded.data_inserimento,
+       version = excluded.version,
+       dettagli = excluded.dettagli
+"""
+
+query_minio = """
+SELECT jsonb_object_agg(mongo_uuid, jsonb_build_object(
+    'idRepository', file_id, 
+    'nome', filename, 
+    'dimensioneByte', size, 
+    'hashMd5', md5
+    )
+) as res
+FROM repo.files
+WHERE mongo_uuid =ANY(
+    %(mongo_uuids)s
+)
 """
