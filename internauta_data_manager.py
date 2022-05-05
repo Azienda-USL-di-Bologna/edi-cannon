@@ -186,24 +186,25 @@ def upsert_doc_list_data(codice_azienda, json_data, conn, id_azienda):
             for allegato in json_data['allegati']:
                 allegato['dettagli'] = {}
                 uid_repository = allegato['uid_repository']
-                if uid_repository['uid_pdf'] is not None:
-                    uid_pdf = uid_repository['uid_pdf']
-                    if uid_pdf in uuids_map:
-                        dettaglio_pdf = uuids_map[uid_pdf]
-                        allegato['dettagli']['convertitoPdf'] = dettaglio_pdf
-                if uid_repository['uid_firmato'] is not None:
-                    uid_firmato = uid_repository['uid_firmato']
-                    if uid_firmato in uuids_map:
-                        dettaglio_firmato = uuids_map[uid_firmato]
-                        allegato['dettagli']['originaleFirmato'] = dettaglio_firmato
-                        allegato['firmato'] = True
-                else:
-                    allegato['firmato'] = False
-                if uid_repository['uid_originale'] is not None:
-                    uid = uid_repository['uid_originale']
-                    if uid in uuids_map:
-                        dettaglio_originale = uuids_map[uid]
-                        allegato['dettagli']['originale'] = dettaglio_originale
+                if uuids_map is not None:
+                    if uid_repository['uid_pdf'] is not None:
+                        uid_pdf = uid_repository['uid_pdf']
+                        if uid_pdf in uuids_map:
+                            dettaglio_pdf = uuids_map[uid_pdf]
+                            allegato['dettagli']['convertitoPdf'] = dettaglio_pdf
+                    if uid_repository['uid_firmato'] is not None:
+                        uid_firmato = uid_repository['uid_firmato']
+                        if uid_firmato in uuids_map:
+                            dettaglio_firmato = uuids_map[uid_firmato]
+                            allegato['dettagli']['originaleFirmato'] = dettaglio_firmato
+                            allegato['firmato'] = True
+                    else:
+                        allegato['firmato'] = False
+                    if uid_repository['uid_originale'] is not None:
+                        uid = uid_repository['uid_originale']
+                        if uid in uuids_map:
+                            dettaglio_originale = uuids_map[uid]
+                            allegato['dettagli']['originale'] = dettaglio_originale
 
                 c.execute(qc.insert_allegati_doc, {
                           "nome": allegato['nome'],
