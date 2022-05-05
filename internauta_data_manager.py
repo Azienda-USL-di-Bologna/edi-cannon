@@ -187,19 +187,22 @@ def upsert_doc_list_data(codice_azienda, json_data, conn, id_azienda):
                 uid_repository = allegato['uid_repository']
                 if uid_repository['uid_pdf'] is not None:
                     uid_pdf = uid_repository['uid_pdf']
-                    dettaglio_pdf = uuids_map[uid_pdf]
-                    allegato['dettagli']['convertitoPdf'] = dettaglio_pdf
+                    if uid_pdf in uuids_map:
+                        dettaglio_pdf = uuids_map[uid_pdf]
+                        allegato['dettagli']['convertitoPdf'] = dettaglio_pdf
                 if uid_repository['uid_firmato'] is not None:
                     uid_firmato = uid_repository['uid_firmato']
-                    dettaglio_firmato = uuids_map[uid_firmato]
-                    allegato['dettagli']['originaleFirmato'] = dettaglio_firmato
-                    allegato['firmato'] = True
+                    if uid_firmato in uuids_map:
+                        dettaglio_firmato = uuids_map[uid_firmato]
+                        allegato['dettagli']['originaleFirmato'] = dettaglio_firmato
+                        allegato['firmato'] = True
                 else:
                     allegato['firmato'] = False
                 if uid_repository['uid_originale'] is not None:
                     uid = uid_repository['uid_originale']
-                    dettaglio_originale = uuids_map[uid]
-                    allegato['dettagli']['originale'] = dettaglio_originale
+                    if uid in uuids_map:
+                        dettaglio_originale = uuids_map[uid]
+                        allegato['dettagli']['originale'] = dettaglio_originale
 
                 c.execute(qc.insert_allegati_doc, {
                           "nome": allegato['nome'],
@@ -211,7 +214,8 @@ def upsert_doc_list_data(codice_azienda, json_data, conn, id_azienda):
                           "id_allegato_padre": allegato['id_allegato_padre'],
                           "data_inserimento": allegato['data_inserimento'],
                           "dettagli": Json(allegato['dettagli']),
-                          "id_esterno": allegato['id_allegato_argo']})
+                          "id_esterno": allegato['id_allegato_argo']
+                })
 
         conn.commit()
         log.info(f"upsert_doc_list_data eseguita con successo per documento con guid: {json_data['guid_documento']}")
