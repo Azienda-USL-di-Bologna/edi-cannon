@@ -175,11 +175,12 @@ def upsert_doc_list_data(codice_azienda, json_data, conn, id_azienda):
                     "mongo_uuids": mongo_uuids
                 })
                 uuids_map = m.fetchone()['res']
-                for key in uuids_map.keys():
-                    obj = uuids_map[key]
-                    obj['estensione'] = os.path.splitext(obj['nome'])[1][1:]
-                    obj['dataCreazione'] = json_data['data_creazione']
-                    obj['mimeType'] = None
+                if uuids_map is not None:
+                    for key in uuids_map.keys():
+                        obj = uuids_map[key]
+                        obj['estensione'] = os.path.splitext(obj['nome'])[1][1:]
+                        obj['dataCreazione'] = json_data['data_creazione']
+                        obj['mimeType'] = None
                 minio_conn.close()
 
             for allegato in json_data['allegati']:
