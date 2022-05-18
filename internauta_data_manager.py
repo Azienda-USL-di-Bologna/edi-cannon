@@ -184,6 +184,7 @@ def upsert_doc_list_data(codice_azienda, json_data, conn, id_azienda):
                 minio_conn.close()
 
             for allegato in json_data['allegati']:
+                allegato['firmato'] = False
                 allegato['dettagli'] = {}
                 uid_repository = allegato['uid_repository']
                 if uid_repository['uid_pdf'] is not None:
@@ -199,8 +200,6 @@ def upsert_doc_list_data(codice_azienda, json_data, conn, id_azienda):
                             dettaglio_firmato = uuids_map[uid_firmato]
                             allegato['dettagli']['originaleFirmato'] = dettaglio_firmato
                             allegato['firmato'] = True
-                else:
-                    allegato['firmato'] = False
                 if uid_repository['uid_originale'] is not None:
                     uid = uid_repository['uid_originale']
                     if uuids_map is not None:
