@@ -1,0 +1,11 @@
+# Default ignored files
+.idea/
+syntax: glob
+.idea/vcs.xml
+.idea/modules.xml
+__pycache__/
+db_connection.py
+edi_cannon.log
+edi_cannon_azienda.log
+venv/
+log/
