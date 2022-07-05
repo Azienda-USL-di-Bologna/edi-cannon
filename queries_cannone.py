@@ -71,7 +71,8 @@ INSERT INTO scripta.docs_details
                         id_strutture_segreteria,
                         sulla_scrivania_di,
                         version,
-                        id_applicazione
+                        id_applicazione,
+                        conservazione
             )
             VALUES
             (           (select id from insert_to_docs),
@@ -108,7 +109,8 @@ INSERT INTO scripta.docs_details
                         %(id_strutture_segreteria)s,
                         %(sulla_scrivania_di)s,
                         %(version)s,
-                        %(id_applicazione)s 
+                        %(id_applicazione)s,
+                        %(conservazione)s
             )
 ON conflict
             (
@@ -144,7 +146,8 @@ set    open_command = excluded.open_command,
        id_strutture_segreteria = excluded.id_strutture_segreteria,
        sulla_scrivania_di = excluded.sulla_scrivania_di,
        version = excluded.version ,
-       id_applicazione = excluded.id_applicazione
+       id_applicazione = excluded.id_applicazione,
+       conservazione = excluded.conservazione
 returning id
 """
 delete_persone_vedenti = """
