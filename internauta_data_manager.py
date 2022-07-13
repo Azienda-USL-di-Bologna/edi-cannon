@@ -139,7 +139,7 @@ def upsert_doc_list_data(codice_azienda, json_data, conn, id_azienda):
             'id_strutture_segreteria': json_data['id_strutture_segreteria'],
             'sulla_scrivania_di': None if json_data['sulla_scrivania_di'] is None else Json(json_data['sulla_scrivania_di']),
             'id_applicazione': json_data['id_applicazione'],
-            'version': json_data['version']
+            'version': json_data['version'], 'conservazione': json_data['conservazione']
         })
         c.execute(qc.delete_persone_vedenti, {
             "guid_documento": json_data['guid_documento'],
