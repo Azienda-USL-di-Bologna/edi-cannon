@@ -33,7 +33,7 @@ with insert_to_docs as (
     set    oggetto = excluded.oggetto,
            id_persona_creazione = excluded.id_persona_creazione,
            tipologia = excluded.tipologia
-   RETURNING id
+   RETURNING id, data_creazione
 )         
 INSERT INTO scripta.docs_details
             (           id,
@@ -87,7 +87,7 @@ INSERT INTO scripta.docs_details
                         %(anno_proposta)s,
                         %(numero_registrazione)s,
                         %(anno_registrazione)s,
-                        %(data_creazione)s,
+                        (select data_creazione from insert_to_docs),
                         %(data_registrazione)s,
                         %(data_pubblicazione)s,
                         %(oggetto)s,
