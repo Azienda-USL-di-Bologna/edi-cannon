@@ -150,13 +150,12 @@ returning id
 """
 delete_persone_vedenti = """
     DELETE FROM scripta.persone_vedenti pv
-    USING scripta.docs_details dd
+    USING scripta.docs dd
     WHERE pv.id_doc_detail = dd.id
-    AND dd.guid_documento = %(guid_documento)s
+    AND dd.id_esterno = %(guid_documento)s
     AND pv.id_azienda = %(id_azienda)s
     AND dd.id_azienda = %(id_azienda)s
-    AND pv.data_creazione = %(data_creazione)s
-    AND dd.data_creazione = %(data_creazione)s
+    AND pv.data_creazione = dd.data_creazione
 """
 insert_persone_vedenti = """
     INSERT INTO scripta.persone_vedenti 
@@ -164,16 +163,19 @@ insert_persone_vedenti = """
         modalita_apertura, data_creazione, data_registrazione, id_azienda) 
     VALUES(
         (   SELECT dd.id 
-            FROM scripta.docs_details dd
-            WHERE dd.guid_documento = %(guid_documento)s
+            FROM scripta.docs dd
+            WHERE dd.id_esterno = %(guid_documento)s
             AND dd.id_azienda = %(id_azienda)s
-            AND dd.data_creazione = %(data_creazione)s
         ), 
         %(id_persona)s, 
         %(mio_documento)s, 
         %(piena_visibilita)s, 
         %(modalita_apertura)s,
-        %(data_creazione)s,
+        (   SELECT dd.data_creazione 
+            FROM scripta.docs dd
+            WHERE dd.id_esterno = %(guid_documento)s
+            AND dd.id_azienda = %(id_azienda)s
+        ),
         %(data_registrazione)s,
         %(id_azienda)s
     )
