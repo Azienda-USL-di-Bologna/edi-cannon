@@ -31,8 +31,7 @@ with insert_to_docs as (
                 )
                 do UPDATE
     set    oggetto = excluded.oggetto,
-           id_persona_creazione = excluded.id_persona_creazione, 
-           data_creazione = excluded.data_creazione,
+           id_persona_creazione = excluded.id_persona_creazione,
            tipologia = excluded.tipologia
    RETURNING id
 )         
@@ -126,7 +125,6 @@ set    open_command = excluded.open_command,
        anno_proposta = excluded.anno_proposta,
        numero_registrazione = excluded.numero_registrazione,
        anno_registrazione = excluded.anno_registrazione,
-       data_creazione = excluded.data_creazione,
        data_registrazione = excluded.data_registrazione,
        data_pubblicazione = excluded.data_pubblicazione,
        oggetto = excluded.oggetto,
