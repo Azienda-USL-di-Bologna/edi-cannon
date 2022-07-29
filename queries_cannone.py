@@ -199,8 +199,8 @@ insert_allegati_doc = """
         %(firmato)s,
         %(ordinale)s,
         (   SELECT id
-            FROM scripta.docs_details
-            WHERE guid_documento = %(guid_documento)s
+            FROM scripta.docs
+            WHERE id_esterno = %(guid_documento)s
         ),
         (   SELECT a.id 
             FROM scripta.allegati a 
