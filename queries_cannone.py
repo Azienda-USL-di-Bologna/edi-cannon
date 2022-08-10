@@ -31,10 +31,9 @@ with insert_to_docs as (
                 )
                 do UPDATE
     set    oggetto = excluded.oggetto,
-           id_persona_creazione = excluded.id_persona_creazione, 
-           data_creazione = excluded.data_creazione,
+           id_persona_creazione = excluded.id_persona_creazione,
            tipologia = excluded.tipologia
-   RETURNING id
+   RETURNING id, data_creazione
 )         
 INSERT INTO scripta.docs_details
             (           id,
@@ -88,7 +87,7 @@ INSERT INTO scripta.docs_details
                         %(anno_proposta)s,
                         %(numero_registrazione)s,
                         %(anno_registrazione)s,
-                        %(data_creazione)s,
+                        (select data_creazione from insert_to_docs),
                         %(data_registrazione)s,
                         %(data_pubblicazione)s,
                         %(oggetto)s,
@@ -126,7 +125,6 @@ set    open_command = excluded.open_command,
        anno_proposta = excluded.anno_proposta,
        numero_registrazione = excluded.numero_registrazione,
        anno_registrazione = excluded.anno_registrazione,
-       data_creazione = excluded.data_creazione,
        data_registrazione = excluded.data_registrazione,
        data_pubblicazione = excluded.data_pubblicazione,
        oggetto = excluded.oggetto,
@@ -152,13 +150,12 @@ returning id
 """
 delete_persone_vedenti = """
     DELETE FROM scripta.persone_vedenti pv
-    USING scripta.docs_details dd
+    USING scripta.docs dd
     WHERE pv.id_doc_detail = dd.id
-    AND dd.guid_documento = %(guid_documento)s
+    AND dd.id_esterno = %(guid_documento)s
     AND pv.id_azienda = %(id_azienda)s
     AND dd.id_azienda = %(id_azienda)s
-    AND pv.data_creazione = %(data_creazione)s
-    AND dd.data_creazione = %(data_creazione)s
+    AND pv.data_creazione = dd.data_creazione
 """
 insert_persone_vedenti = """
     INSERT INTO scripta.persone_vedenti 
@@ -166,16 +163,19 @@ insert_persone_vedenti = """
         modalita_apertura, data_creazione, data_registrazione, id_azienda) 
     VALUES(
         (   SELECT dd.id 
-            FROM scripta.docs_details dd
-            WHERE dd.guid_documento = %(guid_documento)s
+            FROM scripta.docs dd
+            WHERE dd.id_esterno = %(guid_documento)s
             AND dd.id_azienda = %(id_azienda)s
-            AND dd.data_creazione = %(data_creazione)s
         ), 
         %(id_persona)s, 
         %(mio_documento)s, 
         %(piena_visibilita)s, 
         %(modalita_apertura)s,
-        %(data_creazione)s,
+        (   SELECT dd.data_creazione 
+            FROM scripta.docs dd
+            WHERE dd.id_esterno = %(guid_documento)s
+            AND dd.id_azienda = %(id_azienda)s
+        ),
         %(data_registrazione)s,
         %(id_azienda)s
     )
@@ -199,8 +199,8 @@ insert_allegati_doc = """
         %(firmato)s,
         %(ordinale)s,
         (   SELECT id
-            FROM scripta.docs_details
-            WHERE guid_documento = %(guid_documento)s
+            FROM scripta.docs
+            WHERE id_esterno = %(guid_documento)s
         ),
         (   SELECT a.id 
             FROM scripta.allegati a 
