@@ -141,8 +141,8 @@ def upsert_doc_list_data(codice_azienda, json_data, conn, id_azienda):
             'id_applicazione': json_data['id_applicazione'],
             'version': json_data['version'], 'conservazione': json_data['conservazione']
         })
-        c.execute("LOCK TABLE scripta.docs_details IN EXCLUSIVE MODE")
-        c.execute("SELECT setval('scripta.docs_details_id_seq', COALESCE((SELECT MAX(id)+1 FROM scripta.docs_details), 1), false)")
+        #c.execute("LOCK TABLE scripta.docs_details IN EXCLUSIVE MODE")
+        #c.execute("SELECT setval('scripta.docs_details_id_seq', COALESCE((SELECT MAX(id)+1 FROM scripta.docs_details), 1), false)")
         c.execute(qc.delete_persone_vedenti, {
             "guid_documento": json_data['guid_documento'],
             "id_azienda": id_azienda,
