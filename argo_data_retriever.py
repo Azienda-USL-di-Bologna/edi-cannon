@@ -19,7 +19,7 @@ def get_document_by_guid(conn, guid, tipo_documento):
     try:
         c = conn.cursor(cursor_factory=psycopg2.extras.DictCursor)
         now = time.time()
-        c.execute(select, (guid,))
+        c.execute(select, {"guid": guid })
         later = time.time()
         difference = int(later - now)
         log.info(f"get_document_by_guid eseguita con successo per {tipo_documento} guid: {guid} in %s secondi" % str(difference))
