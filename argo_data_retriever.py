@@ -15,7 +15,7 @@ mappa_stored_procedure = {
     Torna un mega json che rappresenta il documento associato al guid passato.
 """
 def get_document_by_guid(conn, guid, tipo_documento):
-    select = "select * from esportazioni.%s(%(guid)s)" % mappa_stored_procedure[tipo_documento]
+    select = "select * from esportazioni.%s" % mappa_stored_procedure[tipo_documento] + "(%(guid)s)"
     try:
         c = conn.cursor(cursor_factory=psycopg2.extras.DictCursor)
         now = time.time()
