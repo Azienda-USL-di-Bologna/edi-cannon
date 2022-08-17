@@ -197,8 +197,9 @@ def search_and_work(conn, codice_azienda, fascicoli_parlanti, conn_internauta, i
                 # Se sono arrivato fin qui ho eseugito l'azione opportuna sull'oggetto, cancello le righe di cannoneggiamento
                 delete_cannoneggiamenti(r["ids"], conn)
             except Exception as ex:
-                log.error("ERRORE! SEARCH_AND_WORK")
-                log.error(ex)
+                output = io.StringIO()
+                traceback.print_exception(*sys.exc_info(), limit=None, file=output)
+                log.error(output.getvalue())
                 errore = ex.args[0]
                 set_guids_in_error(r, conn, codice_azienda, errore)
     except Exception as ex:
