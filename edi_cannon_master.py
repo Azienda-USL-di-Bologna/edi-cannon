@@ -1,5 +1,12 @@
 #!/usr/bin/python3
 
+"""
+    L'edi cannon è uno script master-slave
+    Questo è lo script iniziale dell'edi_cannon. E' il Master.
+    Si occupa di lanciare i processi slave, uno per ogni azienda presente nelle connessioni_db.
+    Lo slave parte con lo script cannoneggiamento_aziendale, funzione main.
+"""
+
 import os
 import multiprocessing as mp
 from multiprocessing.connection import wait
@@ -8,11 +15,9 @@ import cannoneggiamento_aziendale
 import signal
 import sys
 
-
 children = {}
 sentinels = {}
 parentpid = os.getpid()
-
 
 def ammazza_tutti(signal_number, stack):
     global children
@@ -33,8 +38,10 @@ def f(azienda, host, user, password, db):
 def lancia_processo(db):
     global children
     global sentinels
-    children[db["azienda"]] = mp.Process(target=f,
-                                         args=(db["azienda"], db["host"], db["user"], db["password"], db["database"]))
+    children[db["azienda"]] = mp.Process(
+        target=f,
+        args=(db["azienda"], db["host"], db["user"], db["password"], db["database"])
+    )
     children[db["azienda"]].daemon = True
     children[db["azienda"]].name = db["azienda"]
     children[db["azienda"]].start()
