@@ -181,8 +181,9 @@ insert_persone_vedenti = """
     )
 """
 delete_doc = """
-    delete from scripta.docs 
-    where id_esterno = %(guid_documento)s
+    DELETE FROM scripta.docs 
+    WHERE id_esterno = %(guid_documento)s
+    AND id_azienda = %(id_azienda)s
 """
 
 insert_allegati_doc = """
