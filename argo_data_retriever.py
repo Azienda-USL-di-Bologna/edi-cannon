@@ -1,71 +1,45 @@
 import logging
+import psycopg2.extras
+import time
+
 log = logging.getLogger("cannoneggiamento_aziendale")
 
-def get_pico_document_by_guid(conn, guid):
-    log = logging.getLogger("cannoneggiamento_aziendale")
-    qUery = "select * from esportazioni.get_procton_document_data_by_guid(%s)"
+mappa_stored_procedure = {
+    "pico_pe": "get_procton_pe_document_data_by_guid",
+    "pico_pu": "get_procton_pu_document_data_by_guid",
+    "dete": "get_dete_document_data_by_guid",
+    "deli": "get_deli_document_data_by_guid",
+}
+
+"""
+    Torna un mega json che rappresenta il documento associato al guid passato.
+"""
+def get_document_by_guid(conn, guid, tipo_documento):
+    select = "select * from esportazioni.%s(%(guid)s)" % mappa_stored_procedure[tipo_documento]
     try:
-        c = conn.cursor()
-        c.execute(qUery, (guid,))
-        log.info(f"get_pico_document_by_guid eseguita con successo per guid: {guid}")
-        return c.fetchone()
+        c = conn.cursor(cursor_factory=psycopg2.extras.DictCursor)
+        now = time.time()
+        c.execute(select, (guid,))
+        later = time.time()
+        difference = int(later - now)
+        log.info(f"get_document_by_guid eseguita con successo per {tipo_documento} guid: {guid} in %s secondi" % str(difference))
+        return c.fetchone()[0]
     except Exception as ex:
-        log.error(f"get_pico_document_by_guid fallita per guid: {guid}")
+        log.error(f"get_document_by_guid fallita per {tipo_documento} guid: {guid}")
         log.error(ex)
         raise ex
 
-
-def get_pico_pe_document_by_guid(conn, guid):
-    log = logging.getLogger("cannoneggiamento_aziendale")
-    qUery = "select * from esportazioni.get_procton_pe_document_data_by_guid(%s)"
+"""
+    Torno il nome del fascicolo
+"""
+def get_nome_fascicolo(conn, id_fascicolo):
     try:
-        c = conn.cursor()
-        c.execute(qUery, (guid,))
-        log.info(f"get_pico_pe_document_by_guid eseguita con successo per guid: {guid}")
-        return c.fetchone()
+        c = conn.cursor(cursor_factory=psycopg2.extras.DictCursor)
+        select = "select nome_fascicolo from gd.fascicoligd where id_fascicolo = %(id_fascicolo)s"
+        c.execute(select, {'id_fascicolo': id_fascicolo})
+        result = c.fetchone()
+        log.info("get_nome_fascicolo eseguita con successo, nome: %s" % result['nome_fascicolo'])
+        return result['nome_fascicolo']
     except Exception as ex:
-        log.error(f"get_pico_pe_document_by_guid fallita per guid: {guid}")
-        log.error(ex)
-        raise ex
-
-
-def get_pico_pu_document_by_guid(conn, guid):
-    log = logging.getLogger("cannoneggiamento_aziendale")
-    qUery = "select * from esportazioni.get_procton_pu_document_data_by_guid(%s)"
-    try:
-        c = conn.cursor()
-        c.execute(qUery, (guid,))
-        log.info(f"get_pico_pu_document_by_guid eseguita con successo per guid: {guid}")
-        return c.fetchone()
-    except Exception as ex:
-        log.error(f"get_pico_pu_document_by_guid fallita per guid: {guid}")
-        log.error(ex)
-        raise ex
-
-
-def get_dete_document_by_guid(conn, guid):
-    log = logging.getLogger("cannoneggiamento_aziendale")
-    qUery = "select * from esportazioni.get_dete_document_data_by_guid(%s)"
-    try:
-        c = conn.cursor()
-        c.execute(qUery, (guid,))
-        log.info(f"get_dete_document_by_guid eseguita con successo per guid: {guid}")
-        return c.fetchone()
-    except Exception as ex:
-        log.error(f"get_dete_document_by_guid fallita per guid: {guid}")
-        log.error(ex)
-        raise ex
-
-
-def get_deli_document_by_guid(conn, guid):
-    log = logging.getLogger("cannoneggiamento_aziendale")
-    qUery = "select * from esportazioni.get_deli_document_data_by_guid(%s)"
-    try:
-        c = conn.cursor()
-        c.execute(qUery, (guid,))
-        log.info(f"get_deli_document_by_guid eseguita con successo per guid: {guid}")
-        return c.fetchone()
-    except Exception as ex:
-        log.error(f"get_deli_document_by_guid fallita per guid: {guid}")
-        log.error(ex)
+        log.error("get_nome_fascicolo fallita per fascicolo: %s" % id_fascicolo)
         raise ex
