@@ -158,6 +158,9 @@ def upsert_doc_list_data(codice_azienda, json_data, conn, id_azienda):
             "id_azienda": id_azienda,
             'data_creazione': json_data['data_creazione']
         })
+        later = time.time()
+        difference_delete_persone_vedenti = int(later - now)
+        now = time.time()
         if json_data['persone_vedenti'] is not None and len(json_data['persone_vedenti']) > 0:
             for persona_vedente in json_data['persone_vedenti']:
                 c.execute(qc.insert_persone_vedenti, {
@@ -237,7 +240,7 @@ def upsert_doc_list_data(codice_azienda, json_data, conn, id_azienda):
         difference_allegati = int(later - now)
         conn.commit()
         log.info(f"upsert_doc_list_data eseguita con successo per documento con guid: {json_data['guid_documento']}")
-        log.info("%s secondi upsert, %s secondi pers.vedenti, %s secondi allegati" % (str(difference_upsert), str(difference_persone_vedenti), str(difference_allegati)))
+        log.info("%s secondi upsert, %s difference_delete_persone_vedenti, %s secondi pers.vedenti, %s secondi allegati" % (str(difference_upsert), str(difference_delete_persone_vedenti), str(difference_persone_vedenti), str(difference_allegati)))
     except Exception as ex:
         conn.rollback()
         log.error(f"errore in upsert_doc_list_data per guid {json_data['guid_documento']}")
