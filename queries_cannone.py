@@ -164,7 +164,7 @@ upsert_persone_vedenti_and_delete_the_others = """
             modalita_apertura, ( SELECT data_creazione FROM data_creazione ), %(data_registrazione)s, %(id_azienda)s 
         FROM (
         VALUES  
-            %(values)s
+            {values}
         ) AS t (id_persona, mio_documento, piena_visibilita, modalita_apertura)
         ON CONFLICT (id_doc_detail, id_persona, data_creazione, id_azienda) DO UPDATE 
         SET mio_documento = EXCLUDED.mio_documento,
