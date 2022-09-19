@@ -185,7 +185,7 @@ def upsert_doc_list_data(codice_azienda, json_data, conn, id_azienda):
                     {persona_vedente["idPersona"]}, 
                     {persona_vedente['mioDocumento']}, 
                     {persona_vedente['pienaVisibilita']}, 
-                    {"'" + persona_vedente['modalitaApertura'] + "'" if ('modalitaApertura' in persona_vedente) else None}
+                    {"'" + persona_vedente['modalitaApertura'] + "'" if ('modalitaApertura' in persona_vedente) else 'null'}
                 ),"""
         if len(values_persone_vedenti) > 0:
             # Chiamo la upsert and delete
