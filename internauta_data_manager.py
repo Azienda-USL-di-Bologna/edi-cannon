@@ -129,8 +129,6 @@ def upsert_doc_list_data(codice_azienda, json_data, conn, id_azienda):
             'data_registrazione': json_data['data_registrazione'],
             'data_pubblicazione': json_data['data_pubblicazione'],
             'oggetto': json_data['oggetto'],
-            #'fascicolazioni': None if json_data['fascicolazioni'] is None else Json(json_data['fascicolazioni']),
-            #'classificazioni': None if json_data['classificazioni'] is None else Json(json_data['classificazioni']),
             'firmatari': None if json_data['firmatari'] is None else Json(json_data['firmatari']),
             'destinatari': None if json_data['destinatari'] is None else Json(json_data['destinatari']),
             'mittente': json_data['mittente'],
@@ -147,7 +145,8 @@ def upsert_doc_list_data(codice_azienda, json_data, conn, id_azienda):
             'id_strutture_segreteria': json_data['id_strutture_segreteria'],
             'sulla_scrivania_di': None if json_data['sulla_scrivania_di'] is None else Json(json_data['sulla_scrivania_di']),
             'id_applicazione': json_data['id_applicazione'],
-            'version': json_data['version'], 'conservazione': json_data['conservazione']
+            'version': json_data['version'], 
+            'conservazione': json_data['conservazione']
         })
         later = time.time()
         difference_upsert = int(later - now)
