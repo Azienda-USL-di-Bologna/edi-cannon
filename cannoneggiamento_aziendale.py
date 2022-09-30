@@ -192,8 +192,9 @@ def search_and_work(conn, codice_azienda, fascicoli_parlanti, conn_internauta, i
                             idm.upsert_doc_list_data(codice_azienda, json_data, conn_internauta, id_azienda)
                     elif r['tipo_oggetto'] == "fascicolo":
                         # Se l'oggetto è il fascicolo allora si tratta dell'update del nome
-                        nome = "" if fascicoli_parlanti else argo_data_retriever.get_nome_fascicolo(conn, r['id_oggetto'])
-                        idm.update_nome_fascicoli(nome, r['id_oggetto'], conn_internauta)
+                        #nome = "" if fascicoli_parlanti else argo_data_retriever.get_nome_fascicolo(conn, r['id_oggetto'])
+                        #idm.update_nome_fascicoli(nome, r['id_oggetto'], conn_internauta)
+                        pass
                 # Se sono arrivato fin qui ho eseugito l'azione opportuna sull'oggetto, cancello le righe di cannoneggiamento
                 delete_cannoneggiamenti(r["ids"], conn)
             except Exception as ex:
