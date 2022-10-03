@@ -241,7 +241,7 @@ def upsert_doc_list_data(codice_azienda, json_data, conn, id_azienda):
                     if uuids_map is not None:
                         if uid_pdf in uuids_map:
                             dettaglio_pdf = uuids_map[uid_pdf]
-                            allegato['dettagli']['convertitoPdf'] = dettaglio_pdf
+                            allegato['dettagli']['convertito'] = dettaglio_pdf
                 if uid_repository['uid_firmato'] is not None:
                     uid_firmato = uid_repository['uid_firmato']
                     if uuids_map is not None:
