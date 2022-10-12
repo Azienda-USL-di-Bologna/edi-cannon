@@ -257,7 +257,7 @@ upsert_attori_and_delete_the_others = """
             id_doc, id_persona, id_struttura, ruolo, 
             sulla_scrivania, ordinale, data_inserimento_riga
         ) 
-        SELECT DISTINCT %(id_doc)s, id_persona, id_struttura, ruolo::scripta.ruolo_attore_doc, 
+        SELECT DISTINCT %(id_doc)s, id_persona, id_struttura::integer, ruolo::scripta.ruolo_attore_doc, 
             FALSE, ordinale::integer, now() 
         FROM (
         VALUES  
