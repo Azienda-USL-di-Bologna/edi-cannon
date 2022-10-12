@@ -126,7 +126,7 @@ def upsert_doc_list_data(codice_azienda, json_data, conn, id_azienda):
                 values_attori = f"""(
                     {attore["idPersona"]}, 
                     {attore['idStruttura']}, 
-                    {RUOLO_ATTORE[attore['ruolo']]}, 
+                    {"'" + RUOLO_ATTORE[attore['ruolo']] + "'"}, 
                     {attore['ordinale'] if attore['ordinale'] is not None else 'null'}
                 ),"""
         if len(values_attori) > 0:
