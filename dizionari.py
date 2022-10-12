@@ -58,6 +58,7 @@ SOTTOTIPO_ALLEGATO = {
   "Delibera Omissis": "DELIBERA_OMISSIS",
   "Destinatari": "DESTINATARI",
   "Note_Documento": "NOTE_DOCUMENTO",
+  "NoteDocumento": "NOTE_DOCUMENTO",
   "RicevutaAccettazionePec": "RICEVUTA_ACCETTAZIONE_PEC",
   "RicevutaConsegnaPec": "RICEVUTA_CONSEGNA_PEC",
   "RicevutaErrorePec": "RICEVUTA_ERRORE_PEC",
@@ -67,7 +68,8 @@ SOTTOTIPO_ALLEGATO = {
   "Smistamento": "SMISTAMENTO",
   "destinatari": "DESTINATARI",
   "mittenti": "MITTENTI",
-  "RELATA": "RELATA"
+  "RELATA": "RELATA",
+  "Bird": "BIRD"
 }
 RUOLO_ATTORE = {
   "ASSEGNATARIO_INTERNO": "ASSEGNATARIO_INTERNO",
