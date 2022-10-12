@@ -91,7 +91,7 @@ def upsert_doc_list_data(codice_azienda, json_data, conn, id_azienda):
         values_persone_vedenti = ""
         if json_data['persone_vedenti'] is not None and len(json_data['persone_vedenti']) > 0:
             for persona_vedente in json_data['persone_vedenti']:
-                values_persone_vedenti = f"""(
+                values_persone_vedenti = values_persone_vedenti + f"""(
                     {persona_vedente["idPersona"]}, 
                     {persona_vedente['mioDocumento']}, 
                     {persona_vedente['pienaVisibilita']}, 
@@ -123,9 +123,10 @@ def upsert_doc_list_data(codice_azienda, json_data, conn, id_azienda):
         values_attori = ""
         if json_data['attori'] is not None and len(json_data['attori']) > 0:
             for attore in json_data['attori']:
-                values_attori = f"""(
+                # idStruttura può essere null solo perché nei vecchi attori non si riescie a fare il match con le strutture internuata
+                values_attori = values_attori + f"""(
                     {attore["idPersona"]}, 
-                    {attore['idStruttura']}, 
+                    {attore['idStruttura'] if attore['idStruttura'] is not None else 'null'}, 
                     {"'" + RUOLO_ATTORE[attore['ruolo']] + "'"}, 
                     {attore['ordinale'] if attore['ordinale'] is not None else 'null'}
                 ),"""
