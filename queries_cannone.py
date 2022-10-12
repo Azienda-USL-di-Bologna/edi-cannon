@@ -265,7 +265,7 @@ upsert_attori_and_delete_the_others = """
         ) AS t (id_persona, id_struttura, ruolo, ordinale)
         ON CONFLICT (id_doc, id_persona, id_struttura, ruolo) DO UPDATE 
         SET sulla_scrivania = EXCLUDED.sulla_scrivania,
-            ordinale = EXCLUDED.ordinale,
+            ordinale = EXCLUDED.ordinale
         RETURNING id
     )
     DELETE FROM scripta.attori_docs 
