@@ -258,7 +258,7 @@ upsert_attori_and_delete_the_others = """
             sulla_scrivania, ordinale, data_inserimento_riga
         ) 
         SELECT %(id_doc)s, id_persona, id_struttura, ruolo::scripta.ruolo_attore_doc, 
-            FALSE, ordinale, now() 
+            FALSE, ordinale::integer, now() 
         FROM (
         VALUES  
             {values}
