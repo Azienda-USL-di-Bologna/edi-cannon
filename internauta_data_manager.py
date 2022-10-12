@@ -205,7 +205,7 @@ def upsert_doc_list_data(codice_azienda, json_data, conn, id_azienda):
                     "data_inserimento": allegato['data_inserimento'],
                     "dettagli": Json(allegato['dettagli']),
                     "id_esterno": allegato['id_allegato_argo'],
-                    "sottotipo": SOTTOTIPO_ALLEGATO[allegato["sottotipo"]],
+                    "sottotipo": None if allegato["sottotipo"] is None else SOTTOTIPO_ALLEGATO[allegato["sottotipo"]],
                     "additional_data": None if allegato["additional_data"] is None else Json(allegato["additional_data"])
                 })
         later = time.time()
