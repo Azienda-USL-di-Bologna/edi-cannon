@@ -4,6 +4,7 @@ import psycopg2
 import psycopg2.extras
 from psycopg2.extras import Json
 from datetime import datetime
+from dizionari import RUOLO_ATTORE, SOTTOTIPO_ALLEGATO, STATI, STATI_UFFICIO_ATTI, TIPO_ALLEGATO
 import queries_cannone as qc
 import logging
 from io import StringIO
@@ -13,32 +14,6 @@ import cannoneggiamento_aziendale
 import time
 
 log = logging.getLogger("cannoneggiamento_aziendale")
-
-"""
-    Faccio l'update del nome del fascicolo sui documenti che hanno quel nome
-"""
-"""
-def update_nome_fascicoli(nome, id_oggetto, conn):
-    log.info("update_nome_fascicoli")
-    qupdate = "select scripta.update_nome_fascicolo_from_id_fascicolo_radice_argo(%(nome)s, %(id_fascicolo)s)"
-    try:
-        c = conn.cursor(cursor_factory=psycopg2.extras.DictCursor)
-        now = time.time()
-        c.execute(qupdate, {
-            'nome': nome,
-            'id_fascicolo': id_oggetto
-        })
-        later = time.time()
-        difference = int(later - now)
-        conn.commit()
-        log.info("update_nome_fascicoli eseguita con successo in %s secondi" % str(difference))
-    except Exception as ex:
-        conn.rollback()
-        log.error("update_nome_fascicoli fallita ")
-        log.error(ex)
-        log.error(c.query)
-        raise ex
-"""
 
 """
     Cancello il documento by guid
@@ -59,50 +34,6 @@ def delete_doc_by_guid_and_azienda(guid_documento, conn, id_azienda):
         raise ex
 
 
-STATI = {
-    "None": None,
-    "REDAZIONE": 'REDAZIONE',
-    "Redazione": 'REDAZIONE',
-    "Bozza_Redazione": "REDAZIONE",
-    "Bozza_Ricezione": "REDAZIONE",
-    "Bozza": "REDAZIONE",
-    "Ricezione": "REDAZIONE",
-    "PARERI": 'PARERE',
-    "Pareri": 'PARERE',
-    "Visti": "VISTA",
-    "Approvazione": 'APPROVAZIONE',
-    "FIRMA": 'FIRMA',
-    "Firma": 'FIRMA',
-    "SPEDIZIONE_MANUALE": 'SPEDIZIONE_MANUALE',
-    "ASPETTA_SPEDIZIONI": 'ASPETTA_SPEDIZIONI',
-    "ASPETTA_SPEDIZIONE": 'ASPETTA_SPEDIZIONI',
-    "CONTROLLO_SEGRETERIA": 'CONTROLLO_SEGRETERIA',
-    "FINE": 'FINE',
-    "Fine": 'FINE',
-    "Fine_Emergenza_In": "FINE",
-    "ATTENDI_JOBS": 'ATTENDI_JOBS',
-    "Fine_Entrata": "FINE",
-    "SMISTAMENTO": "SMISTAMENTO",
-    "NUMERAZIONE": 'NUMERAZIONE',
-    "Registrazione_Protocollo": 'REGISTRAZIONE_PROTOCOLLO',
-    "AVVIA_SPEDIZIONI": 'AVVIA_SPEDIZIONI',
-    "Ufficio_Atti": "UFFICIO_ATTI",
-    "Direttore_Generale": "DG",
-    "Direttore_Amministrativo": "DA",
-    "Direttore_Scientifico": "DSC",
-    "Direttore_Sanitario": "DS",
-    "Direttore_Affari_Generali_Legali": "DAGL",
-    "ANNULLATO": "ANNULLATO"
-}
-
-STATI_UFFICIO_ATTI = {
-    "None": None,
-    "sospesa": "SOSPESA",
-    "Elaborata": "ELABORATA",
-    "Non Rilevante": "NON_RILEVANTE",
-    "da_valutare": "DA_VALUTARE"
-}
-
 """
     A partire da un grosso json che contiene i dati del documento effettua la upsert per il documento
     Dopodiche aggiorna persone vedenti e allegati. Per questi ultimi si connette a minio
@@ -111,6 +42,7 @@ def upsert_doc_list_data(codice_azienda, json_data, conn, id_azienda):
     #log = logging.getLogger("cannoneggiamento_aziendale")
     c = conn.cursor(cursor_factory=psycopg2.extras.DictCursor)
     try:
+        # AGGIORNAMENTO DEL DOC
         now = time.time()
         c.execute(qc.insert_doc, {
             'id_azienda': id_azienda,
@@ -152,36 +84,14 @@ def upsert_doc_list_data(codice_azienda, json_data, conn, id_azienda):
         difference_upsert = int(later - now)
 
         id_doc = c.fetchone()["id"]
-        #c.execute("LOCK TABLE scripta.docs_details IN EXCLUSIVE MODE")
-        #c.execute("SELECT setval('scripta.docs_details_id_seq', COALESCE((SELECT MAX(id)+1 FROM scripta.docs_details), 1), false)")
-        
-        """
-        c.execute(qc.delete_persone_vedenti, {
-            "guid_documento": json_data['guid_documento'],
-            "id_azienda": id_azienda,
-            'data_creazione': json_data['data_creazione']
-        })
-        later = time.time()
-        difference_delete_persone_vedenti = int(later - now)
-        now = time.time()
-        if json_data['persone_vedenti'] is not None and len(json_data['persone_vedenti']) > 0:
-            for persona_vedente in json_data['persone_vedenti']:
-                c.execute(qc.insert_persone_vedenti, {
-                    "guid_documento": json_data['guid_documento'],
-                    "id_persona": persona_vedente["idPersona"],
-                    "mio_documento": persona_vedente['mioDocumento'],
-                    "piena_visibilita": persona_vedente['pienaVisibilita'],
-                    "modalita_apertura": persona_vedente['modalitaApertura'] if ('modalitaApertura' in persona_vedente) else None,
-                    "data_creazione": json_data['data_creazione'],
-                    "data_registrazione": json_data['data_registrazione'],
-                    "id_azienda": id_azienda
-                })
-        """
+
+
+        # AGGIORNAMENTO DELLE PERSONE VEDENTI 
         now = time.time()
         values_persone_vedenti = ""
         if json_data['persone_vedenti'] is not None and len(json_data['persone_vedenti']) > 0:
             for persona_vedente in json_data['persone_vedenti']:
-                values_persone_vedenti = f"""(
+                values_persone_vedenti = values_persone_vedenti + f"""(
                     {persona_vedente["idPersona"]}, 
                     {persona_vedente['mioDocumento']}, 
                     {persona_vedente['pienaVisibilita']}, 
@@ -206,6 +116,36 @@ def upsert_doc_list_data(codice_azienda, json_data, conn, id_azienda):
             })
         later = time.time()
         difference_persone_vedenti = int(later - now)
+
+
+        # AGGIORNAMENTO DEGLI ATTORI
+        now = time.time()
+        values_attori = ""
+        if json_data['attori'] is not None and len(json_data['attori']) > 0:
+            for attore in json_data['attori']:
+                # idStruttura può essere null solo perché nei vecchi attori non si riescie a fare il match con le strutture internuata
+                values_attori = values_attori + f"""(
+                    {attore["idPersona"]}, 
+                    {attore['idStruttura'] if attore['idStruttura'] is not None else 'null'}, 
+                    {"'" + RUOLO_ATTORE[attore['ruolo']] + "'"}, 
+                    {attore['ordinale'] if attore['ordinale'] is not None else 'null'}
+                ),"""
+        if len(values_attori) > 0:
+            # Chiamo la upsert and delete
+            values_attori = values_attori[:-1] # rimuovo l'ultima virgola
+            c.execute(qc.upsert_attori_and_delete_the_others.format(values=values_attori), {
+                "id_doc": id_doc
+            })
+        else:
+            # Faccio solo la delete
+            c.execute(qc.delete_attori, {
+                "id_doc": id_doc
+            })
+        later = time.time()
+        difference_attori = int(later - now)
+
+
+        # AGGIORNAMENTO DEGLI ALLEGATI
         now = time.time()
         if json_data['allegati'] is not None and len(json_data['allegati']) > 0:
             mongo_uuids = []
@@ -241,7 +181,7 @@ def upsert_doc_list_data(codice_azienda, json_data, conn, id_azienda):
                     if uuids_map is not None:
                         if uid_pdf in uuids_map:
                             dettaglio_pdf = uuids_map[uid_pdf]
-                            allegato['dettagli']['convertitoPdf'] = dettaglio_pdf
+                            allegato['dettagli']['convertito'] = dettaglio_pdf
                 if uid_repository['uid_firmato'] is not None:
                     uid_firmato = uid_repository['uid_firmato']
                     if uuids_map is not None:
@@ -257,7 +197,7 @@ def upsert_doc_list_data(codice_azienda, json_data, conn, id_azienda):
                             allegato['dettagli']['originale'] = dettaglio_originale
                 c.execute(qc.insert_allegati_doc, {
                     "nome": allegato['nome'],
-                    "tipo": allegato['tipo_allegato'],
+                    "tipo": TIPO_ALLEGATO[allegato['tipo_allegato']],
                     "principale": allegato['principale'],
                     "firmato": allegato['firmato'],
                     "ordinale": allegato['ordinale'],
@@ -265,13 +205,17 @@ def upsert_doc_list_data(codice_azienda, json_data, conn, id_azienda):
                     "id_allegato_padre": allegato['id_allegato_padre'],
                     "data_inserimento": allegato['data_inserimento'],
                     "dettagli": Json(allegato['dettagli']),
-                    "id_esterno": allegato['id_allegato_argo']
+                    "id_esterno": allegato['id_allegato_argo'],
+                    "sottotipo": None if allegato["sottotipo"] is None else SOTTOTIPO_ALLEGATO[allegato["sottotipo"]],
+                    "additional_data": None if allegato["additional_data"] is None else Json(allegato["additional_data"])
                 })
         later = time.time()
         difference_allegati = int(later - now)
+
+        # DOCUMENTO AGGIORNATO. COMMITTO
         conn.commit()
         log.info(f"upsert_doc_list_data eseguita con successo per documento con guid: {json_data['guid_documento']}")
-        log.info("%s secondi upsert, %s secondi pers.vedenti, %s secondi allegati" % (str(difference_upsert), str(difference_persone_vedenti), str(difference_allegati)))
+        log.info("%s secondi upsert, %s secondi pers.vedenti, %s secondi allegati, %s secondi difference_attori" % (str(difference_upsert), str(difference_persone_vedenti), str(difference_allegati), str(difference_attori)))
     except Exception as ex:
         conn.rollback()
         log.error(f"errore in upsert_doc_list_data per guid {json_data['guid_documento']}")
