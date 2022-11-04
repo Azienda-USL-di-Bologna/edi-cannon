@@ -185,8 +185,8 @@ def search_and_work(conn, codice_azienda, fascicoli_parlanti, conn_internauta, i
                     log.info("Delete eseguita con successo in %s secondi" % str(difference))
                 else:
                     # Gestisco update/insert in modo differente a seconda del tipo oggetto su cui agire
-                    if r['tipo_oggetto'] in ["pico_pe", "pico_pu", "dete", "deli"]:
-                        json_data = argo_data_retriever.get_document_by_guid(conn, r['id_oggetto'], r['tipo_oggetto'])
+                    if r['tipo_oggetto'] in ["pico_pe", "pico_pu", "dete", "deli", "RGPICO", "RGDETE", "RGDELI"]:
+                        json_data = argo_data_retriever.get_document_by_guid(conn, r['id_oggetto'], )
                         # Se il doc esiste dovrei avere dei dati, se è così vado a fare la upsert
                         if json_data is not None:
                             idm.upsert_doc_list_data(codice_azienda, json_data, conn_internauta, id_azienda)
