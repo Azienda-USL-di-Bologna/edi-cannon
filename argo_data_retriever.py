@@ -9,6 +9,9 @@ mappa_stored_procedure = {
     "pico_pu": "get_procton_pu_document_data_by_guid",
     "dete": "get_dete_document_data_by_guid",
     "deli": "get_deli_document_data_by_guid",
+    "RGPICO": "get_registri_giornalieri_by_id",
+    "RGDETE": "get_registri_giornalieri_by_id",
+    "RGDELI": "get_registri_giornalieri_by_id"
 }
 
 """
