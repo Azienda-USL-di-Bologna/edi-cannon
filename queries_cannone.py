@@ -243,7 +243,7 @@ insert_allegati_doc = """
         data_inserimento = excluded.data_inserimento,
         dettagli = excluded.dettagli,
         sottotipo = excluded.sottotipo,
-        additional_data = excluded.additional_data
+        additional_data = excluded.additional_data,
         version = excluded.version
 """
 query_minio = """
@@ -271,7 +271,7 @@ upsert_attori_and_delete_the_others = """
         ) AS t (id_persona, id_struttura, ruolo, ordinale)
         ON CONFLICT (id_doc, id_persona, id_struttura, ruolo) DO UPDATE 
         SET sulla_scrivania = EXCLUDED.sulla_scrivania,
-            ordinale = EXCLUDED.ordinale
+            ordinale = EXCLUDED.ordinale,
             version = EXCLUDED.version
         RETURNING id
     )
