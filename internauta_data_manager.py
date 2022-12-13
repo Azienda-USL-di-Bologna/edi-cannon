@@ -2,6 +2,7 @@
 import os
 import psycopg2
 import psycopg2.extras
+from pip._vendor.rich import json
 from psycopg2.extras import Json
 from datetime import datetime
 from dizionari import RUOLO_ATTORE, SOTTOTIPO_ALLEGATO, STATI, STATI_UFFICIO_ATTI, TIPO_ALLEGATO
@@ -78,7 +79,8 @@ def upsert_doc_list_data(codice_azienda, json_data, conn, id_azienda):
             'sulla_scrivania_di': None if json_data['sulla_scrivania_di'] is None else Json(json_data['sulla_scrivania_di']),
             'id_applicazione': json_data['id_applicazione'],
             'version': json_data['version'], 
-            'conservazione': json_data['conservazione']
+            'conservazione': json_data['conservazione'],
+            'id_pec_mittente': json_data['id_pec_mittente']
         })
         later = time.time()
         difference_upsert = int(later - now)
