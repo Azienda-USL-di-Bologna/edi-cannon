@@ -80,7 +80,7 @@ def upsert_doc_list_data(codice_azienda, json_data, conn, id_azienda):
             'id_applicazione': json_data['id_applicazione'],
             'version': json_data['version'], 
             'conservazione': json_data['conservazione'],
-            'id_pec_mittente': json_data['id_pec_mittente']
+            'id_pec_mittente': None if json_data['id_pec_mittente'] is None else json_data['id_pec_mittente']
         })
         later = time.time()
         difference_upsert = int(later - now)
