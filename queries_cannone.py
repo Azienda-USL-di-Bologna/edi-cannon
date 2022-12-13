@@ -67,7 +67,8 @@ insert_doc = """
         sulla_scrivania_di,
         version,
         id_applicazione,
-        conservazione
+        conservazione,
+        id_pec_mittente
     ) VALUES (
         (select id from insert_to_docs),
         %(id_azienda)s,
@@ -102,7 +103,8 @@ insert_doc = """
         %(sulla_scrivania_di)s,
         %(version)s,
         %(id_applicazione)s,
-        %(conservazione)s
+        %(conservazione)s,
+        %(id_pec_mittente)s
     ) ON conflict (guid_documento, id_azienda, data_creazione)
     DO UPDATE
     SET open_command = excluded.open_command,
@@ -132,7 +134,8 @@ insert_doc = """
        sulla_scrivania_di = excluded.sulla_scrivania_di,
        version = excluded.version,
        id_applicazione = excluded.id_applicazione,
-       conservazione = excluded.conservazione
+       conservazione = excluded.conservazione,
+       id_pec_mittente = excluded.id_pec_mittente
     RETURNING id
 """
 upsert_persone_vedenti_and_delete_the_others = """

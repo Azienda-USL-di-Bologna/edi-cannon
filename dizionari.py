@@ -105,5 +105,7 @@ RUOLO_ATTORE = {
   "Validazione_Segreteria": "CONTROLLO_SEGRETERIA",
   "Vedenza_Emergenza": "VEDENZA_EMERGENZA",
   "Bozza_Ricezione": "REDAZIONE",
-  "Bozza_Redazione": "REDAZIONE",
+  "RESPONSABILE": "RESPONSABILE",
+  "SEGRETERIA": "SEGRETERIA",
+  "ASSEGNAZIONE": "ASSEGNAZIONE"
 }
