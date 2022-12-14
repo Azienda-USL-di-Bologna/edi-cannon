@@ -44,8 +44,10 @@ def upsert_doc_list_data(codice_azienda, json_data, conn, id_azienda):
     try:
         # AGGIORNAMENTO DEL DOC
         if json_data['id_pec_mittente'] is not None:
-            c.execute(qc.get_id_pec, {'id_pec_mittente': json_data['id_pec_mittente']})
-            id_pec_mittente = c.fetchone()["id"]
+            connex = conn.cursor(cursor_factory=psycopg2.extras.DictCursor)
+            connex.execute(qc.get_id_pec, {'id_pec_mittente': json_data['id_pec_mittente']})
+            id_pec_mittente = connex.fetchone()["id"]
+            connex.commit()
         now = time.time()
         c.execute(qc.insert_doc, {
             'id_azienda': id_azienda,
@@ -86,7 +88,7 @@ def upsert_doc_list_data(codice_azienda, json_data, conn, id_azienda):
         })
         later = time.time()
         difference_upsert = int(later - now)
- 
+
         id_doc = c.fetchone()["id"]
 
 
