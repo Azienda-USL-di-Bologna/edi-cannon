@@ -86,7 +86,7 @@ def upsert_doc_list_data(codice_azienda, json_data, conn, id_azienda):
         })
         later = time.time()
         difference_upsert = int(later - now)
-
+ 
         id_doc = c.fetchone()["id"]
 
 
