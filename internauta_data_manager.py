@@ -2,7 +2,6 @@
 import os
 import psycopg2
 import psycopg2.extras
-from pip._vendor.rich import json
 from psycopg2.extras import Json
 from datetime import datetime
 from dizionari import RUOLO_ATTORE, SOTTOTIPO_ALLEGATO, STATI, STATI_UFFICIO_ATTI, TIPO_ALLEGATO
@@ -44,6 +43,9 @@ def upsert_doc_list_data(codice_azienda, json_data, conn, id_azienda):
     c = conn.cursor(cursor_factory=psycopg2.extras.DictCursor)
     try:
         # AGGIORNAMENTO DEL DOC
+        if json_data['id_pec_mittente'] is not None:
+            c.execute(qc.get_id_pec, {'id_pec_mittente': json_data['id_pec_mittente']})
+            id_pec_mittente = c.fetchone()["id"]
         now = time.time()
         c.execute(qc.insert_doc, {
             'id_azienda': id_azienda,
@@ -80,7 +82,7 @@ def upsert_doc_list_data(codice_azienda, json_data, conn, id_azienda):
             'id_applicazione': json_data['id_applicazione'],
             'version': json_data['version'], 
             'conservazione': json_data['conservazione'],
-            'id_pec_mittente': None if json_data['id_pec_mittente'] is None else json_data['id_pec_mittente']
+            'id_pec_mittente': None if id_pec_mittente is None else id_pec_mittente
         })
         later = time.time()
         difference_upsert = int(later - now)

@@ -286,3 +286,8 @@ delete_attori = """
     DELETE FROM scripta.attori_docs 
     WHERE id_doc = %(id_doc)s
 """
+
+get_id_pec = """
+    SELECT id FROM baborg.pec 
+    WHERE indirizzo = %(id_pec_mittente)s
+"""
