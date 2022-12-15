@@ -47,7 +47,7 @@ def upsert_doc_list_data(codice_azienda, json_data, conn, id_azienda):
             connex = conn.cursor(cursor_factory=psycopg2.extras.DictCursor)
             connex.execute(qc.get_id_pec, {'id_pec_mittente': json_data['id_pec_mittente']})
             json_data['id_pec_mittente'] = connex.fetchone()["id"]
-            connex.close()
+            log.info(f"pec mittente è: {json_data['id_pec_mittente']}")
         now = time.time()
         c.execute(qc.insert_doc, {
             'id_azienda': id_azienda,
