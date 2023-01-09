@@ -175,7 +175,7 @@ def upsert_doc_list_data(codice_azienda, json_data, conn, id_azienda):
                         obj = uuids_map[key]
                         obj['estensione'] = os.path.splitext(obj['nome'])[1][1:]
                         obj['dataCreazione'] = json_data['data_creazione']
-                        obj['mimeType'] = None
+                        obj['mimeType'] = allegato['mime_type']
                 minio_conn.close()
 
             for allegato in json_data['allegati']:
