@@ -104,6 +104,9 @@ RUOLO_ATTORE = {
   "Raccolta_Pareri_Pre_Firma": "PARERI",
   "Validazione_Segreteria": "CONTROLLO_SEGRETERIA",
   "Vedenza_Emergenza": "VEDENZA_EMERGENZA",
-  "Bozza_Ricezione": "REDAZIONE",
   "Bozza_Redazione": "REDAZIONE",
+  "Bozza_Ricezione": "REDAZIONE",
+  "RESPONSABILE": "RESPONSABILE",
+  "SEGRETERIA": "SEGRETARIO",
+  "ASSEGNAZIONE": "ASSEGNATARIO"
 }
