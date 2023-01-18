@@ -8,7 +8,8 @@ insert_doc = """
             id_azienda,
             tipologia,
             visibilita,
-            id_esterno
+            id_esterno,
+            version
         ) VALUES (
             %(oggetto)s,
             %(id_persona_redattrice)s,
@@ -22,12 +23,14 @@ insert_doc = """
                     THEN 'LIMITATA'::scripta.visibilita_doc
                 else 'NORMALE'::scripta.visibilita_doc
             END,
-            %(guid_documento)s
+            %(guid_documento)s,
+            %(version)s
         ) ON conflict (id_esterno)
         do UPDATE
         set oggetto = excluded.oggetto,
             id_persona_creazione = excluded.id_persona_creazione,
-            tipologia = excluded.tipologia
+            tipologia = excluded.tipologia,
+            version = excluded.version
         RETURNING id, data_creazione
     )         
     INSERT INTO scripta.docs_details (
@@ -64,7 +67,8 @@ insert_doc = """
         sulla_scrivania_di,
         version,
         id_applicazione,
-        conservazione
+        conservazione,
+        id_pec_mittente
     ) VALUES (
         (select id from insert_to_docs),
         %(id_azienda)s,
@@ -99,7 +103,8 @@ insert_doc = """
         %(sulla_scrivania_di)s,
         %(version)s,
         %(id_applicazione)s,
-        %(conservazione)s
+        %(conservazione)s,
+        %(id_pec_mittente)s
     ) ON conflict (guid_documento, id_azienda, data_creazione)
     DO UPDATE
     SET open_command = excluded.open_command,
@@ -127,9 +132,10 @@ insert_doc = """
        id_mezzo_ricezione = excluded.id_mezzo_ricezione,
        id_strutture_segreteria = excluded.id_strutture_segreteria,
        sulla_scrivania_di = excluded.sulla_scrivania_di,
-       version = excluded.version ,
+       version = excluded.version,
        id_applicazione = excluded.id_applicazione,
-       conservazione = excluded.conservazione
+       conservazione = excluded.conservazione,
+       id_pec_mittente = excluded.id_pec_mittente
     RETURNING id
 """
 upsert_persone_vedenti_and_delete_the_others = """
@@ -142,10 +148,10 @@ upsert_persone_vedenti_and_delete_the_others = """
     id_da_tenere AS (
         INSERT INTO scripta.persone_vedenti (
             id_doc_detail, id_persona, mio_documento, piena_visibilita, 
-            modalita_apertura, data_creazione, data_registrazione, id_azienda
+            modalita_apertura, data_creazione, data_registrazione, id_azienda, version
         ) 
         SELECT %(id_doc)s, id_persona, mio_documento, piena_visibilita, 
-            modalita_apertura, ( SELECT data_creazione FROM data_creazione ), %(data_registrazione)s, %(id_azienda)s 
+            modalita_apertura, ( SELECT data_creazione FROM data_creazione ), %(data_registrazione)s, %(id_azienda)s, now()
         FROM (
         VALUES  
             {values}
@@ -153,7 +159,8 @@ upsert_persone_vedenti_and_delete_the_others = """
         ON CONFLICT (id_doc_detail, id_persona, data_creazione, id_azienda) DO UPDATE 
         SET mio_documento = EXCLUDED.mio_documento,
             piena_visibilita = EXCLUDED.piena_visibilita,
-            modalita_apertura = EXCLUDED.modalita_apertura
+            modalita_apertura = EXCLUDED.modalita_apertura,
+            version = EXCLUDED.version
         RETURNING id
     )
     DELETE FROM scripta.persone_vedenti 
@@ -203,7 +210,7 @@ insert_allegati_doc = """
     INSERT INTO scripta.allegati (
         nome, tipo, principale, firmato, 
         ordinale, id_doc, id_allegato_padre, data_inserimento, 
-        dettagli, id_esterno, sottotipo, additional_data
+        dettagli, id_esterno, sottotipo, additional_data, version
     ) VALUES ( 
         %(nome)s,
         %(tipo)s,
@@ -225,7 +232,8 @@ insert_allegati_doc = """
         %(dettagli)s,
         %(id_esterno)s,
         %(sottotipo)s,
-        %(additional_data)s
+        %(additional_data)s,
+        now()
         )
     ON CONFLICT (id_esterno, tipo) DO UPDATE
     SET nome = excluded.nome,
@@ -238,7 +246,8 @@ insert_allegati_doc = """
         data_inserimento = excluded.data_inserimento,
         dettagli = excluded.dettagli,
         sottotipo = excluded.sottotipo,
-        additional_data = excluded.additional_data
+        additional_data = excluded.additional_data,
+        version = excluded.version
 """
 query_minio = """
     SELECT jsonb_object_agg(mongo_uuid, jsonb_build_object(
@@ -255,17 +264,18 @@ upsert_attori_and_delete_the_others = """
     WITH id_da_tenere AS (
         INSERT INTO scripta.attori_docs (
             id_doc, id_persona, id_struttura, ruolo, 
-            sulla_scrivania, ordinale, data_inserimento_riga
+            sulla_scrivania, ordinale, data_inserimento_riga, version
         ) 
         SELECT DISTINCT %(id_doc)s, id_persona, id_struttura::integer, ruolo::scripta.ruolo_attore_doc, 
-            FALSE, ordinale::integer, now() 
+            FALSE, ordinale::integer, now(), now()
         FROM (
         VALUES  
             {values}
         ) AS t (id_persona, id_struttura, ruolo, ordinale)
         ON CONFLICT (id_doc, id_persona, id_struttura, ruolo) DO UPDATE 
         SET sulla_scrivania = EXCLUDED.sulla_scrivania,
-            ordinale = EXCLUDED.ordinale
+            ordinale = EXCLUDED.ordinale,
+            version = EXCLUDED.version
         RETURNING id
     )
     DELETE FROM scripta.attori_docs 
@@ -275,4 +285,9 @@ upsert_attori_and_delete_the_others = """
 delete_attori = """
     DELETE FROM scripta.attori_docs 
     WHERE id_doc = %(id_doc)s
+"""
+
+get_id_pec = """
+    SELECT id FROM baborg.pec 
+    WHERE indirizzo = %(id_pec_mittente)s
 """

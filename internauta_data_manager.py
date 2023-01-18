@@ -43,6 +43,11 @@ def upsert_doc_list_data(codice_azienda, json_data, conn, id_azienda):
     c = conn.cursor(cursor_factory=psycopg2.extras.DictCursor)
     try:
         # AGGIORNAMENTO DEL DOC
+        if json_data['id_pec_mittente'] is not None:
+            connex = conn.cursor(cursor_factory=psycopg2.extras.DictCursor)
+            connex.execute(qc.get_id_pec, {'id_pec_mittente': json_data['id_pec_mittente']})
+            json_data['id_pec_mittente'] = connex.fetchone()["id"]
+            log.info(f"pec mittente è: {json_data['id_pec_mittente']}")
         now = time.time()
         c.execute(qc.insert_doc, {
             'id_azienda': id_azienda,
@@ -78,7 +83,8 @@ def upsert_doc_list_data(codice_azienda, json_data, conn, id_azienda):
             'sulla_scrivania_di': None if json_data['sulla_scrivania_di'] is None else Json(json_data['sulla_scrivania_di']),
             'id_applicazione': json_data['id_applicazione'],
             'version': json_data['version'], 
-            'conservazione': json_data['conservazione']
+            'conservazione': json_data['conservazione'],
+            'id_pec_mittente': None if json_data['id_pec_mittente'] is None else json_data['id_pec_mittente']
         })
         later = time.time()
         difference_upsert = int(later - now)
@@ -169,7 +175,7 @@ def upsert_doc_list_data(codice_azienda, json_data, conn, id_azienda):
                         obj = uuids_map[key]
                         obj['estensione'] = os.path.splitext(obj['nome'])[1][1:]
                         obj['dataCreazione'] = json_data['data_creazione']
-                        obj['mimeType'] = None
+                        obj['mimeType'] = allegato['mime_type']
                 minio_conn.close()
 
             for allegato in json_data['allegati']:
