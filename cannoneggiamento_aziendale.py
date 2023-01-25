@@ -72,9 +72,9 @@ def set_guids_in_esecuzione(row, conn):
         raise ex
 
 
-def set_guids_in_error(row, conn, codice_azienda, ex):
+def set_guids_in_error(row, conn, codice_azienda, ex, guid):
     # log = logging.getLogger("cannoneggiamento_aziendale")
-    log.info('setto guid in errore')
+    log.info('setto guid in errore: ' + guid)
     qError = """ update esportazioni.cannoneggiamenti
     set in_error = true
     where id in %s """
@@ -198,7 +198,7 @@ def search_and_work(conn, codice_azienda, fascicoli_parlanti, conn_internauta, i
                         traceback.print_exception(*sys.exc_info(), limit=None, file=output)
                         log.error(output.getvalue())
                         errore = ex.args[0]
-                        set_guids_in_error(r, conn, codice_azienda, errore)
+                        set_guids_in_error(r, conn, codice_azienda, errore, r['id_oggetto'])
 
     except Exception as ex:
         log.error("SEARCH_AND_WORK errore nel reperimento delle righe o del parametro nome parlante")
@@ -211,7 +211,7 @@ def setta_log(azienda):
     filename = "log/edi_cannon_" + str(azienda) + ".log"
     if not os.path.exists(filename):
         open(filename, "w").close()
-    fmt = logging.Formatter('%(asctime)s %(message)s', datefmt='%Y-%m-%d %I:%M:%S %p')
+    fmt = logging.Formatter('%(asctime)s %(processName)s %(process)d %(name)s %(levelname)-8s %(message)s', datefmt='%Y-%m-%d %I:%M:%S %p')
     hnd = TimedRotatingFileHandler(filename, when='midnight', interval=1, backupCount=7)
     hnd.setFormatter(fmt)
     log.addHandler(hnd)
