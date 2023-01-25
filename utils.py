@@ -39,7 +39,7 @@ def connetti(db):
 def get_numero_thread_and_set_todo(db):
     conn = connetti(db)
     c = conn.cursor(cursor_factory=psycopg2.extras.DictCursor)
-    c.execute("select val_parametro from bds_tools.parametri_pubblici where nome_parametro = 'nThreadEdiCannon'")
+    c.execute("select val_parametro from bds_tools.parametri_pubblici where nome_parametro = 'nProcessEdiCannon'")
     n_thread = c.fetchone()[0]
     c.execute("update esportazioni.cannoneggiamenti set in_esecuzione = false where in_esecuzione and not in_error")
     conn.close()
