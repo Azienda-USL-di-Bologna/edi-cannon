@@ -14,6 +14,7 @@ from db_connection import connessioni_db
 import cannoneggiamento_aziendale
 import signal
 import sys
+import utils
 
 children = {}
 sentinels = {}
@@ -67,7 +68,10 @@ def main():
     signal.signal(signal.SIGINT, ammazza_tutti)
     for db in connessioni_db:
         print(db)
-        lancia_processo(db)
+        n_process_todo = int(utils.get_numero_thread_and_set_todo(db))
+        for i in range(n_process_todo):
+            #mi collego al db e guardo quanti processi devo lanciare poi metto lancia processo in un ciclo
+            lancia_processo(db)
 
     while sentinels.keys() or mp.active_children():
         ready = wait(sentinels.keys())
