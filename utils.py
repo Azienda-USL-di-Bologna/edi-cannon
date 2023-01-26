@@ -41,7 +41,20 @@ def get_numero_thread_and_set_todo(db):
     c = conn.cursor(cursor_factory=psycopg2.extras.DictCursor)
     c.execute("select val_parametro from bds_tools.parametri_pubblici where nome_parametro = 'nProcessEdiCannon'")
     n_thread = c.fetchone()[0]
-    c.execute("update esportazioni.cannoneggiamenti set in_esecuzione = false where in_esecuzione and not in_error")
+    print('recupero il numero di processi da instanziare %s', str(n_thread))
+    print('pulisco la tabella per cannoneggiare lo stretto indispensabile')
+    c.execute('''DELETE FROM esportazioni.cannoneggiamenti 
+                WHERE id IN
+                    (SELECT id
+                    FROM 
+                        (SELECT id,
+                         ROW_NUMBER() OVER( PARTITION BY id_oggetto, tipo_oggetto, operazione
+                        ORDER BY  id ) AS row_num
+                        FROM  esportazioni.cannoneggiamenti   ) t
+                        WHERE t.row_num > 1 )''')
+    print('setto in esecuzione false per le esportazioni')
+    c.execute("update esportazioni.cannoneggiamenti set in_esecuzione = false where in_esecuzione")
+    conn.commit()
     conn.close()
     return n_thread
 
