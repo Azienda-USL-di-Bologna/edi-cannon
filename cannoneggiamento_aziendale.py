@@ -75,21 +75,12 @@ def set_guids_in_esecuzione(row, conn):
 def set_guids_in_error(row, conn, codice_azienda, ex, guid):
     # log = logging.getLogger("cannoneggiamento_aziendale")
     log.info('setto guid in errore: ' + guid)
-    qError = """ update esportazioni.cannoneggiamenti
+    q_error = """ update esportazioni.cannoneggiamenti
     set in_error = true
-    where id in %s """
+    where id = ANY(%(ids)s) """
     c = conn.cursor(cursor_factory=psycopg2.extras.DictCursor)
-    c.execute('''DELETE FROM esportazioni.cannoneggiamenti 
-                            WHERE id IN
-                                (SELECT id
-                                FROM 
-                                    (SELECT id,
-                                     ROW_NUMBER() OVER( PARTITION BY id_oggetto, tipo_oggetto, operazione
-                                    ORDER BY  id ) AS row_num
-                                    FROM  esportazioni.cannoneggiamenti   ) t
-                                    WHERE t.row_num > 1 )''')
-    log.error(qError % str(tuple(i for i in row[3])))
-    c.execute(qError, (tuple(i for i in row[3]),))
+    #log.error(qError % str(tuple(i for i in row[3])))
+    c.execute(q_error, {'ids': row['ids']})
     conn.commit()
     erroro(conn, codice_azienda, ex)
 

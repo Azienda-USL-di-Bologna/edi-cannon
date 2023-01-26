@@ -54,6 +54,7 @@ def get_numero_thread_and_set_todo(db):
                         WHERE t.row_num > 1 )''')
     print('setto in esecuzione false per le esportazioni')
     c.execute("update esportazioni.cannoneggiamenti set in_esecuzione = false where in_esecuzione")
+    conn.commit()
     conn.close()
     return n_thread
 
