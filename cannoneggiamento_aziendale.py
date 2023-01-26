@@ -75,12 +75,12 @@ def set_guids_in_esecuzione(row, conn):
 def set_guids_in_error(row, conn, codice_azienda, ex, guid):
     # log = logging.getLogger("cannoneggiamento_aziendale")
     log.info('setto guid in errore: ' + guid)
-    qError = """ update esportazioni.cannoneggiamenti
+    q_error = """ update esportazioni.cannoneggiamenti
     set in_error = true
-    where id in %s """
+    where id = ANY(%(ids)s) """
     c = conn.cursor(cursor_factory=psycopg2.extras.DictCursor)
-    log.error(qError % str(tuple(i for i in row[3])))
-    c.execute(qError, (tuple(i for i in row[3]),))
+    #log.error(qError % str(tuple(i for i in row[3])))
+    c.execute(q_error, {'ids': row['ids']})
     conn.commit()
     erroro(conn, codice_azienda, ex)
 
@@ -148,57 +148,69 @@ def search_and_work(conn, codice_azienda, fascicoli_parlanti, conn_internauta, i
     log.info("Eseguo search_and_work....")
     curs = conn.cursor(cursor_factory=psycopg2.extras.DictCursor)
     try:
-        # questa query mi deve restituire un documento alla volta prendendo il lock su quello.
-        # devo mettere il controllo del lock sul documento se fallisco devo prendere il doc successivo e quello di prima lo ignoro
+        select_cannoneggiamenti = '''
+            SELECT id_oggetto, tipo_oggetto, array_agg(operazione) AS operazioni, array_agg(id) as ids
+            FROM esportazioni.cannoneggiamenti e
+            WHERE not e.in_esecuzione
+            AND not in_error
+            GROUP BY id_oggetto, tipo_oggetto
+            LIMIT 1 
+            OFFSET %(offset)s
+        '''
+        offset = 0
+        curs.execute(select_cannoneggiamenti, {'offset': offset})
+        log.info('1')
+        while curs.rowcount == 1:
 
-            select_cannoneggiamenti = """
-                WITH id_presi_in_carico AS (
-                    UPDATE esportazioni.cannoneggiamenti
-                    SET in_esecuzione = TRUE 
-                    WHERE NOT in_esecuzione
-                    AND NOT in_error
-                    RETURNING id, id_oggetto, tipo_oggetto, operazione
-                )
-                SELECT id_oggetto, tipo_oggetto, array_agg(operazione) AS operazioni, array_agg(id) as ids
-                FROM id_presi_in_carico
-                GROUP BY id_oggetto, tipo_oggetto
-            """
-            curs.execute(select_cannoneggiamenti)
-            rows = curs.fetchall()
-            for r in rows:
-                if utils.try_lock_all_guid(conn, r['id_oggetto'], r['tipo_oggetto']):
-                    try:
-                        log.info("Tipologia %s" % r['tipo_oggetto'])
-                        if "DELETE" in r["operazioni"]:
-                            # Devo cancellare questo oggetto (è previsto che sia un pico/dete/deli), lo cancello e poi posso eliminare tutte le righe corrispondenti
-                            log.info("Delete del guid: %s, tipo: %s, azienda: %s" % (r['id_oggetto'], r["tipo_oggetto"], codice_azienda))
-                            now = time.time()
-                            idm.delete_doc_by_guid_and_azienda(r['id_oggetto'], conn_internauta, id_azienda)
-                            later = time.time()
-                            difference = int(later - now)
-                            log.info("Delete eseguita con successo in %s secondi" % str(difference))
-                        else:
-                            # Gestisco update/insert in modo differente a seconda del tipo oggetto su cui agire
-                            if r['tipo_oggetto'] in ["pico_pe", "pico_pu", "dete", "deli", "RGPICO", "RGDETE", "RGDELI"]:
-                                json_data = argo_data_retriever.get_document_by_guid(conn, r['id_oggetto'], r['tipo_oggetto'])
-                                # Se il doc esiste dovrei avere dei dati, se è così vado a fare la upsert
-                                if json_data is not None:
-                                    idm.upsert_doc_list_data(codice_azienda, json_data, conn_internauta, id_azienda)
-                            elif r['tipo_oggetto'] == "fascicolo":
-                                # Se l'oggetto è il fascicolo allora si tratta dell'update del nome
-                                # nome = "" if fascicoli_parlanti else argo_data_retriever.get_nome_fascicolo(conn, r['id_oggetto'])
-                                # idm.update_nome_fascicoli(nome, r['id_oggetto'], conn_internauta)
-                                pass
-                        # Se sono arrivato fin qui ho eseugito l'azione opportuna sull'oggetto, cancello le righe di cannoneggiamento
-                        # e slocko il documento
-                        delete_cannoneggiamenti(r["ids"], conn)
-                        utils.unlock_all_guid(conn, r['id_oggetto'], r['tipo_oggetto'])
-                    except Exception as ex:
-                        output = io.StringIO()
-                        traceback.print_exception(*sys.exc_info(), limit=None, file=output)
-                        log.error(output.getvalue())
-                        errore = ex.args[0]
-                        set_guids_in_error(r, conn, codice_azienda, errore, r['id_oggetto'])
+            log.info('1.5')
+            r = curs.fetchone()
+            log.info('2')
+            if utils.try_lock_all_guid(conn, r['id_oggetto'], r['tipo_oggetto']):
+                log.info('3')
+                try:
+                    curs.execute("""
+                        UPDATE esportazioni.cannoneggiamenti
+                        SET in_esecuzione = TRUE 
+                        WHERE 
+                        id = ANY(%(ids)s)
+                    """, {'ids': r['ids']})
+                    
+                    log.info("Tipologia %s" % r['tipo_oggetto'])
+                    if "DELETE" in r["operazioni"]:
+                        # Devo cancellare questo oggetto (è previsto che sia un pico/dete/deli), lo cancello e poi posso eliminare tutte le righe corrispondenti
+                        log.info("Delete del guid: %s, tipo: %s, azienda: %s" % (r['id_oggetto'], r["tipo_oggetto"], codice_azienda))
+                        now = time.time()
+                        idm.delete_doc_by_guid_and_azienda(r['id_oggetto'], conn_internauta, id_azienda)
+                        later = time.time()
+                        difference = int(later - now)
+                        log.info("Delete eseguita con successo in %s secondi" % str(difference))
+                    else:
+                        # Gestisco update/insert in modo differente a seconda del tipo oggetto su cui agire
+                        if r['tipo_oggetto'] in ["pico_pe", "pico_pu", "dete", "deli", "RGPICO", "RGDETE", "RGDELI"]:
+                            json_data = argo_data_retriever.get_document_by_guid(conn, r['id_oggetto'], r['tipo_oggetto'])
+                            # Se il doc esiste dovrei avere dei dati, se è così vado a fare la upsert
+                            if json_data is not None:
+                                idm.upsert_doc_list_data(codice_azienda, json_data, conn_internauta, id_azienda)
+                        elif r['tipo_oggetto'] == "fascicolo":
+                            # Se l'oggetto è il fascicolo allora si tratta dell'update del nome
+                            # nome = "" if fascicoli_parlanti else argo_data_retriever.get_nome_fascicolo(conn, r['id_oggetto'])
+                            # idm.update_nome_fascicoli(nome, r['id_oggetto'], conn_internauta)
+                            pass
+                    # Se sono arrivato fin qui ho eseugito l'azione opportuna sull'oggetto, cancello le righe di cannoneggiamento
+                    # e slocko il documento
+                    delete_cannoneggiamenti(r["ids"], conn)
+                    utils.unlock_all_guid(conn, r['id_oggetto'], r['tipo_oggetto'])
+
+                except Exception as ex:
+                    log.error("ERRORE NEL CANNONNEGGIAMENTO DEL DOCUMENTO")
+                    output = io.StringIO()
+                    traceback.print_exception(*sys.exc_info(), limit=None, file=output)
+                    log.error(output.getvalue())
+                    errore = ex.args[0]
+                    set_guids_in_error(r, conn, codice_azienda, errore, r['id_oggetto'])
+
+            offset += 1
+            curs.execute(select_cannoneggiamenti, {'offset': offset})
 
     except Exception as ex:
         log.error("SEARCH_AND_WORK errore nel reperimento delle righe o del parametro nome parlante")
@@ -250,13 +262,13 @@ def main(codice_azienda, host, user, password, db):
         conn.set_isolation_level(psycopg2.extensions.ISOLATION_LEVEL_AUTOCOMMIT)
 
         log.info("Guardo se c'è del lavoro arretrato da fare subito")
-
         while True:
             #finche ho cose arretrate devo svolegere quelle una alla volta
             # devo
             curs.execute("LISTEN cannoneggiamenti_argo;")
             search_and_work(conn, codice_azienda, fascicoli_parlanti, conn_internauta, id_azienda)
             #time.sleep(10)
+
             log.info("In ascolto per altro lavoro..")
             while 1:
                 if select.select([conn], [], []):
