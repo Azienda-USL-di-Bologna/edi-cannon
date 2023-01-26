@@ -176,14 +176,14 @@ def search_and_work(conn, codice_azienda, fascicoli_parlanti, conn_internauta, i
             log.info('2')
             if utils.try_lock_all_guid(conn, r['id_oggetto'], r['tipo_oggetto']):
                 log.info('3')
-                curs.execute("""
-                    UPDATE esportazioni.cannoneggiamenti
-                    SET in_esecuzione = TRUE 
-                    WHERE 
-                    id = ANY(%(ids)s)
-                """, {'ids': r['ids']})
-
                 try:
+                    curs.execute("""
+                        UPDATE esportazioni.cannoneggiamenti
+                        SET in_esecuzione = TRUE 
+                        WHERE 
+                        id = ANY(%(ids)s)
+                    """, {'ids': r['ids']})
+                    
                     log.info("Tipologia %s" % r['tipo_oggetto'])
                     if "DELETE" in r["operazioni"]:
                         # Devo cancellare questo oggetto (è previsto che sia un pico/dete/deli), lo cancello e poi posso eliminare tutte le righe corrispondenti
