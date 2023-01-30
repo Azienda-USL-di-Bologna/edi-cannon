@@ -32,7 +32,8 @@ insert_doc = """
         set oggetto = excluded.oggetto,
             id_persona_creazione = excluded.id_persona_creazione,
             tipologia = excluded.tipologia,
-            version = excluded.version
+            version = excluded.version,
+            additional_data = excluded.additional_data
         RETURNING id, data_creazione
     )         
     INSERT INTO scripta.docs_details (
