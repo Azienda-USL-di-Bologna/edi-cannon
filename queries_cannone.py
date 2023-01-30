@@ -9,7 +9,8 @@ insert_doc = """
             tipologia,
             visibilita,
             id_esterno,
-            version
+            version,
+            additional_data
         ) VALUES (
             %(oggetto)s,
             %(id_persona_redattrice)s,
@@ -24,7 +25,8 @@ insert_doc = """
                 else 'NORMALE'::scripta.visibilita_doc
             END,
             %(guid_documento)s,
-            %(version)s
+            %(version)s,
+            %(additional_data)s
         ) ON conflict (id_esterno)
         do UPDATE
         set oggetto = excluded.oggetto,

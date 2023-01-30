@@ -82,7 +82,8 @@ def upsert_doc_list_data(codice_azienda, json_data, conn, id_azienda):
             'id_strutture_segreteria': json_data['id_strutture_segreteria'],
             'sulla_scrivania_di': None if json_data['sulla_scrivania_di'] is None else Json(json_data['sulla_scrivania_di']),
             'id_applicazione': json_data['id_applicazione'],
-            'version': json_data['version'], 
+            'version': json_data['version'],
+            'additional_data': json_data['additional_data'],
             'conservazione': json_data['conservazione'],
             'id_pec_mittente': None if json_data['id_pec_mittente'] is None else json_data['id_pec_mittente']
         })
