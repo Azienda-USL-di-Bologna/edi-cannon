@@ -27,7 +27,7 @@ insert_doc = """
             %(guid_documento)s,
             %(version)s,
             %(additional_data)s
-        ) ON conflict (id_esterno)
+        ) ON conflict (id_azienda, id_esterno)
         do UPDATE
         set oggetto = excluded.oggetto,
             id_persona_creazione = excluded.id_persona_creazione,
