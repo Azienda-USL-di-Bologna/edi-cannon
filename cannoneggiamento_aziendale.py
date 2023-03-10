@@ -159,14 +159,11 @@ def search_and_work(conn, codice_azienda, fascicoli_parlanti, conn_internauta, i
         '''
         offset = 0
         curs.execute(select_cannoneggiamenti, {'offset': offset})
-        log.info('1')
         while curs.rowcount == 1:
-
-            log.info('1.5')
             r = curs.fetchone()
-            log.info('2')
+            log.info('Trovato cannoneggiamento da eseguire, provo a prendere il lock')
             if utils.try_lock_all_guid(conn, r['id_oggetto'], r['tipo_oggetto']):
-                log.info('3')
+                log.info('Lock preso, eseguo il cannoneggiamento')
                 try:
                     curs.execute("""
                         UPDATE esportazioni.cannoneggiamenti
