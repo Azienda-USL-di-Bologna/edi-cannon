@@ -208,7 +208,7 @@ def upsert_doc_list_data(codice_azienda, json_data, conn, id_azienda):
                     "principale": allegato['principale'],
                     "firmato": allegato['firmato'],
                     "ordinale": allegato['ordinale'],
-                    "guid_documento": json_data['guid_documento'],
+                    "id_doc": id_doc,
                     "id_allegato_padre": allegato['id_allegato_padre'],
                     "data_inserimento": allegato['data_inserimento'],
                     "dettagli": Json(allegato['dettagli']),
