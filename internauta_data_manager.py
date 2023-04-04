@@ -154,6 +154,7 @@ def upsert_doc_list_data(codice_azienda, json_data, conn, id_azienda):
 
         # AGGIORNAMENTO DEGLI ALLEGATI
         now = time.time()
+        id_allegati_da_tenere = []
         if json_data['allegati'] is not None and len(json_data['allegati']) > 0:
             mongo_uuids = []
             for allegato in json_data['allegati']:
@@ -216,6 +217,16 @@ def upsert_doc_list_data(codice_azienda, json_data, conn, id_azienda):
                     "sottotipo": None if allegato["sottotipo"] is None else SOTTOTIPO_ALLEGATO[allegato["sottotipo"]],
                     "additional_data": None if allegato["additional_data"] is None else Json(allegato["additional_data"])
                 })
+                id_allegati_da_tenere.append(c.fetchone()["id"])
+        if len(id_allegati_da_tenere) > 0:
+            c.execute(qc.delete_allegati, {
+                "id_allegati_da_tenere": id_allegati_da_tenere,
+                "id_doc": id_doc
+            })
+        else:
+            c.execute(qc.delete_allegati_tutti, {
+                "id_doc": id_doc
+            })
         later = time.time()
         difference_allegati = int(later - now)
 
