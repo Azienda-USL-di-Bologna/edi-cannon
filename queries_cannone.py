@@ -253,7 +253,7 @@ insert_allegati_doc = """
 delete_allegati = """
     DELETE FROM scripta.allegati aa
     WHERE aa.id_doc = %(id_doc)s
-    AND aa.id not in (%(id_allegati_da_tenere)s) 
+    AND not aa.id = ANY(%(id_allegati_da_tenere)s) 
 """
 delete_allegati_tutti = """
     DELETE FROM scripta.allegati aa
