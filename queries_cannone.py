@@ -210,47 +210,53 @@ delete_doc = """
     AND id_azienda = %(id_azienda)s
 """
 insert_allegati_doc = """
-    INSERT INTO scripta.allegati (
-        nome, tipo, principale, firmato, 
-        ordinale, id_doc, id_allegato_padre, data_inserimento, 
-        dettagli, id_esterno, sottotipo, additional_data, version
-    ) VALUES ( 
-        %(nome)s,
-        %(tipo)s,
-        CASE
-            when %(principale)s != 0 then true::boolean
-            else false::boolean
-        END,
-        %(firmato)s,
-        %(ordinale)s,
-        (   SELECT id
-            FROM scripta.docs
-            WHERE id_esterno = %(guid_documento)s
-        ),
-        (   SELECT a.id 
-            FROM scripta.allegati a 
-            WHERE a.id_esterno = %(id_allegato_padre)s
-        ),
-        %(data_inserimento)s,
-        %(dettagli)s,
-        %(id_esterno)s,
-        %(sottotipo)s,
-        %(additional_data)s,
-        now()
-        )
-    ON CONFLICT (id_esterno, tipo) DO UPDATE
-    SET nome = excluded.nome,
-        tipo = excluded.tipo,
-        principale = excluded.principale,
-        firmato = excluded.firmato,
-        ordinale = excluded.ordinale,
-        id_doc = excluded.id_doc,
-        id_allegato_padre = excluded.id_allegato_padre,
-        data_inserimento = excluded.data_inserimento,
-        dettagli = excluded.dettagli,
-        sottotipo = excluded.sottotipo,
-        additional_data = excluded.additional_data,
-        version = excluded.version
+    WITH allegati_aggiornati AS (
+        INSERT INTO scripta.allegati (
+            nome, tipo, principale, firmato, 
+            ordinale, id_doc, id_allegato_padre, data_inserimento, 
+            dettagli, id_esterno, sottotipo, additional_data, version
+        ) VALUES ( 
+            %(nome)s,
+            %(tipo)s,
+            CASE
+                when %(principale)s != 0 then true::boolean
+                else false::boolean
+            END,
+            %(firmato)s,
+            %(ordinale)s,
+            %(id_doc)s,
+            (   SELECT a.id 
+                FROM scripta.allegati a 
+                WHERE a.id_esterno = %(id_allegato_padre)s
+                AND a.id_doc = %(id_doc)s
+            ),
+            %(data_inserimento)s,
+            %(dettagli)s,
+            %(id_esterno)s,
+            %(sottotipo)s,
+            %(additional_data)s,
+            now()
+            )
+        ON CONFLICT (id_doc, id_esterno, tipo) DO UPDATE
+        SET nome = excluded.nome,
+            tipo = excluded.tipo,
+            principale = excluded.principale,
+            firmato = excluded.firmato,
+            ordinale = excluded.ordinale,
+            id_allegato_padre = excluded.id_allegato_padre,
+            data_inserimento = excluded.data_inserimento,
+            dettagli = excluded.dettagli,
+            sottotipo = excluded.sottotipo,
+            additional_data = excluded.additional_data,
+            version = excluded.version
+        RETURNING id
+    )
+    DELETE FROM scripta.allegati aa
+    WHERE aa.id_doc = %(id_doc)s
+    AND aa.id not in (
+        SELECT agg.id
+        FROM allegati_aggiornati agg
+    ) 
 """
 query_minio = """
     SELECT jsonb_object_agg(mongo_uuid, jsonb_build_object(
