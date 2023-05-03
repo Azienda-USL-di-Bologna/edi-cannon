@@ -46,8 +46,7 @@ update_doc_by_id = """
         version,
         id_applicazione,
         conservazione,
-        id_pec_mittente,
-        guid_documento
+        id_pec_mittente
     ) VALUES (
         %(id_doc)s,
         %(id_azienda)s,
@@ -83,8 +82,7 @@ update_doc_by_id = """
         %(version)s,
         %(id_applicazione)s,
         %(conservazione)s,
-        %(id_pec_mittente)s,
-        %(guid_documento)s
+        %(id_pec_mittente)s
     ) ON conflict (id, id_azienda, data_creazione)
     DO UPDATE
     SET open_command = excluded.open_command,
