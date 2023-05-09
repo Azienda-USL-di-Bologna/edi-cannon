@@ -49,7 +49,13 @@ def upsert_doc_list_data(codice_azienda, json_data, conn, id_azienda):
             json_data['id_pec_mittente'] = connex.fetchone()["id"]
             log.info(f"pec mittente è: {json_data['id_pec_mittente']}")
         now = time.time()
-        c.execute(qc.insert_doc, {
+        query_to_use = qc.insert_doc
+        id_doc = None
+        if 'id_doc' in json_data and json_data['id_doc'] is not None:
+            query_to_use = qc.update_doc_by_id
+            id_doc = json_data['id_doc']
+            log.info("ho l'id_doc %s, userò l'update" % str(id_doc))
+        c.execute(query_to_use, {
             'id_azienda': id_azienda,
             'guid_documento': json_data['guid_documento'],
             'tipologia': json_data['tipologia'],
@@ -85,7 +91,8 @@ def upsert_doc_list_data(codice_azienda, json_data, conn, id_azienda):
             'version': json_data['version'],
             'additional_data': Json(json_data['additional_data']),
             'conservazione': json_data['conservazione'],
-            'id_pec_mittente': None if json_data['id_pec_mittente'] is None else json_data['id_pec_mittente']
+            'id_pec_mittente': None if json_data['id_pec_mittente'] is None else json_data['id_pec_mittente'],
+            'id_doc': id_doc
         })
         later = time.time()
         difference_upsert = int(later - now)
