@@ -217,6 +217,15 @@ def upsert_doc_list_data(codice_azienda, json_data, conn, id_azienda):
                             uuids_map[uid]["dataCreazione"] = allegato['data_inserimento']
                             dettaglio_originale = uuids_map[uid]
                             allegato['dettagli']['originale'] = dettaglio_originale
+                        else:
+                            # Qui non dovrei entrare perché se non entro allora il file è andato perduto, cioè non l'ho torvato su minirepo
+                            # In ogni caso voglio scrivere ciò che so dell'originale
+                            dettaglio_originale = {
+                                "mimeType": allegato['mime_type'],
+                                "dataCreazione": allegato['data_inserimento'],
+                                "nome": allegato["nome"]
+                            }
+                            allegato['dettagli']['originale'] = dettaglio_originale
                 c.execute(qc.insert_allegati_doc, {
                     "nome": allegato['nome'],
                     "tipo": TIPO_ALLEGATO[allegato['tipo_allegato']],
