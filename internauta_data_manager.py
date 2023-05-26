@@ -180,11 +180,12 @@ def upsert_doc_list_data(codice_azienda, json_data, conn, id_azienda):
                 })
                 uuids_map = m.fetchone()['res']
                 if uuids_map is not None:
+                    # Ciclo gli uuid, ogni uuid rappresenta una certa versione di un certo allegato
                     for key in uuids_map.keys():
                         obj = uuids_map[key]
                         obj['estensione'] = os.path.splitext(obj['nome'])[1][1:]
-                        obj['dataCreazione'] = json_data['data_creazione']
-                        obj['mimeType'] = allegato['mime_type']
+                        #obj['dataCreazione'] = json_data['data_creazione']
+                        #obj['mimeType'] = allegato['mime_type']
                 minio_conn.close()
 
             for allegato in json_data['allegati']:
@@ -195,12 +196,16 @@ def upsert_doc_list_data(codice_azienda, json_data, conn, id_azienda):
                     uid_pdf = uid_repository['uid_pdf']
                     if uuids_map is not None:
                         if uid_pdf in uuids_map:
+                            uuids_map[uid_pdf]["mimeType"] = "application/pdf"
+                            uuids_map[uid_pdf]["dataCreazione"] = allegato['data_inserimento']
                             dettaglio_pdf = uuids_map[uid_pdf]
                             allegato['dettagli']['convertito'] = dettaglio_pdf
                 if uid_repository['uid_firmato'] is not None:
                     uid_firmato = uid_repository['uid_firmato']
                     if uuids_map is not None:
                         if uid_firmato in uuids_map:
+                            uuids_map[uid_pdf]["mimeType"] = "application/pdf"  # TODO: Qui ci andrebbe il corretto mimetype del file firmato, da tirar su con le stored procedue
+                            uuids_map[uid_pdf]["dataCreazione"] = allegato['data_inserimento']
                             dettaglio_firmato = uuids_map[uid_firmato]
                             allegato['dettagli']['originaleFirmato'] = dettaglio_firmato
                             allegato['firmato'] = True
@@ -208,6 +213,8 @@ def upsert_doc_list_data(codice_azienda, json_data, conn, id_azienda):
                     uid = uid_repository['uid_originale']
                     if uuids_map is not None:
                         if uid in uuids_map:
+                            uuids_map[uid_pdf]["mimeType"] = allegato['mime_type']
+                            uuids_map[uid_pdf]["dataCreazione"] = allegato['data_inserimento']
                             dettaglio_originale = uuids_map[uid]
                             allegato['dettagli']['originale'] = dettaglio_originale
                 c.execute(qc.insert_allegati_doc, {
