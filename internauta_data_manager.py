@@ -49,7 +49,13 @@ def upsert_doc_list_data(codice_azienda, json_data, conn, id_azienda):
             json_data['id_pec_mittente'] = connex.fetchone()["id"]
             log.info(f"pec mittente è: {json_data['id_pec_mittente']}")
         now = time.time()
-        c.execute(qc.insert_doc, {
+        query_to_use = qc.insert_doc
+        id_doc = None
+        if 'id_doc' in json_data and json_data['id_doc'] is not None:
+            query_to_use = qc.update_doc_by_id
+            id_doc = json_data['id_doc']
+            log.info("ho l'id_doc %s, userò l'update" % str(id_doc))
+        c.execute(query_to_use, {
             'id_azienda': id_azienda,
             'guid_documento': json_data['guid_documento'],
             'tipologia': json_data['tipologia'],
@@ -85,7 +91,8 @@ def upsert_doc_list_data(codice_azienda, json_data, conn, id_azienda):
             'version': json_data['version'],
             'additional_data': Json(json_data['additional_data']),
             'conservazione': json_data['conservazione'],
-            'id_pec_mittente': None if json_data['id_pec_mittente'] is None else json_data['id_pec_mittente']
+            'id_pec_mittente': None if json_data['id_pec_mittente'] is None else json_data['id_pec_mittente'],
+            'id_doc': id_doc
         })
         later = time.time()
         difference_upsert = int(later - now)
@@ -173,11 +180,12 @@ def upsert_doc_list_data(codice_azienda, json_data, conn, id_azienda):
                 })
                 uuids_map = m.fetchone()['res']
                 if uuids_map is not None:
+                    # Ciclo gli uuid, ogni uuid rappresenta una certa versione di un certo allegato
                     for key in uuids_map.keys():
                         obj = uuids_map[key]
                         obj['estensione'] = os.path.splitext(obj['nome'])[1][1:]
-                        obj['dataCreazione'] = json_data['data_creazione']
-                        obj['mimeType'] = allegato['mime_type']
+                        #obj['dataCreazione'] = json_data['data_creazione']
+                        #obj['mimeType'] = allegato['mime_type']
                 minio_conn.close()
 
             for allegato in json_data['allegati']:
@@ -188,12 +196,16 @@ def upsert_doc_list_data(codice_azienda, json_data, conn, id_azienda):
                     uid_pdf = uid_repository['uid_pdf']
                     if uuids_map is not None:
                         if uid_pdf in uuids_map:
+                            uuids_map[uid_pdf]["mimeType"] = "application/pdf"
+                            uuids_map[uid_pdf]["dataCreazione"] = allegato['data_inserimento']
                             dettaglio_pdf = uuids_map[uid_pdf]
                             allegato['dettagli']['convertito'] = dettaglio_pdf
                 if uid_repository['uid_firmato'] is not None:
                     uid_firmato = uid_repository['uid_firmato']
                     if uuids_map is not None:
                         if uid_firmato in uuids_map:
+                            uuids_map[uid_firmato]["mimeType"] = "application/pdf"  # TODO: Qui ci andrebbe il corretto mimetype del file firmato, da tirar su con le stored procedue
+                            uuids_map[uid_firmato]["dataCreazione"] = allegato['data_inserimento']
                             dettaglio_firmato = uuids_map[uid_firmato]
                             allegato['dettagli']['originaleFirmato'] = dettaglio_firmato
                             allegato['firmato'] = True
@@ -201,6 +213,8 @@ def upsert_doc_list_data(codice_azienda, json_data, conn, id_azienda):
                     uid = uid_repository['uid_originale']
                     if uuids_map is not None:
                         if uid in uuids_map:
+                            uuids_map[uid]["mimeType"] = allegato['mime_type']
+                            uuids_map[uid]["dataCreazione"] = allegato['data_inserimento']
                             dettaglio_originale = uuids_map[uid]
                             allegato['dettagli']['originale'] = dettaglio_originale
                 c.execute(qc.insert_allegati_doc, {
