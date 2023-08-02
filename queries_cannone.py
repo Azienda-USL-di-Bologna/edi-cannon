@@ -127,6 +127,7 @@ insert_doc = """
             tipologia,
             visibilita,
             id_esterno,
+            id_pec_mittente,
             version,
             additional_data
         ) VALUES (
@@ -143,6 +144,7 @@ insert_doc = """
                 else 'NORMALE'::scripta.visibilita_doc
             END,
             %(guid_documento)s,
+            %(id_pec_mittente)s,
             %(version)s,
             %(additional_data)s
         ) ON conflict (id_azienda, id_esterno)
@@ -150,6 +152,7 @@ insert_doc = """
         set oggetto = excluded.oggetto,
             id_persona_creazione = excluded.id_persona_creazione,
             tipologia = excluded.tipologia,
+            id_pec_mittente = excluded.id_pec_mittente,
             version = excluded.version,
             additional_data = excluded.additional_data
         RETURNING id, data_creazione
