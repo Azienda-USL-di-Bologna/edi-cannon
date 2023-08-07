@@ -417,5 +417,5 @@ delete_attori = """
 
 get_id_pec = """
     SELECT id FROM baborg.pec 
-    WHERE indirizzo = %(id_pec_mittente)s
+    WHERE lower(indirizzo) = lower(%(id_pec_mittente)s)
 """
