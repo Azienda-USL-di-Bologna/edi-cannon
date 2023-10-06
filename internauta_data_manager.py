@@ -199,6 +199,7 @@ def upsert_doc_list_data(codice_azienda, json_data, conn, id_azienda):
                             uuids_map[uid_pdf]["mimeType"] = "application/pdf"
                             uuids_map[uid_pdf]["dataCreazione"] = allegato['data_inserimento']
                             dettaglio_pdf = uuids_map[uid_pdf]
+                            dettaglio_pdf["classz"] = "it.bologna.ausl.model.entities.scripta.Allegato$DettaglioAllegato"
                             allegato['dettagli']['convertito'] = dettaglio_pdf
                 if uid_repository['uid_firmato'] is not None:
                     uid_firmato = uid_repository['uid_firmato']
@@ -207,6 +208,7 @@ def upsert_doc_list_data(codice_azienda, json_data, conn, id_azienda):
                             uuids_map[uid_firmato]["mimeType"] = "application/pdf"  # TODO: Qui ci andrebbe il corretto mimetype del file firmato, da tirar su con le stored procedue
                             uuids_map[uid_firmato]["dataCreazione"] = allegato['data_inserimento']
                             dettaglio_firmato = uuids_map[uid_firmato]
+                            dettaglio_firmato["classz"] = "it.bologna.ausl.model.entities.scripta.Allegato$DettaglioAllegato"
                             allegato['dettagli']['originaleFirmato'] = dettaglio_firmato
                             allegato['firmato'] = True
                 if uid_repository['uid_originale'] is not None:
@@ -216,6 +218,7 @@ def upsert_doc_list_data(codice_azienda, json_data, conn, id_azienda):
                             uuids_map[uid]["mimeType"] = allegato['mime_type']
                             uuids_map[uid]["dataCreazione"] = allegato['data_inserimento']
                             dettaglio_originale = uuids_map[uid]
+                            dettaglio_originale["classz"] = "it.bologna.ausl.model.entities.scripta.Allegato$DettaglioAllegato"
                             allegato['dettagli']['originale'] = dettaglio_originale
                         else:
                             # Qui non dovrei entrare perché se non entro allora il file è andato perduto, cioè non l'ho torvato su minirepo
@@ -223,7 +226,8 @@ def upsert_doc_list_data(codice_azienda, json_data, conn, id_azienda):
                             dettaglio_originale = {
                                 "mimeType": allegato['mime_type'],
                                 "dataCreazione": allegato['data_inserimento'],
-                                "nome": allegato["nome"]
+                                "nome": allegato["nome"],
+                                "classz": "it.bologna.ausl.model.entities.scripta.Allegato$DettaglioAllegato"
                             }
                             allegato['dettagli']['originale'] = dettaglio_originale
                 c.execute(qc.insert_allegati_doc, {
