@@ -86,6 +86,7 @@ RUOLO_ATTORE = {
   "Direttore_Generale": "DIRETTORE_GENERALE",
   "Direttore_Sanitario": "DIRETTORE_SANITARIO",
   "Direttore_Scientifico": "DIRETTORE_SCIENTIFICO",
+  "Visore": "VISORE",
   "FIRMA": "FIRMA",
   "Firma": "FIRMA",
   "Visti": "VISTI",
