@@ -430,8 +430,9 @@ delete_messages_docs = """
 insert_messages_docs = """
     INSERT INTO scripta.messages_docs (
         id_doc, id_message, "tipo", "scope"
-    ) VALUES (
-        %(id_doc)s, %(id_message)s, 'IN'::scripta.tipi_messages_docs, 'PROTOCOLLAZIONE'::scripta.message_doc_scope
-    )
+    ) 
+    SELECT %(id_doc)s, %(id_message)s, 'IN'::scripta.tipi_messages_docs, 'PROTOCOLLAZIONE'::scripta.message_doc_scope
+    FROM shpeck.messages m
+    WHERE m.id = %(id_message)s
     ON CONFLICT (id_doc, id_message, "scope") DO NOTHING
 """
