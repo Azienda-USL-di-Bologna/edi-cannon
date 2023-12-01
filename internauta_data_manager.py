@@ -99,6 +99,18 @@ def upsert_doc_list_data(codice_azienda, json_data, conn, id_azienda):
 
         id_doc = c.fetchone()["id"]
 
+        # AGGIORNO LA MESSAGES_DOCS
+        if "id_message_shpeck" in json_data:
+            if json_data["id_message_shpeck"] is None:
+                c.execute(qc.delete_messages_docs, {
+                    "id_message": json_data['id_message_shpeck'],
+                    "id_doc": id_doc
+                })
+            else:
+                c.execute(qc.insert_messages_docs, {
+                    "id_message": json_data['id_message_shpeck'],
+                    "id_doc": id_doc
+                })
 
         # AGGIORNAMENTO DELLE PERSONE VEDENTI 
         now = time.time()

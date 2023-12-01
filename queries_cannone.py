@@ -417,8 +417,22 @@ delete_attori = """
     DELETE FROM scripta.attori_docs 
     WHERE id_doc = %(id_doc)s
 """
-
 get_id_pec = """
     SELECT id FROM baborg.pec 
     WHERE lower(indirizzo) = lower(%(id_pec_mittente)s)
+"""
+delete_messages_docs = """
+    DELETE FROM scripta.messages_docs
+    WHERE id_doc = %(id_doc)s
+    AND id_message = %(id_message)s
+    AND scope = 'PROTOCOLLAZIONE'::scripta.message_doc_scope
+"""
+insert_messages_docs = """
+    INSERT INTO scripta.messages_docs (
+        id_doc, id_message, "tipo", "scope"
+    ) 
+    SELECT %(id_doc)s, %(id_message)s, 'IN'::scripta.tipi_messages_docs, 'PROTOCOLLAZIONE'::scripta.message_doc_scope
+    FROM shpeck.messages m
+    WHERE m.id = %(id_message)s
+    ON CONFLICT (id_doc, id_message, "scope") DO NOTHING
 """
