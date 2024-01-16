@@ -286,12 +286,30 @@ upsert_persone_vedenti_and_delete_the_others = """
             modalita_apertura = EXCLUDED.modalita_apertura,
             version = EXCLUDED.version
         RETURNING id
+    ),
+    altri_id_da_tenere AS (
+        INSERT INTO scripta.persone_vedenti (
+            id_doc_detail, id_persona, mio_documento, piena_visibilita, 
+            data_creazione, data_registrazione, id_azienda, version
+        ) 
+        SELECT %(id_doc)s, pa.id_persona, FALSE, TRUE, 
+            modalita_apertura, d.data_creazione, %(data_registrazione)s, %(id_azienda)s, now()
+        FROM scripta.docs d 
+		JOIN scripta.archivi_docs ad ON ad.id_doc = d.id 
+		JOIN scripta.archivi a ON a.id = ad.id_archivio 
+		JOIN scripta.permessi_archivi pa ON pa.id_archivio_detail = a.id AND pa.data_creazione = a.data_creazione AND pa.id_azienda = a.id_azienda 
+		WHERE d.id = %(id_doc)s
+		AND pa.BIT > 1
+        ON CONFLICT (id_doc_detail, id_persona, data_creazione, id_azienda) DO UPDATE 
+        SET piena_visibilita = EXCLUDED.piena_visibilita
+        RETURNING id
     )
     DELETE FROM scripta.persone_vedenti 
     WHERE id_azienda = %(id_azienda)s
     AND data_creazione = ( SELECT data_creazione FROM data_creazione )
     AND id_doc_detail = %(id_doc)s
     AND id NOT IN (SELECT id FROM id_da_tenere)
+    AND id NOT IN (SELECT id FROM altri_id_da_tenere)
 """
 delete_persone_vedenti = """
     DELETE FROM scripta.persone_vedenti pv
