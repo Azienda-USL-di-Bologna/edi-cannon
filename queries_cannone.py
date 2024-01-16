@@ -293,7 +293,7 @@ upsert_persone_vedenti_and_delete_the_others = """
             data_creazione, data_registrazione, id_azienda, version
         ) 
         SELECT %(id_doc)s, pa.id_persona, FALSE, TRUE, 
-            modalita_apertura, d.data_creazione, %(data_registrazione)s, %(id_azienda)s, now()
+            d.data_creazione, %(data_registrazione)s, %(id_azienda)s, now()
         FROM scripta.docs d 
 		JOIN scripta.archivi_docs ad ON ad.id_doc = d.id 
 		JOIN scripta.archivi a ON a.id = ad.id_archivio 
