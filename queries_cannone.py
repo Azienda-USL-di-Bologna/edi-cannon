@@ -292,7 +292,7 @@ upsert_persone_vedenti_and_delete_the_others = """
             id_doc_detail, id_persona, mio_documento, piena_visibilita, 
             data_creazione, data_registrazione, id_azienda, version
         ) 
-        SELECT %(id_doc)s, pa.id_persona, FALSE, TRUE, 
+        SELECT DISTINCT ON (pa.id_persona) %(id_doc)s, pa.id_persona, FALSE, TRUE, 
             d.data_creazione, %(data_registrazione)s, %(id_azienda)s, now()
         FROM scripta.docs d 
 		JOIN scripta.archivi_docs ad ON ad.id_doc = d.id 
