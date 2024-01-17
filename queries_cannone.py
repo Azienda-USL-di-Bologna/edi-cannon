@@ -413,18 +413,20 @@ upsert_attori_and_delete_the_others = """
     WITH id_da_tenere AS (
         INSERT INTO scripta.attori_docs (
             id_doc, id_persona, id_struttura, ruolo, 
-            sulla_scrivania, ordinale, data_inserimento_riga, version
+            sulla_scrivania, ordinale, data_inserimento_riga, version,
+            vedente
         ) 
         SELECT DISTINCT %(id_doc)s, id_persona, id_struttura::integer, ruolo::scripta.ruolo_attore_doc, 
             FALSE, ordinale::integer, now(), now()
         FROM (
         VALUES  
             {values}
-        ) AS t (id_persona, id_struttura, ruolo, ordinale)
+        ) AS t (id_persona, id_struttura, ruolo, ordinale, vedente)
         ON CONFLICT (id_doc, id_persona, id_struttura, ruolo) DO UPDATE 
         SET sulla_scrivania = EXCLUDED.sulla_scrivania,
             ordinale = EXCLUDED.ordinale,
-            version = EXCLUDED.version
+            version = EXCLUDED.version,
+            vedente = EXCLUDED.vedente
         RETURNING id
     )
     DELETE FROM scripta.attori_docs 

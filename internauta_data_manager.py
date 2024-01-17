@@ -154,7 +154,8 @@ def upsert_doc_list_data(codice_azienda, json_data, conn, id_azienda):
                     {attore["idPersona"]}, 
                     {attore['idStruttura'] if attore['idStruttura'] is not None else 'null'}, 
                     {"'" + RUOLO_ATTORE[attore['ruolo']] + "'"}, 
-                    {attore['ordinale'] if attore['ordinale'] is not None else 'null'}
+                    {attore['ordinale'] if attore['ordinale'] is not None else 'null'},
+                    {attore["vedente"]}
                 ),"""
         if len(values_attori) > 0:
             # Chiamo la upsert and delete
