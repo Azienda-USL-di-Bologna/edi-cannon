@@ -112,36 +112,36 @@ def upsert_doc_list_data(codice_azienda, json_data, conn, id_azienda):
                     "id_doc": id_doc
                 })
 
-        # AGGIORNAMENTO DELLE PERSONE VEDENTI 
-        now = time.time()
-        values_persone_vedenti = ""
-        if json_data['persone_vedenti'] is not None and len(json_data['persone_vedenti']) > 0:
-            for persona_vedente in json_data['persone_vedenti']:
-                values_persone_vedenti = values_persone_vedenti + f"""(
-                    {persona_vedente["idPersona"]}, 
-                    {persona_vedente['mioDocumento']}, 
-                    {persona_vedente['pienaVisibilita']}, 
-                    {"'" + persona_vedente['modalitaApertura'] + "'" if ('modalitaApertura' in persona_vedente) else 'null'}
-                ),"""
-        if len(values_persone_vedenti) > 0:
-            # Chiamo la upsert and delete
-            values_persone_vedenti = values_persone_vedenti[:-1] # rimuovo l'ultima virgola
-            c.execute(qc.upsert_persone_vedenti_and_delete_the_others.format(values=values_persone_vedenti), {
-                "guid_documento": json_data['guid_documento'],
-                "id_persona": persona_vedente["idPersona"],
-                "data_registrazione": json_data['data_registrazione'],
-                "id_azienda": id_azienda,
-                "id_doc": id_doc
-            })
-        else:
-            # Faccio solo la delete
-            c.execute(qc.delete_persone_vedenti, {
-                "guid_documento": json_data['guid_documento'],
-                "id_azienda": id_azienda,
-                'data_creazione': json_data['data_creazione']
-            })
-        later = time.time()
-        difference_persone_vedenti = int(later - now)
+        # OLD AGGIORNAMENTO DELLE PERSONE VEDENTI  - ORA LO FACCIO PIU SOTTO
+        # now = time.time()
+        # values_persone_vedenti = ""
+        # if json_data['persone_vedenti'] is not None and len(json_data['persone_vedenti']) > 0:
+        #     for persona_vedente in json_data['persone_vedenti']:
+        #         values_persone_vedenti = values_persone_vedenti + f"""(
+        #             {persona_vedente["idPersona"]}, 
+        #             {persona_vedente['mioDocumento']}, 
+        #             {persona_vedente['pienaVisibilita']}, 
+        #             {"'" + persona_vedente['modalitaApertura'] + "'" if ('modalitaApertura' in persona_vedente) else 'null'}
+        #         ),"""
+        # if len(values_persone_vedenti) > 0:
+        #     # Chiamo la upsert and delete
+        #     values_persone_vedenti = values_persone_vedenti[:-1] # rimuovo l'ultima virgola
+        #     c.execute(qc.upsert_persone_vedenti_and_delete_the_others.format(values=values_persone_vedenti), {
+        #         "guid_documento": json_data['guid_documento'],
+        #         "id_persona": persona_vedente["idPersona"],
+        #         "data_registrazione": json_data['data_registrazione'],
+        #         "id_azienda": id_azienda,
+        #         "id_doc": id_doc
+        #     })
+        # else:
+        #     # Faccio solo la delete
+        #     c.execute(qc.delete_persone_vedenti, {
+        #         "guid_documento": json_data['guid_documento'],
+        #         "id_azienda": id_azienda,
+        #         'data_creazione': json_data['data_creazione']
+        #     })
+        # later = time.time()
+        # difference_persone_vedenti = int(later - now)
 
 
         # AGGIORNAMENTO DEGLI ATTORI
@@ -170,6 +170,15 @@ def upsert_doc_list_data(codice_azienda, json_data, conn, id_azienda):
         later = time.time()
         difference_attori = int(later - now)
 
+
+        now = time.time()
+        c.execute("""
+            SELECT scripta.calcola_persone_vedenti(%(id_doc)s)
+        """, {
+            "id_doc": id_doc
+        })
+        later = time.time()
+        difference_persone_vedenti = int(later - now)
 
         # AGGIORNAMENTO DEGLI ALLEGATI
         now = time.time()
