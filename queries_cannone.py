@@ -417,7 +417,8 @@ upsert_attori_and_delete_the_others = """
             vedente
         ) 
         SELECT DISTINCT %(id_doc)s, id_persona, id_struttura::integer, ruolo::scripta.ruolo_attore_doc, 
-            FALSE, ordinale::integer, now(), now()
+            FALSE, ordinale::integer, now(), now(),
+            vedente
         FROM (
         VALUES  
             {values}
