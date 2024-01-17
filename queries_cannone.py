@@ -422,7 +422,7 @@ upsert_attori_and_delete_the_others = """
             {values}
         ) AS t (id_persona, id_struttura, ruolo, ordinale, vedente)
         GROUP BY 
-            id_doc, id_persona, id_struttura, ruolo, sulla_scrivania 
+            id_persona, id_struttura, ruolo 
         ON CONFLICT (id_doc, id_persona, id_struttura, ruolo) DO UPDATE 
         SET sulla_scrivania = EXCLUDED.sulla_scrivania,
             ordinale = EXCLUDED.ordinale,
