@@ -174,7 +174,18 @@ def upsert_doc_list_data(codice_azienda, json_data, conn, id_azienda):
 
         now = time.time()
         c.execute("""
-            SELECT scripta.calcola_persone_vedenti(%(id_doc)s)
+            INSERT INTO masterjobs.jobs_notified (
+                job_name, job_data, "deferred", object_id,
+                object_type, app, wait_object, priority,
+                insert_ts, skip_if_already_present
+            ) VALUES (
+                'CalcolaPersoneVedentiDocJobWorker', json_build_object(
+                    '@class', 'it.bologna.ausl.internauta.utils.masterjobs.workers.jobs.calcolapersonevedentidoc.CalcolaPersoneVedentiDocJobWorkerData',
+                    'idDoc', %(id_doc)s
+                ), false, %(id_doc)s, 
+                'archivio', 'scripta', FALSE, 'NORMAL', 
+                now(), FALSE
+            )
         """, {
             "id_doc": id_doc
         })
