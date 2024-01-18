@@ -172,6 +172,7 @@ def upsert_doc_list_data(codice_azienda, json_data, conn, id_azienda):
         difference_attori = int(later - now)
 
 
+        # AGGIORNAMENTO DELLE PERSONE VEDENTI - DO L'INCARICO AL MASTERJOBS
         now = time.time()
         c.execute("""
             INSERT INTO masterjobs.jobs_notified (
