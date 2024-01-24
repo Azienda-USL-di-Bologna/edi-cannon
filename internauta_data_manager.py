@@ -72,6 +72,7 @@ def upsert_doc_list_data(codice_azienda, json_data, conn, id_azienda):
             'data_registrazione': json_data['data_registrazione'],
             'data_pubblicazione': json_data['data_pubblicazione'],
             'oggetto': json_data['oggetto'],
+            'testo': json_data['testo'],
             'firmatari': None if json_data['firmatari'] is None else Json(json_data['firmatari']),
             'destinatari': None if json_data['destinatari'] is None else Json(json_data['destinatari']),
             'mittente': json_data['mittente'],

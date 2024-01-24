@@ -3,6 +3,7 @@ update_doc_by_id = """
     WITH updated_doc AS (
         UPDATE scripta.docs d
         SET oggetto = %(oggetto)s,
+            testo = %(testo)s,
             id_persona_creazione = %(id_persona_redattrice)s,
             tipologia = %(tipologia)s,
             version = %(version)s,
@@ -29,6 +30,7 @@ update_doc_by_id = """
         data_registrazione,
         data_pubblicazione,
         oggetto,
+        testo,
         firmatari,
         destinatari,
         mittente,
@@ -65,6 +67,7 @@ update_doc_by_id = """
         %(data_registrazione)s,
         %(data_pubblicazione)s,
         %(oggetto)s,
+        %(testo)s,
         %(firmatari)s,
         %(destinatari)s,
         %(mittente)s,
@@ -97,6 +100,7 @@ update_doc_by_id = """
        data_registrazione = excluded.data_registrazione,
        data_pubblicazione = excluded.data_pubblicazione,
        oggetto = excluded.oggetto,
+       testo = excluded.testo,
        firmatari = excluded.firmatari,
        destinatari = excluded.destinatari,
        mittente = excluded.mittente,
@@ -121,6 +125,7 @@ insert_doc = """
     with insert_to_docs as (
         INSERT INTO scripta.docs  (           
             oggetto,
+            testo,
             id_persona_creazione,
             data_creazione,
             id_azienda,
@@ -132,6 +137,7 @@ insert_doc = """
             additional_data
         ) VALUES (
             %(oggetto)s,
+            %(testo)s,
             %(id_persona_redattrice)s,
             %(data_creazione)s,
             %(id_azienda)s,
@@ -150,6 +156,7 @@ insert_doc = """
         ) ON conflict (id_azienda, id_esterno)
         do UPDATE
         set oggetto = excluded.oggetto,
+            testo = excluded.testo,
             id_persona_creazione = excluded.id_persona_creazione,
             tipologia = excluded.tipologia,
             id_pec_mittente = excluded.id_pec_mittente,
@@ -175,6 +182,7 @@ insert_doc = """
         data_registrazione,
         data_pubblicazione,
         oggetto,
+        testo,
         firmatari,
         destinatari,
         mittente,
@@ -211,6 +219,7 @@ insert_doc = """
         %(data_registrazione)s,
         %(data_pubblicazione)s,
         %(oggetto)s,
+        %(testo)s,
         %(firmatari)s,
         %(destinatari)s,
         %(mittente)s,
@@ -243,6 +252,7 @@ insert_doc = """
        data_registrazione = excluded.data_registrazione,
        data_pubblicazione = excluded.data_pubblicazione,
        oggetto = excluded.oggetto,
+       testo = excluded.testo,
        firmatari = excluded.firmatari,
        destinatari = excluded.destinatari,
        mittente = excluded.mittente,
