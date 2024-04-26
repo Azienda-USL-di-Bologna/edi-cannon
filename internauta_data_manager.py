@@ -338,7 +338,7 @@ def upsert_doc_list_data(codice_azienda, json_data, conn, id_azienda):
 
 def get_and_cache_collegio_sindacale_from_mail(conn, email, id_azienda):
     global map_collegi_sindcali
-    key_to_find = email + "__" + id_azienda
+    key_to_find = email + "__" + str(id_azienda)
     if key_to_find not in map_collegi_sindcali:
         c = conn.cursor(cursor_factory=psycopg2.extras.DictCursor)
         c.execute(qc.get_collegi_sindacali, {'email': email, 'id_azienda': id_azienda})
