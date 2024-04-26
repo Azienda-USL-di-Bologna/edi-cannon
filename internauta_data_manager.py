@@ -343,4 +343,7 @@ def get_and_cache_collegio_sindacale_from_mail(conn, email, id_azienda):
         c = conn.cursor(cursor_factory=psycopg2.extras.DictCursor)
         c.execute(qc.get_collegi_sindacali, {'email': email, 'id_azienda': id_azienda})
         map_collegi_sindcali = c.fetchone()["collegi_sindacali_map"]
-    return map_collegi_sindcali[key_to_find]
+    if key_to_find in map_collegi_sindcali:
+        return map_collegi_sindcali[key_to_find]
+    else:
+        return None
