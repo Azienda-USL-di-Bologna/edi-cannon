@@ -14,7 +14,7 @@ import cannoneggiamento_aziendale
 import time
 
 log = logging.getLogger("cannoneggiamento_aziendale")
-
+map_collegi_sindcali = {}
 """
     Cancello il documento by guid
 """
@@ -81,7 +81,7 @@ def upsert_doc_list_data(codice_azienda, json_data, conn, id_azienda):
             'riservato': True if json_data['riservato'] != 0 else False,
             'annullato': True if json_data['annullato'] != 0 else False,
             'protocollo_esterno': json_data['protocollo_esterno'],
-            'mail_collegio': json_data['mail_collegio'],
+            #'mail_collegio': json_data['mail_collegio'],
             'stato_ufficio_atti': STATI_UFFICIO_ATTI[str(json_data['stato_ufficio_atti'])],
             'data_inserimento_riga': datetime.now(),
             #'persone_vedenti': None if json_data['persone_vedenti'] is None else Json(json_data['persone_vedenti']),
@@ -292,10 +292,38 @@ def upsert_doc_list_data(codice_azienda, json_data, conn, id_azienda):
         later = time.time()
         difference_allegati = int(later - now)
 
+        # AGGIORNAMENTO COLLEGI SINDACALI
+        now = time.time()
+        values_collegio_sindacale = ""
+        if json_data['collegi_sindacali'] is not None and len(json_data['collegi_sindacali']) > 0:
+            for collegio_sindacale in json_data['collegi_sindacali']:
+                if collegio_sindacale is None:
+                    raise Exception("il collegio_sindacale nel json è null")
+                collegio_sindacale_map = get_and_cache_collegio_sindacale_from_mail(conn, collegio_sindacale, id_azienda)
+                if collegio_sindacale_map is None or collegio_sindacale_map == {} or "id" not in collegio_sindacale_map or collegio_sindacale_map["id"] is None:
+                    raise Exception("non ho trovato il collegio sindacale " + collegio_sindacale + "in internauta per l'azienda " + id_azienda)
+                values_collegio_sindacale = values_collegio_sindacale + f"""(
+                            {collegio_sindacale_map["id"]}
+                        ),"""
+        if len(values_collegio_sindacale) > 0:
+            # Chiamo la insert and delete
+            values_collegio_sindacale = values_collegio_sindacale[:-1]  # rimuovo l'ultima virgola
+            c.execute(qc.insert_docs_collegi_sindacali_and_delete_the_others.format(values=values_collegio_sindacale), {
+                "id_doc": id_doc
+            })
+        else:
+            # Faccio solo la delete
+            c.execute(qc.delete_collegi_sindacali, {
+                "id_doc": id_doc
+            })
+
+        later = time.time()
+        difference_collegi_sindacali = int(later - now)
+
         # DOCUMENTO AGGIORNATO. COMMITTO
         conn.commit()
         log.info(f"upsert_doc_list_data eseguita con successo per documento con guid: {json_data['guid_documento']}")
-        log.info("%s secondi upsert, %s secondi pers.vedenti, %s secondi allegati, %s secondi difference_attori" % (str(difference_upsert), str(difference_persone_vedenti), str(difference_allegati), str(difference_attori)))
+        log.info("%s secondi upsert, %s secondi pers.vedenti, %s secondi allegati, %s secondi difference_attori, %s secondi difference_collegi_sindacali" % (str(difference_upsert), str(difference_persone_vedenti), str(difference_allegati), str(difference_attori), str(difference_collegi_sindacali)))
     except Exception as ex:
         conn.rollback()
         log.error(f"errore in upsert_doc_list_data per guid {json_data['guid_documento']}")
@@ -306,3 +334,13 @@ def upsert_doc_list_data(codice_azienda, json_data, conn, id_azienda):
         log.critical(output.getvalue())
         traceback.print_exception(*sys.exc_info())
         raise ex
+
+
+def get_and_cache_collegio_sindacale_from_mail(conn, email, id_azienda):
+    global map_collegi_sindcali
+    key_to_find = email + "__" + id_azienda
+    if key_to_find not in map_collegi_sindcali:
+        c = conn.cursor(cursor_factory=psycopg2.extras.DictCursor)
+        c.execute(qc.get_collegi_sindacali, {'email': email, 'id_azienda': id_azienda})
+        map_collegi_sindcali = c.fetchone()["collegi_sindacali_map"]
+    return map_collegi_sindcali[key_to_find]

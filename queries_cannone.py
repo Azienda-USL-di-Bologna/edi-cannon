@@ -467,3 +467,27 @@ insert_messages_docs = """
     WHERE m.id = %(id_message)s
     ON CONFLICT (id_doc, id_message, "scope") DO NOTHING
 """
+insert_docs_collegi_sindacali_and_delete_the_others = """
+    WITH id_da_tenere AS (
+        INSERT INTO scripta.collegi_sindacali_docs 
+        (id_collegio_sindacale, id_doc) 
+        SELECT DISTINCT id_collegio_sindacale, %(id_doc)s 
+        FROM (
+            VALUES 
+                {values}
+            ) AS t (id_collegio_sindacale)
+        ON CONFLICT DO NOTHING
+        RETURNING id
+    )
+    DELETE FROM scripta.collegi_sindacali_docs 
+    WHERE id_doc = %(id_doc)s 
+    AND id NOT IN (SELECT id FROM id_da_tenere)  
+"""
+delete_collegi_sindacali = """
+    DELETE FROM scripta.collegi_sindacali_docs 
+    WHERE id_doc = %(id_doc)s
+"""
+get_collegi_sindacali = """
+    SELECT jsonb_object_agg(email || '__' || id_azienda, jsonb_build_object('email', email, 'attivo', attivo, 'predefinita', predefinita, 'id_azienda', id_azienda, 'id', id)) AS collegi_sindacali_map
+    FROM scripta.collegi_sindacali
+"""
