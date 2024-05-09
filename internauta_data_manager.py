@@ -299,9 +299,9 @@ def upsert_doc_list_data(codice_azienda, json_data, conn, id_azienda):
             for collegio_sindacale in json_data['collegi_sindacali']:
                 if collegio_sindacale is None:
                     raise Exception("il collegio_sindacale nel json è null")
-                collegio_sindacale_map = get_and_cache_collegio_sindacale_from_mail(conn, collegio_sindacale, id_azienda)
+                collegio_sindacale_map = get_and_cache_collegio_sindacale_from_mail(conn, str(collegio_sindacale), id_azienda)
                 if collegio_sindacale_map is None or collegio_sindacale_map == {} or "id" not in collegio_sindacale_map or collegio_sindacale_map["id"] is None:
-                    raise Exception("non ho trovato il collegio sindacale " + collegio_sindacale + "in internauta per l'azienda " + id_azienda)
+                    raise Exception("non ho trovato il collegio sindacale " + str(collegio_sindacale) + "in internauta per l'azienda " + id_azienda)
                 values_collegio_sindacale = values_collegio_sindacale + f"""(
                             {collegio_sindacale_map["id"]}
                         ),"""
