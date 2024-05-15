@@ -3,6 +3,7 @@ update_doc_by_id = """
     WITH updated_doc AS (
         UPDATE scripta.docs d
         SET oggetto = %(oggetto)s,
+            testo = %(testo)s,
             id_persona_creazione = %(id_persona_redattrice)s,
             tipologia = %(tipologia)s,
             version = %(version)s,
@@ -29,6 +30,7 @@ update_doc_by_id = """
         data_registrazione,
         data_pubblicazione,
         oggetto,
+        testo_tscol,
         firmatari,
         destinatari,
         mittente,
@@ -37,7 +39,6 @@ update_doc_by_id = """
         riservato ,
         annullato,
         protocollo_esterno,
-        mail_collegio,
         stato_ufficio_atti,
         data_inserimento_riga,
         id_mezzo_ricezione,
@@ -65,6 +66,7 @@ update_doc_by_id = """
         %(data_registrazione)s,
         %(data_pubblicazione)s,
         %(oggetto)s,
+        scripta.calcola_tscol(%(testo)s),
         %(firmatari)s,
         %(destinatari)s,
         %(mittente)s,
@@ -73,7 +75,6 @@ update_doc_by_id = """
         %(riservato)s,
         %(annullato)s, 
         %(protocollo_esterno)s,
-        %(mail_collegio)s,
         %(stato_ufficio_atti)s,
         %(data_inserimento_riga)s,
         (select id from scripta.mezzi where descrizione = %(id_mezzo_ricezione)s),
@@ -97,6 +98,7 @@ update_doc_by_id = """
        data_registrazione = excluded.data_registrazione,
        data_pubblicazione = excluded.data_pubblicazione,
        oggetto = excluded.oggetto,
+       testo_tscol = excluded.testo_tscol,
        firmatari = excluded.firmatari,
        destinatari = excluded.destinatari,
        mittente = excluded.mittente,
@@ -105,7 +107,6 @@ update_doc_by_id = """
        riservato = excluded.riservato,
        annullato = excluded.annullato,
        protocollo_esterno = excluded.protocollo_esterno ,
-       mail_collegio = excluded.mail_collegio,
        stato_ufficio_atti = excluded.stato_ufficio_atti,
        id_mezzo_ricezione = excluded.id_mezzo_ricezione,
        id_strutture_segreteria = excluded.id_strutture_segreteria,
@@ -121,6 +122,7 @@ insert_doc = """
     with insert_to_docs as (
         INSERT INTO scripta.docs  (           
             oggetto,
+            testo,
             id_persona_creazione,
             data_creazione,
             id_azienda,
@@ -132,6 +134,7 @@ insert_doc = """
             additional_data
         ) VALUES (
             %(oggetto)s,
+            %(testo)s,
             %(id_persona_redattrice)s,
             %(data_creazione)s,
             %(id_azienda)s,
@@ -150,6 +153,7 @@ insert_doc = """
         ) ON conflict (id_azienda, id_esterno)
         do UPDATE
         set oggetto = excluded.oggetto,
+            testo = excluded.testo,
             id_persona_creazione = excluded.id_persona_creazione,
             tipologia = excluded.tipologia,
             id_pec_mittente = excluded.id_pec_mittente,
@@ -175,6 +179,7 @@ insert_doc = """
         data_registrazione,
         data_pubblicazione,
         oggetto,
+        testo_tscol,
         firmatari,
         destinatari,
         mittente,
@@ -183,7 +188,6 @@ insert_doc = """
         riservato ,
         annullato,
         protocollo_esterno,
-        mail_collegio,
         stato_ufficio_atti,
         data_inserimento_riga,
         id_mezzo_ricezione,
@@ -211,6 +215,7 @@ insert_doc = """
         %(data_registrazione)s,
         %(data_pubblicazione)s,
         %(oggetto)s,
+        scripta.calcola_tscol(%(testo)s),
         %(firmatari)s,
         %(destinatari)s,
         %(mittente)s,
@@ -219,7 +224,6 @@ insert_doc = """
         %(riservato)s,
         %(annullato)s, 
         %(protocollo_esterno)s,
-        %(mail_collegio)s,
         %(stato_ufficio_atti)s,
         %(data_inserimento_riga)s,
         (select id from scripta.mezzi where descrizione = %(id_mezzo_ricezione)s),
@@ -243,6 +247,7 @@ insert_doc = """
        data_registrazione = excluded.data_registrazione,
        data_pubblicazione = excluded.data_pubblicazione,
        oggetto = excluded.oggetto,
+       testo_tscol = excluded.testo_tscol,
        firmatari = excluded.firmatari,
        destinatari = excluded.destinatari,
        mittente = excluded.mittente,
@@ -251,7 +256,6 @@ insert_doc = """
        riservato = excluded.riservato,
        annullato = excluded.annullato,
        protocollo_esterno = excluded.protocollo_esterno ,
-       mail_collegio = excluded.mail_collegio,
        stato_ufficio_atti = excluded.stato_ufficio_atti,
        id_mezzo_ricezione = excluded.id_mezzo_ricezione,
        id_strutture_segreteria = excluded.id_strutture_segreteria,
@@ -456,4 +460,28 @@ insert_messages_docs = """
     FROM shpeck.messages m
     WHERE m.id = %(id_message)s
     ON CONFLICT (id_doc, id_message, "scope") DO NOTHING
+"""
+insert_docs_collegi_sindacali_and_delete_the_others = """
+    WITH id_da_tenere AS (
+        INSERT INTO scripta.collegi_sindacali_docs 
+        (id_collegio_sindacale, id_doc) 
+        SELECT DISTINCT id_collegio_sindacale, %(id_doc)s 
+        FROM (
+            VALUES 
+                {values}
+            ) AS t (id_collegio_sindacale)
+        ON CONFLICT DO NOTHING
+        RETURNING id
+    )
+    DELETE FROM scripta.collegi_sindacali_docs 
+    WHERE id_doc = %(id_doc)s 
+    AND id NOT IN (SELECT id FROM id_da_tenere)  
+"""
+delete_collegi_sindacali = """
+    DELETE FROM scripta.collegi_sindacali_docs 
+    WHERE id_doc = %(id_doc)s
+"""
+get_collegi_sindacali = """
+    SELECT jsonb_object_agg(email || '__' || id_azienda, jsonb_build_object('email', email, 'attivo', attivo, 'predefinita', predefinita, 'id_azienda', id_azienda, 'id', id)) AS collegi_sindacali_map
+    FROM scripta.collegi_sindacali
 """
