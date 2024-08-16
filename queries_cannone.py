@@ -370,7 +370,7 @@ insert_registri_docproposte = """
 insert_registri_doc_registrati = """INSERT INTO scripta.registri_docs (
      id_registro, id_doc, numero, anno, id_persona_registrante, id_struttura_registrante, data_registrazione
     )
-SELECT r.id , %(id_doc)s , %(numero_registrazione)s, %(anno_registrazione),  %(id_persona_registrazione)s, %(id_struttura_registrazione)s, %(data_registrazione)s
+SELECT r.id , %(id_doc)s , %(numero_registrazione)s, %(anno_registrazione)s,  %(id_persona_registrazione)s, %(id_struttura_registrazione)s, %(data_registrazione)s
     FROM scripta.registri r
     WHERE r.id_azienda = %(id_azienda)s 
     AND r.attivo = true
