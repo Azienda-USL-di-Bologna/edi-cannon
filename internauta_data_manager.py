@@ -148,13 +148,13 @@ def upsert_doc_list_data(codice_azienda, json_data, conn, id_azienda):
         if(json_data['numero_registrazione'] is None):
             now = time.time()
             c.execute(qc.insert_registri_docproposte, {
-                      "id_doc": id_doc,
+                    "id_doc": id_doc,
                     "numero_proposta": json_data["numero_proposta"],
                     "anno_proposta": json_data["anno_proposta"],
                     "id_persona_registrazione": json_data["id_persona_registrazione"],
                     "id_struttura_registrazione": json_data["id_struttura_registrazione"],
                     "data_registrazione": json_data["data_registrazione"],
-                    "tipologia":json_data["tipologia"],
+                    "tipologia": json_data["tipologia"],
                     "id_azienda": id_azienda
                 }
             )

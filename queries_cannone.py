@@ -360,9 +360,9 @@ insert_registri_docproposte = """
     FROM scripta.registri r
     WHERE r.id_azienda = %(id_azienda)s 
     AND r.attivo = true
-	and ( %(tipologia)s in ('PROTOCOLLO_IN_ENTRATA', 'PROTOCOLLO_IN_USCITA')  AND  r.codice = 'PROP_PG'
-			OR %(tipologia)s = 'DETERMINA' AND r.codice ='PROP_DETE'
-			OR %(tipologia)s = 'DELIBERA' AND r.codice ='PROP_DELI' )
+	and ( (%(tipologia)s in ('PROTOCOLLO_IN_ENTRATA', 'PROTOCOLLO_IN_USCITA')  AND  r.codice = 'PROP_PG')
+			OR (%(tipologia)s = 'DETERMINA' AND r.codice ='PROP_DETE')
+			OR (%(tipologia)s = 'DELIBERA' AND r.codice ='PROP_DELI' ))
 	on conflict (id_registro, id_doc)
 	do update 
 	set numero = EXCLUDED.numero , anno = EXCLUDED.anno
@@ -385,7 +385,7 @@ SELECT r.id , %(id_doc)s , %(numero_registrazione)s, %(anno_registrazione),  %(i
   (%(tipologia)s = 'RGDELI' AND r.codice = 'RGDELI')
 )	on conflict (id_registro, id_doc)
 do update 
-	set numero = EXCLUDED.numero , anno = EXCLUDED.anno;"""
+	set numero = EXCLUDED.numero , anno = EXCLUDED.anno """
 insert_allegati_doc = """
     INSERT INTO scripta.allegati (
         nome, tipo, principale, firmato, 
