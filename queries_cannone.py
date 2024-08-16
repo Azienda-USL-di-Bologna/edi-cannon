@@ -352,6 +352,40 @@ delete_doc = """
     WHERE id_esterno = %(guid_documento)s
     AND id_azienda = %(id_azienda)s
 """
+insert_registri_docproposte = """
+    INSERT INTO scripta.registri_docs (
+     id_registro, id_doc, numero, anno, id_persona_registrante, id_struttura_registrante, data_registrazione
+    )
+    SELECT r.id , %(id_doc)s , %(numero_proposta)s, %(anno_proposta)s, %(id_persona_registrazione)s, %(id_struttura_registrazione)s, %(data_registrazione)s
+    FROM scripta.registri r
+    WHERE r.id_azienda = %(id_azienda)s 
+    AND r.attivo = true
+	and ( %(tipologia)s in ('PROTOCOLLO_IN_ENTRATA', 'PROTOCOLLO_IN_USCITA')  AND  r.codice = 'PROP_PG'
+			OR %(tipologia)s = 'DETERMINA' AND r.codice ='PROP_DETE'
+			OR %(tipologia)s = 'DELIBERA' AND r.codice ='PROP_DELI' )
+	on conflict (id_registro, id_doc)
+	do update 
+	set numero = EXCLUDED.numero , anno = EXCLUDED.anno
+"""
+insert_registri_doc_registrati = """INSERT INTO scripta.registri_docs (
+     id_registro, id_doc, numero, anno, id_persona_registrante, id_struttura_registrante, data_registrazione
+    )
+SELECT r.id , %(id_doc)s , %(numero_registrazione)s, %(anno_registrazione),  %(id_persona_registrazione)s, %(id_struttura_registrazione)s, %(data_registrazione)s
+    FROM scripta.registri r
+    WHERE r.id_azienda = %(id_azienda)s 
+    AND r.attivo = true
+    and %(numero_registrazione)s is not null 
+	and (
+  (%(tipologia)s = 'PROTOCOLLO_IN_ENTRATA' AND r.codice = 'PG') OR
+  (%(tipologia)s = 'PROTOCOLLO_IN_USCITA' AND r.codice = 'PG') OR
+  (%(tipologia)s = 'DETERMINA' AND r.codice = 'DETE') OR
+  (%(tipologia)s = 'DELIBERA' AND r.codice = 'DELI') OR
+  (%(tipologia)s = 'RGPICO' AND r.codice = 'RGPICO') OR
+  (%(tipologia)s = 'RGDETE' AND r.codice = 'RGDETE') OR
+  (%(tipologia)s = 'RGDELI' AND r.codice = 'RGDELI')
+)	on conflict (id_registro, id_doc)
+do update 
+	set numero = EXCLUDED.numero , anno = EXCLUDED.anno;"""
 insert_allegati_doc = """
     INSERT INTO scripta.allegati (
         nome, tipo, principale, firmato, 

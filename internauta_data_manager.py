@@ -144,6 +144,37 @@ def upsert_doc_list_data(codice_azienda, json_data, conn, id_azienda):
         # later = time.time()
         # difference_persone_vedenti = int(later - now)
 
+        #AGGIORNAMENTO REGISTRAZIONI
+        if(json_data['numero_registrazione'] is None):
+            now = time.time()
+            c.execute(qc.insert_registri_docproposte, {
+                      "id_doc": id_doc,
+                    "numero_proposta": json_data["numero_proposta"],
+                    "anno_proposta": json_data["anno_proposta"],
+                    "id_persona_registrazione": json_data["id_persona_registrazione"],
+                    "id_struttura_registrazione": json_data["id_struttura_registrazione"],
+                    "data_registrazione": json_data["data_registrazione"],
+                    "tipologia":json_data["tipologia"],
+                    "id_azienda": id_azienda
+                }
+            )
+            later = time.time()
+            difference_registrazioni = int(later - now)
+        else:
+            now = time.time()
+            c.execute(qc.insert_registri_doc_registrati, {
+                "id_doc": id_doc,
+                "numero_registrazione": json_data["numero_registrazione"],
+                "anno_regisrazione": json_data["anno_regisrazione"],
+                "id_persona_registrazione": json_data["id_persona_registrazione"],
+                "id_struttura_registrazione": json_data["id_struttura_registrazione"],
+                "data_registrazione": json_data["data_registrazione"],
+                "tipologia": json_data["tipologia"],
+                "id_azienda": id_azienda
+            }
+                      )
+            later = time.time()
+            difference_registrazioni = int(later - now)
 
         # AGGIORNAMENTO DEGLI ATTORI
         now = time.time()
@@ -323,7 +354,7 @@ def upsert_doc_list_data(codice_azienda, json_data, conn, id_azienda):
         # DOCUMENTO AGGIORNATO. COMMITTO
         conn.commit()
         log.info(f"upsert_doc_list_data eseguita con successo per documento con guid: {json_data['guid_documento']}")
-        log.info("%s secondi upsert, %s secondi pers.vedenti, %s secondi allegati, %s secondi difference_attori, %s secondi difference_collegi_sindacali" % (str(difference_upsert), str(difference_persone_vedenti), str(difference_allegati), str(difference_attori), str(difference_collegi_sindacali)))
+        log.info("%s secondi upsert, %s secondi pers.vedenti, %s secondi allegati, %s secondi difference_attori, %s secondi difference_collegi_sindacali" % (str(difference_upsert), str(difference_persone_vedenti), str(difference_allegati), str(difference_attori), str(difference_collegi_sindacali), str(difference_registrazioni)))
     except Exception as ex:
         conn.rollback()
         log.error(f"errore in upsert_doc_list_data per guid {json_data['guid_documento']}")
