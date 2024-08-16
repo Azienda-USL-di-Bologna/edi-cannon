@@ -171,8 +171,7 @@ def upsert_doc_list_data(codice_azienda, json_data, conn, id_azienda):
                 "data_registrazione": json_data["data_registrazione"],
                 "tipologia": json_data["tipologia"],
                 "id_azienda": id_azienda
-            }
-                      )
+            })
             later = time.time()
             difference_registrazioni = int(later - now)
 
