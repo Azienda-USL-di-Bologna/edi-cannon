@@ -165,7 +165,7 @@ def upsert_doc_list_data(codice_azienda, json_data, conn, id_azienda):
             c.execute(qc.insert_registri_doc_registrati, {
                 "id_doc": id_doc,
                 "numero_registrazione": json_data["numero_registrazione"],
-                "anno_regisrazione": json_data["anno_regisrazione"],
+                "anno_registrazione": json_data["anno_registrazione"],
                 "id_persona_registrazione": json_data["id_persona_registrazione"],
                 "id_struttura_registrazione": json_data["id_struttura_registrazione"],
                 "data_registrazione": json_data["data_registrazione"],
