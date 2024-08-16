@@ -153,7 +153,7 @@ def upsert_doc_list_data(codice_azienda, json_data, conn, id_azienda):
                     "anno_proposta": json_data["anno_proposta"],
                     "id_persona_registrazione": json_data["id_persona_registrazione"],
                     "id_struttura_registrazione": json_data["id_struttura_registrazione"],
-                    "data_registrazione": json_data["data_registrazione"],
+                    "data_creazione": json_data["data_creazione"],
                     "tipologia": json_data["tipologia"],
                     "id_azienda": id_azienda
                 }
