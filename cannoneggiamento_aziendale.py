@@ -82,7 +82,7 @@ def set_guids_in_error(row, conn, codice_azienda, ex, guid):
     #log.error(qError % str(tuple(i for i in row[3])))
     c.execute(q_error, {'ids': row['ids']})
     conn.commit()
-    erroro(conn, codice_azienda, ex)
+    #erroro(conn, codice_azienda, ex)
 
 
 def delete_cannoneggiamenti(ids, conn):
