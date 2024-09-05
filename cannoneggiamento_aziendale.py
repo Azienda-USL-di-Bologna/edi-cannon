@@ -76,13 +76,14 @@ def set_guids_in_error(row, conn, codice_azienda, ex, guid):
     # log = logging.getLogger("cannoneggiamento_aziendale")
     log.info('setto guid in errore: ' + guid)
     q_error = """ update esportazioni.cannoneggiamenti
-    set in_error = true
+    set in_error = true, log_error = %(log_error)s
     where id = ANY(%(ids)s) """
     c = conn.cursor(cursor_factory=psycopg2.extras.DictCursor)
     #log.error(qError % str(tuple(i for i in row[3])))
-    c.execute(q_error, {'ids': row['ids']})
+    c.execute(q_error, {'ids': row['ids'],
+                        'log_error': str(ex)})
     conn.commit()
-    erroro(conn, codice_azienda, ex)
+    #erroro(conn, codice_azienda, ex)
 
 
 def delete_cannoneggiamenti(ids, conn):
