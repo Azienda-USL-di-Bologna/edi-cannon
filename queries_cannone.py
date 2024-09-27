@@ -58,7 +58,7 @@ insert_doc = """
             tipologia = excluded.tipologia,
             id_pec_mittente = excluded.id_pec_mittente,
             version = excluded.version,
-            additional_data = excluded.additional_data
+            additional_data = excluded.additional_data,
             stato = excluded.stato
         RETURNING id, data_creazione
 """
