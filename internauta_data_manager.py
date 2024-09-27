@@ -55,6 +55,12 @@ def upsert_doc_list_data(codice_azienda, json_data, conn, id_azienda):
             query_to_use = qc.update_doc_by_id
             id_doc = json_data['id_doc']
             log.info("ho l'id_doc %s, userò l'update" % str(id_doc))
+
+            if json_data['data_registrazione'] is None:
+                data_documento = json_data['data_creazione']
+            else:
+                data_documento = json_data['data_registrazione']
+
         c.execute(query_to_use, {
             'id_azienda': id_azienda,
             'guid_documento': json_data['guid_documento'],
@@ -68,6 +74,7 @@ def upsert_doc_list_data(codice_azienda, json_data, conn, id_azienda):
             'anno_registrazione': json_data['anno_registrazione'],
             'data_creazione': json_data['data_creazione'],
             'data_registrazione': json_data['data_registrazione'],
+            'data_documento': data_documento ,
             'oggetto': json_data['oggetto'],
             'testo': json_data['testo'],
             'stato': "ANNULLATO" if json_data['annullato'] != 0 else STATI[str(json_data['stato'])],
