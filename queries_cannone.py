@@ -29,8 +29,7 @@ insert_doc = """
             version,
             additional_data,
             stato,
-            data_registrazione,
-            data_documento
+            data_registrazione
             ) VALUES (
             %(oggetto)s,
             %(testo)s,
