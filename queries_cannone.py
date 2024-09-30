@@ -272,10 +272,10 @@ upsert_attori_and_delete_the_others = """
 upsert_related_and_delete_the_others="""
     WITH id_da_tenere AS (
         INSERT INTO scripta.related (
-            id_doc, id_contatto, id_persona_inserente, tipo, 
+            id_doc,  id_persona_inserente, tipo, 
             origine, id_gruppo, descrizione,data_inserimento
         ) 
-        SELECT DISTINCT %(id_doc)s, NULL, id_persona_inserente::integer, tipo::scripta.tipo_related, 
+        SELECT DISTINCT %(id_doc)s,  id_persona_inserente::integer, tipo::scripta.tipo_related, 
             origine, id_gruppo, descrizione, data_inserimento
         FROM (
         VALUES  
