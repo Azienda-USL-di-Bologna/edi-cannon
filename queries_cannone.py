@@ -276,7 +276,7 @@ upsert_related_and_delete_the_others="""
             origine, id_gruppo, descrizione,data_inserimento
         ) 
         SELECT DISTINCT %(id_doc)s,  id_persona_inserente::integer, tipo::scripta.tipo_related, 
-            origine, id_gruppo, descrizione, data_inserimento
+            origine::scripta.origine_related, id_gruppo, descrizione, data_inserimento
         FROM (
         VALUES  
             {values}
