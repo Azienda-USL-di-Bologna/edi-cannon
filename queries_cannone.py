@@ -280,7 +280,7 @@ upsert_related_and_delete_the_others="""
         FROM (
         VALUES  
             {values}
-        ) AS t (id_contatto, id_persona_inserente, tipo, origine, id_gruppo,descrizione , data_inserimento)
+        ) AS t (id_contatto, id_persona_inserente, tipo, origine, id_gruppo, descrizione , data_inserimento)
         GROUP BY 
             id_doc, descrizione, tipo 
         ON CONFLICT (id_doc, descrizione, tipo ) DO UPDATE 
@@ -289,6 +289,7 @@ upsert_related_and_delete_the_others="""
             origine = EXCLUDED.origine,
             id_gruppo = EXCLUDED.id_gruppo,
             data_inserimento = EXCLUDED.data_inserimento,
+            descrizione = EXCLUDED.descrizione,
             version = EXCLUDED.version
         RETURNING id
     )
