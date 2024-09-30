@@ -250,11 +250,11 @@ upsert_attori_and_delete_the_others = """
             sulla_scrivania, ordinale, vedente
         ) 
         SELECT DISTINCT %(id_doc)s, id_persona, id_struttura::integer, ruolo::scripta.ruolo_attore_doc, 
-            FALSE, MIN(ordinale::integer), bool_or(vedente)
+            bool_or(sulla_scrivania), MIN(ordinale::integer), bool_or(vedente)
         FROM (
         VALUES  
             {values}
-        ) AS t (id_persona, id_struttura, ruolo, ordinale, vedente)
+        ) AS t (id_persona, id_struttura, ruolo, ordinale, vedente, sulla_scrivania)
         GROUP BY 
             id_persona, id_struttura, ruolo 
         ON CONFLICT (id_doc, id_persona, id_struttura, ruolo) DO UPDATE 
@@ -282,7 +282,7 @@ upsert_related_and_delete_the_others="""
             {values}
         ) AS t (id_contatto, id_persona_inserente, tipo, origine, id_gruppo, descrizione , data_inserimento)
         GROUP BY 
-            descrizione, tipo 
+            id_contatto, descrizione, tipo 
         ON CONFLICT (id_doc, descrizione, tipo ) DO UPDATE 
         SET id_contatto = EXCLUDED.id_contatto,
             id_persona_inserente = EXCLUDED.id_persona_inserente,
