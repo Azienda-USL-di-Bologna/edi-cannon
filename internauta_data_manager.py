@@ -217,10 +217,9 @@ def upsert_doc_list_data(codice_azienda, json_data, conn, id_azienda):
             for related in json_data['related']:
                 # idStruttura può essere null solo perché nei vecchi attori non si riescie a fare il match con le strutture internuata
                 values_related = values_related + f"""(
-                    {related['id_persona_inserente'] if related['id_persona_inserente'] is not None else 'null'}, 
+                    {related['id_persona_inserente'] if related['id_persona_inserente'] is not None else 1}, 
                     {"'" +related['tipo'] + "'" },
                     {"'" + related['origine'] + "'" },
-                    {related['id_gruppo'] if related['id_gruppo'] is not None else 'null' },
                     {"'" + related['descrizione'] + "'"},
                     {"'" + related['data_inserimento'] + "'"}
                 ),"""

@@ -273,21 +273,20 @@ upsert_related_and_delete_the_others="""
     WITH id_da_tenere AS (
         INSERT INTO scripta.related (
             id_doc,  id_persona_inserente, tipo, 
-            origine, id_gruppo, descrizione,data_inserimento
+            origine,  descrizione,data_inserimento
         ) 
         SELECT DISTINCT %(id_doc)s,  id_persona_inserente::integer, tipo::scripta.tipo_related, 
-            origine::scripta.origine_related, id_gruppo, descrizione, data_inserimento
+            origine::scripta.origine_related,  descrizione, data_inserimento
         FROM (
         VALUES  
             {values}
-        ) AS t ( id_persona_inserente, tipo, origine, id_gruppo, descrizione , data_inserimento)
+        ) AS t ( id_persona_inserente, tipo, origine,  descrizione , data_inserimento)
         GROUP BY 
-            id_persona_inserente, descrizione, tipo , origine, id_gruppo, data_inserimento
+            id_persona_inserente, descrizione, tipo , origine,  data_inserimento
         ON CONFLICT (id_doc, descrizione, tipo ) DO UPDATE 
         SET 
             id_persona_inserente = EXCLUDED.id_persona_inserente,
             origine = EXCLUDED.origine,
-            id_gruppo = EXCLUDED.id_gruppo,
             data_inserimento = EXCLUDED.data_inserimento,
             descrizione = EXCLUDED.descrizione,
             version = EXCLUDED.version
