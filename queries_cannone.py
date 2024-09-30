@@ -282,7 +282,7 @@ upsert_related_and_delete_the_others="""
             {values}
         ) AS t (id_contatto, id_persona_inserente, tipo, origine, id_gruppo, descrizione , data_inserimento)
         GROUP BY 
-            id_contatto,id_persona_inserente, descrizione, tipo , origine, id_gruppo
+            id_contatto,id_persona_inserente, descrizione, tipo , origine, id_gruppo, data_inserimento
         ON CONFLICT (id_doc, descrizione, tipo ) DO UPDATE 
         SET id_contatto = EXCLUDED.id_contatto,
             id_persona_inserente = EXCLUDED.id_persona_inserente,
