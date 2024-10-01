@@ -249,7 +249,7 @@ upsert_attori_and_delete_the_others = """
             id_doc, id_persona, id_struttura, ruolo, 
              ordinale, vedente, sulla_scrivania
         ) 
-        SELECT DISTINCT %(id_doc)s, id_persona, id_struttura::integer, ruolo::scripta.ruolo_attore_doc, 
+        SELECT DISTINCT %(id_doc)s, id_persona::integer, id_struttura::integer, ruolo::scripta.ruolo_attore_doc, 
              MIN(ordinale::integer), bool_or(vedente), bool_or(sulla_scrivania)
         FROM (
         VALUES  
