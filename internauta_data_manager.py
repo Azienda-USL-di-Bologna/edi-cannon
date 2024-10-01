@@ -220,7 +220,7 @@ def upsert_doc_list_data(codice_azienda, json_data, conn, id_azienda):
                     {related['id_persona_inserente'] if related['id_persona_inserente'] is not None else 1}, 
                     {"'" +related['tipo'] + "'" },
                     {"'" + related['origine'] + "'" },
-                    {"'" + related['descrizione'] + "'"},
+                    {"'" + related['descrizione'] + "'" if related['descrizione'] is not None else 'null'},
                     {"'" + related['data_inserimento'] + "'"}
                 ),"""
         if len(values_related) > 0:
