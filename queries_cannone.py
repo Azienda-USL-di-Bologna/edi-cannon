@@ -247,14 +247,14 @@ upsert_attori_and_delete_the_others = """
     WITH id_da_tenere AS (
         INSERT INTO scripta.attori_docs (
             id_doc, id_persona, id_struttura, ruolo, 
-            sulla_scrivania, ordinale, vedente
+             ordinale, vedente, sulla_scrivania
         ) 
         SELECT DISTINCT %(id_doc)s, id_persona, id_struttura::integer, ruolo::scripta.ruolo_attore_doc, 
-            bool_or(sulla_scrivania), MIN(ordinale::integer), bool_or(vedente)
+             MIN(ordinale::integer), bool_or(vedente), bool_or(sulla_scrivania)
         FROM (
         VALUES  
             {values}
-        ) AS t (id_persona, id_struttura, ruolo, sulla_scrivania, ordinale, vedente)
+        ) AS t (id_persona, id_struttura, ruolo, ordinale, vedente , sulla_scrivania)
         GROUP BY 
             id_persona, id_struttura, ruolo 
         ON CONFLICT (id_doc, id_persona, id_struttura, ruolo) DO UPDATE 
