@@ -156,7 +156,7 @@ insert_registri_docproposte = """
     FROM scripta.registri r
     WHERE r.id_azienda = %(id_azienda)s 
     AND r.attivo = true
-	and ( (%(tipologia)s in ('PROTOCOLLO_IN_ENTRATA', 'PROTOCOLLO_IN_USCITA')  AND  r.codice = 'PROP_PG')
+	and (( (%(tipologia)s in ('PROTOCOLLO_IN_ENTRATA', 'PROTOCOLLO_IN_USCITA')  AND  r.codice = 'PROP_PG')
 			OR (%(tipologia)s = 'DETERMINA' AND r.codice ='PROP_DETE')
 			OR (%(tipologia)s = 'DELIBERA' AND r.codice ='PROP_DELI' ))
 	on conflict (id_registro, id_doc)
