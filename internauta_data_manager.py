@@ -251,16 +251,17 @@ def upsert_doc_list_data(codice_azienda, json_data, conn, id_azienda):
                 "id_doc": id_doc
                 })
         elif json_data["tipologia"] == "PROTOCOLLO_IN_USCITA":
-            for related in json_data['related']:
-                if related['tipo'] == 'MITTENTE':
-                    c.execute(qc.seleziona_id_mezzo, {
-                        "mezzo": "Babel"})
-                    id_mezzo = c.fetchone();
-                    c.execute(qc.upsert_spedizione, {
-                        "id_doc": id_doc,
-                        "id_message": None,
-                        "id_mezzo": id_mezzo
-                    })
+            if json_data["related"] is not None and len(json_data['related']) > 0:
+                for related in json_data['related']:
+                    if related['tipo'] == 'MITTENTE':
+                        c.execute(qc.seleziona_id_mezzo, {
+                            "mezzo": "Babel"})
+                        id_mezzo = c.fetchone();
+                        c.execute(qc.upsert_spedizione, {
+                            "id_doc": id_doc,
+                            "id_message": None,
+                            "id_mezzo": id_mezzo
+                        })
         # AGGIORNAMENTO DELLE PERSONE VEDENTI - DO L'INCARICO AL MASTERJOBS
         now = time.time()
         c.execute("""
