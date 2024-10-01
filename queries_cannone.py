@@ -314,7 +314,7 @@ upsert_spedizione="""
 """
 delete_spedizione="""
     DELETE FROM scripta.spedizioni
-    WHERE id_related in (SELECT r.id WHERE r.tipo = 'MITTENTE'::scripta.tipo_related  AND r.id_doc = %(id_doc)s)
+    WHERE id_related in (SELECT r.id FROM scripta.related r WHERE r.tipo = 'MITTENTE'::scripta.tipo_related  AND r.id_doc = %(id_doc)s)
 """
 seleziona_id_mezzo="""
     SELECT id FROM scripta.mezzi WHERE descrizione = %(mezzo)s
