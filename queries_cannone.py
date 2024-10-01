@@ -346,7 +346,7 @@ insert_messages_docs_pu = """
     INSERT INTO scripta.messages_docs (
         id_doc, id_message, "tipo", "scope"
     ) 
-    SELECT %(id_doc)s, , 'IN'::scripta.tipi_messages_docs, 'PROTOCOLLAZIONE'::scripta.message_doc_scope
+    SELECT %(id_doc)s, m.id , 'IN'::scripta.tipi_messages_docs, 'PROTOCOLLAZIONE'::scripta.message_doc_scope
     FROM shpeck.messages m
     WHERE m.id_outbox =  substring(%(id_message)s FROM '[0-9]+')::int
     ON CONFLICT (id_doc, id_message, "scope") DO NOTHING
