@@ -254,7 +254,7 @@ upsert_attori_and_delete_the_others = """
         FROM (
         VALUES  
             {values}
-        ) AS t (id_persona, id_struttura, ruolo, ordinale, vedente, sulla_scrivania)
+        ) AS t (id_persona, id_struttura, ruolo, sulla_scrivania, ordinale, vedente)
         GROUP BY 
             id_persona, id_struttura, ruolo 
         ON CONFLICT (id_doc, id_persona, id_struttura, ruolo) DO UPDATE 
