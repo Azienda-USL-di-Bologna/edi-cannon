@@ -12,7 +12,7 @@ update_doc_by_id = """
             id_esterno = %(guid_documento)s,
             stato = %(stato)s
         WHERE d.id = %(id_doc)s
-        RETURNING data_creazione
+        RETURNING id, data_creazione
     )
 """
 insert_doc = """
