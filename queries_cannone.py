@@ -1,19 +1,17 @@
 # -*- coding: utf-8 -*-
 update_doc_by_id = """
-    WITH updated_doc AS (
-        UPDATE scripta.docs d
-        SET oggetto = %(oggetto)s,
-            testo = %(testo)s,
-            data_registrazione = %(data_registrazione)s,
-            id_persona_creazione = %(id_persona_redattrice)s,
-            tipologia = %(tipologia)s,
-            version = %(version)s,
-            additional_data = %(additional_data)s,
-            id_esterno = %(guid_documento)s,
-            stato = %(stato)s
-        WHERE d.id = %(id_doc)s
-        RETURNING id, data_creazione
-    )
+    UPDATE scripta.docs d
+    SET oggetto = %(oggetto)s,
+        testo = %(testo)s,
+        data_registrazione = %(data_registrazione)s,
+        id_persona_creazione = %(id_persona_redattrice)s,
+        tipologia = %(tipologia)s,
+        version = %(version)s,
+        additional_data = %(additional_data)s,
+        id_esterno = %(guid_documento)s,
+        stato = %(stato)s
+    WHERE d.id = %(id_doc)s
+    RETURNING id, data_creazione
 """
 insert_doc = """
         INSERT INTO scripta.docs  (           
