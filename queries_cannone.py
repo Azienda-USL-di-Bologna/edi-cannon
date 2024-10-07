@@ -30,7 +30,7 @@ insert_doc = """
             additional_data,
             stato,
             data_registrazione,
-            id_struttura_registrazione
+            id_struttura_registrante
             ) VALUES (
             %(oggetto)s,
             %(testo)s,
@@ -62,7 +62,7 @@ insert_doc = """
             version = excluded.version,
             additional_data = excluded.additional_data,
             stato = excluded.stato
-            id_struttura_registrazione = excluded.id_struttura_registrazione
+            id_struttura_registrante = excluded.id_struttura_registrante
         RETURNING id, data_creazione
 """
 upsert_persone_vedenti_and_delete_the_others = """
