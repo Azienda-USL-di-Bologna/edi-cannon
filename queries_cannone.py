@@ -1,125 +1,20 @@
 # -*- coding: utf-8 -*-
 update_doc_by_id = """
-    WITH updated_doc AS (
-        UPDATE scripta.docs d
-        SET oggetto = %(oggetto)s,
-            testo = %(testo)s,
-            id_persona_creazione = %(id_persona_redattrice)s,
-            tipologia = %(tipologia)s,
-            version = %(version)s,
-            additional_data = %(additional_data)s,
-            id_esterno = %(guid_documento)s
-        WHERE d.id = %(id_doc)s
-        RETURNING data_creazione
-    )
-    INSERT INTO scripta.docs_details (
-        id,
-        id_azienda,
-        guid_documento,
-        tipologia,
-        open_command,
-        command_type,
-        id_persona_responsabile_procedimento,
-        id_persona_redattrice,
-        id_struttura_registrazione,
-        numero_proposta,
-        anno_proposta,
-        numero_registrazione,
-        anno_registrazione,
-        data_creazione,
-        data_registrazione,
-        data_pubblicazione,
-        oggetto,
-        testo_tscol,
-        firmatari,
-        destinatari,
-        mittente,
-        stato,
-        visibilita_limitata,
-        riservato ,
-        annullato,
-        protocollo_esterno,
-        stato_ufficio_atti,
-        data_inserimento_riga,
-        id_mezzo_ricezione,
-        id_strutture_segreteria,
-        sulla_scrivania_di,
-        version,
-        id_applicazione,
-        conservazione,
-        id_pec_mittente
-    ) VALUES (
-        %(id_doc)s,
-        %(id_azienda)s,
-        %(guid_documento)s,
-        %(tipologia)s, 
-        %(open_command)s,
-        %(command_type)s,
-        %(id_persona_responsabile_procedimento)s,
-        %(id_persona_redattrice)s,
-        %(id_struttura_registrazione)s,
-        %(numero_proposta)s,
-        %(anno_proposta)s,
-        %(numero_registrazione)s,
-        %(anno_registrazione)s,
-        (select data_creazione from updated_doc),
-        %(data_registrazione)s,
-        %(data_pubblicazione)s,
-        %(oggetto)s,
-        scripta.calcola_tscol(%(testo)s),
-        %(firmatari)s,
-        %(destinatari)s,
-        %(mittente)s,
-        %(stato)s,
-        %(visibilita_limitata)s,
-        %(riservato)s,
-        %(annullato)s, 
-        %(protocollo_esterno)s,
-        %(stato_ufficio_atti)s,
-        %(data_inserimento_riga)s,
-        (select id from scripta.mezzi where descrizione = %(id_mezzo_ricezione)s),
-        %(id_strutture_segreteria)s,
-        %(sulla_scrivania_di)s,
-        %(version)s,
-        %(id_applicazione)s,
-        %(conservazione)s,
-        %(id_pec_mittente)s
-    ) ON conflict (id, id_azienda, data_creazione)
-    DO UPDATE
-    SET open_command = excluded.open_command,
-       command_type = excluded.command_type,
-       id_persona_responsabile_procedimento = excluded.id_persona_responsabile_procedimento,
-       id_persona_redattrice = excluded.id_persona_redattrice,
-       id_struttura_registrazione = excluded.id_struttura_registrazione,
-       numero_proposta = excluded.numero_proposta,
-       anno_proposta = excluded.anno_proposta,
-       numero_registrazione = excluded.numero_registrazione,
-       anno_registrazione = excluded.anno_registrazione,
-       data_registrazione = excluded.data_registrazione,
-       data_pubblicazione = excluded.data_pubblicazione,
-       oggetto = excluded.oggetto,
-       testo_tscol = excluded.testo_tscol,
-       firmatari = excluded.firmatari,
-       destinatari = excluded.destinatari,
-       mittente = excluded.mittente,
-       stato = excluded.stato,
-       visibilita_limitata = excluded.visibilita_limitata,
-       riservato = excluded.riservato,
-       annullato = excluded.annullato,
-       protocollo_esterno = excluded.protocollo_esterno ,
-       stato_ufficio_atti = excluded.stato_ufficio_atti,
-       id_mezzo_ricezione = excluded.id_mezzo_ricezione,
-       id_strutture_segreteria = excluded.id_strutture_segreteria,
-       sulla_scrivania_di = excluded.sulla_scrivania_di,
-       version = excluded.version,
-       id_applicazione = excluded.id_applicazione,
-       conservazione = excluded.conservazione,
-       id_pec_mittente = excluded.id_pec_mittente,
-       guid_documento = excluded.guid_documento
-    RETURNING id
+    UPDATE scripta.docs d
+    SET oggetto = %(oggetto)s,
+        testo = %(testo)s,
+        data_registrazione = %(data_registrazione)s,
+        id_persona_creazione = %(id_persona_redattrice)s,
+        tipologia = %(tipologia)s,
+        version = %(version)s,
+        additional_data = %(additional_data)s,
+        id_esterno = %(guid_documento)s,
+        stato = %(stato)s,
+        data_registrazione = %(data_registrazione)s
+    WHERE d.id = %(id_doc)s
+    RETURNING id, data_creazione
 """
 insert_doc = """
-    with insert_to_docs as (
         INSERT INTO scripta.docs  (           
             oggetto,
             testo,
@@ -131,8 +26,10 @@ insert_doc = """
             id_esterno,
             id_pec_mittente,
             version,
-            additional_data
-        ) VALUES (
+            additional_data,
+            stato,
+            data_registrazione
+            ) VALUES (
             %(oggetto)s,
             %(testo)s,
             %(id_persona_redattrice)s,
@@ -149,7 +46,9 @@ insert_doc = """
             %(guid_documento)s,
             %(id_pec_mittente)s,
             %(version)s,
-            %(additional_data)s
+            %(additional_data)s,
+            %(stato)s,
+            %(data_registrazione)s
         ) ON conflict (id_azienda, id_esterno)
         do UPDATE
         set oggetto = excluded.oggetto,
@@ -158,113 +57,9 @@ insert_doc = """
             tipologia = excluded.tipologia,
             id_pec_mittente = excluded.id_pec_mittente,
             version = excluded.version,
-            additional_data = excluded.additional_data
+            additional_data = excluded.additional_data,
+            stato = excluded.stato
         RETURNING id, data_creazione
-    )         
-    INSERT INTO scripta.docs_details (
-        id,
-        id_azienda,
-        guid_documento,
-        tipologia,
-        open_command,
-        command_type,
-        id_persona_responsabile_procedimento,
-        id_persona_redattrice,
-        id_struttura_registrazione,
-        numero_proposta,
-        anno_proposta,
-        numero_registrazione,
-        anno_registrazione,
-        data_creazione,
-        data_registrazione,
-        data_pubblicazione,
-        oggetto,
-        testo_tscol,
-        firmatari,
-        destinatari,
-        mittente,
-        stato,
-        visibilita_limitata,
-        riservato ,
-        annullato,
-        protocollo_esterno,
-        stato_ufficio_atti,
-        data_inserimento_riga,
-        id_mezzo_ricezione,
-        id_strutture_segreteria,
-        sulla_scrivania_di,
-        version,
-        id_applicazione,
-        conservazione,
-        id_pec_mittente
-    ) VALUES (
-        (select id from insert_to_docs),
-        %(id_azienda)s,
-        %(guid_documento)s,
-        %(tipologia)s, 
-        %(open_command)s,
-        %(command_type)s,
-        %(id_persona_responsabile_procedimento)s,
-        %(id_persona_redattrice)s,
-        %(id_struttura_registrazione)s,
-        %(numero_proposta)s,
-        %(anno_proposta)s,
-        %(numero_registrazione)s,
-        %(anno_registrazione)s,
-        (select data_creazione from insert_to_docs),
-        %(data_registrazione)s,
-        %(data_pubblicazione)s,
-        %(oggetto)s,
-        scripta.calcola_tscol(%(testo)s),
-        %(firmatari)s,
-        %(destinatari)s,
-        %(mittente)s,
-        %(stato)s,
-        %(visibilita_limitata)s,
-        %(riservato)s,
-        %(annullato)s, 
-        %(protocollo_esterno)s,
-        %(stato_ufficio_atti)s,
-        %(data_inserimento_riga)s,
-        (select id from scripta.mezzi where descrizione = %(id_mezzo_ricezione)s),
-        %(id_strutture_segreteria)s,
-        %(sulla_scrivania_di)s,
-        %(version)s,
-        %(id_applicazione)s,
-        %(conservazione)s,
-        %(id_pec_mittente)s
-    ) ON conflict (guid_documento, id_azienda, data_creazione)
-    DO UPDATE
-    SET open_command = excluded.open_command,
-       command_type = excluded.command_type,
-       id_persona_responsabile_procedimento = excluded.id_persona_responsabile_procedimento,
-       id_persona_redattrice = excluded.id_persona_redattrice,
-       id_struttura_registrazione = excluded.id_struttura_registrazione,
-       numero_proposta = excluded.numero_proposta,
-       anno_proposta = excluded.anno_proposta,
-       numero_registrazione = excluded.numero_registrazione,
-       anno_registrazione = excluded.anno_registrazione,
-       data_registrazione = excluded.data_registrazione,
-       data_pubblicazione = excluded.data_pubblicazione,
-       oggetto = excluded.oggetto,
-       testo_tscol = excluded.testo_tscol,
-       firmatari = excluded.firmatari,
-       destinatari = excluded.destinatari,
-       mittente = excluded.mittente,
-       stato = excluded.stato,
-       visibilita_limitata = excluded.visibilita_limitata,
-       riservato = excluded.riservato,
-       annullato = excluded.annullato,
-       protocollo_esterno = excluded.protocollo_esterno ,
-       stato_ufficio_atti = excluded.stato_ufficio_atti,
-       id_mezzo_ricezione = excluded.id_mezzo_ricezione,
-       id_strutture_segreteria = excluded.id_strutture_segreteria,
-       sulla_scrivania_di = excluded.sulla_scrivania_di,
-       version = excluded.version,
-       id_applicazione = excluded.id_applicazione,
-       conservazione = excluded.conservazione,
-       id_pec_mittente = excluded.id_pec_mittente
-    RETURNING id
 """
 upsert_persone_vedenti_and_delete_the_others = """
     WITH data_creazione AS (
@@ -451,14 +246,14 @@ upsert_attori_and_delete_the_others = """
     WITH id_da_tenere AS (
         INSERT INTO scripta.attori_docs (
             id_doc, id_persona, id_struttura, ruolo, 
-            sulla_scrivania, ordinale, vedente
+             ordinale, vedente, sulla_scrivania
         ) 
-        SELECT DISTINCT %(id_doc)s, id_persona, id_struttura::integer, ruolo::scripta.ruolo_attore_doc, 
-            FALSE, MIN(ordinale::integer), bool_or(vedente)
+        SELECT DISTINCT %(id_doc)s, id_persona::integer, id_struttura::integer, ruolo::scripta.ruolo_attore_doc, 
+             MIN(ordinale::integer), bool_or(vedente), bool_or(sulla_scrivania)
         FROM (
         VALUES  
             {values}
-        ) AS t (id_persona, id_struttura, ruolo, ordinale, vedente)
+        ) AS t (id_persona, id_struttura, ruolo, ordinale, vedente , sulla_scrivania)
         GROUP BY 
             id_persona, id_struttura, ruolo 
         ON CONFLICT (id_doc, id_persona, id_struttura, ruolo) DO UPDATE 
@@ -471,6 +266,57 @@ upsert_attori_and_delete_the_others = """
     DELETE FROM scripta.attori_docs 
     WHERE id_doc = %(id_doc)s
     AND id NOT IN (SELECT id FROM id_da_tenere)
+"""
+
+upsert_related_and_delete_the_others="""
+    WITH id_da_tenere AS (
+        INSERT INTO scripta.related (
+            id_doc,  id_persona_inserente, tipo, 
+            origine,  descrizione,data_inserimento
+        ) 
+        SELECT DISTINCT %(id_doc)s,  id_persona_inserente::integer, tipo::scripta.tipo_related, 
+            origine::scripta.origine_related,  descrizione, data_inserimento::timestamptz
+        FROM (
+        VALUES  
+            {values}
+        ) AS t ( id_persona_inserente, tipo, origine,  descrizione , data_inserimento)
+        GROUP BY 
+            id_persona_inserente, descrizione, tipo , origine,  data_inserimento
+        ON CONFLICT (id_doc, descrizione, tipo ) DO UPDATE 
+        SET 
+            id_persona_inserente = EXCLUDED.id_persona_inserente,
+            origine = EXCLUDED.origine,
+            data_inserimento = EXCLUDED.data_inserimento,
+            descrizione = EXCLUDED.descrizione,
+            version = EXCLUDED.version
+        RETURNING id
+    )
+    DELETE FROM scripta.related 
+    WHERE id_doc = %(id_doc)s
+    AND id NOT IN (SELECT id FROM id_da_tenere)
+"""
+upsert_spedizione="""
+    INSERT INTO scripta.spedizioni (
+        id_related, id_message, id_mezzo, indirizzo, id_smistamento, annullata, data_inserimento
+    )
+    SELECT r.id , %(id_message)s, %(id_mezzo)s, jsonb_build_object('cap', null, 'via', null, 'civico', null, 'comune',null, 'nazione', null, 'provincia', null, 'indirizzo', r.descrizione)::jsonb, null, FALSE, r.data_inserimento
+    FROM scripta.related r
+    WHERE r.tipo = 'MITTENTE'::scripta.tipo_related
+    AND r.id_doc = %(id_doc)s
+    ON CONFLICT (id_related, id_message ) DO UPDATE 
+    SET id_mezzo = EXCLUDED.id_mezzo,
+        indirizzo = EXCLUDED.indirizzo,
+        id_smistamento = EXCLUDED.id_smistamento,
+        annullata = EXCLUDED.annullata,
+        data_inserimento = EXCLUDED.data_inserimento,
+        version = EXCLUDED.version
+"""
+delete_spedizione="""
+    DELETE FROM scripta.spedizioni
+    WHERE id_related in (SELECT r.id FROM scripta.related r WHERE r.tipo = 'MITTENTE'::scripta.tipo_related  AND r.id_doc = %(id_doc)s)
+"""
+seleziona_id_mezzo="""
+    SELECT id FROM scripta.mezzi WHERE descrizione = %(mezzo)s
 """
 delete_attori = """
     DELETE FROM scripta.attori_docs 
@@ -486,13 +332,22 @@ delete_messages_docs = """
     AND id_message = %(id_message)s
     AND scope = 'PROTOCOLLAZIONE'::scripta.message_doc_scope
 """
-insert_messages_docs = """
+insert_messages_docs_pe = """
     INSERT INTO scripta.messages_docs (
         id_doc, id_message, "tipo", "scope"
     ) 
     SELECT %(id_doc)s, %(id_message)s, 'IN'::scripta.tipi_messages_docs, 'PROTOCOLLAZIONE'::scripta.message_doc_scope
     FROM shpeck.messages m
     WHERE m.id = %(id_message)s
+    ON CONFLICT (id_doc, id_message, "scope") DO NOTHING
+"""
+insert_messages_docs_pu = """
+    INSERT INTO scripta.messages_docs (
+        id_doc, id_message, "tipo", "scope"
+    ) 
+    SELECT %(id_doc)s, m.id , 'IN'::scripta.tipi_messages_docs, 'PROTOCOLLAZIONE'::scripta.message_doc_scope
+    FROM shpeck.messages m
+    WHERE m.id_outbox =  substring(%(id_message)s FROM '[0-9]+')::int
     ON CONFLICT (id_doc, id_message, "scope") DO NOTHING
 """
 insert_docs_collegi_sindacali_and_delete_the_others = """
@@ -515,7 +370,14 @@ delete_collegi_sindacali = """
     DELETE FROM scripta.collegi_sindacali_docs 
     WHERE id_doc = %(id_doc)s
 """
+delete_related = """
+    DELETE FROM scripta.related
+    WHERE id_doc = %(id_doc)s
+"""
 get_collegi_sindacali = """
     SELECT jsonb_object_agg(email || '__' || id_azienda, jsonb_build_object('email', email, 'attivo', attivo, 'predefinita', predefinita, 'id_azienda', id_azienda, 'id', id)) AS collegi_sindacali_map
     FROM scripta.collegi_sindacali
+"""
+aggiorna_id_strutture_segreteria_su_docs_details = """
+    SELECT * FROM scripta.aggiorna_id_strutture_segreteria_su_docs_details(%(id_doc)s)
 """
