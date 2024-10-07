@@ -61,7 +61,7 @@ insert_doc = """
             id_pec_mittente = excluded.id_pec_mittente,
             version = excluded.version,
             additional_data = excluded.additional_data,
-            stato = excluded.stato
+            stato = excluded.stato,
             id_struttura_registrante = excluded.id_struttura_registrante
         RETURNING id, data_creazione
 """
