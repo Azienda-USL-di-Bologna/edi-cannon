@@ -10,7 +10,8 @@ update_doc_by_id = """
         additional_data = %(additional_data)s,
         id_esterno = %(guid_documento)s,
         stato = %(stato)s,
-        data_registrazione = %(data_registrazione)s
+        data_registrazione = %(data_registrazione)s,
+        id_struttura_registrante = %(id_struttura_registrazione)s
     WHERE d.id = %(id_doc)s
     RETURNING id, data_creazione
 """
@@ -28,7 +29,8 @@ insert_doc = """
             version,
             additional_data,
             stato,
-            data_registrazione
+            data_registrazione,
+            id_struttura_registrazione
             ) VALUES (
             %(oggetto)s,
             %(testo)s,
@@ -48,7 +50,8 @@ insert_doc = """
             %(version)s,
             %(additional_data)s,
             %(stato)s,
-            %(data_registrazione)s
+            %(data_registrazione)s,
+            %(id_struttura_registrazione)s
         ) ON conflict (id_azienda, id_esterno)
         do UPDATE
         set oggetto = excluded.oggetto,
@@ -59,6 +62,7 @@ insert_doc = """
             version = excluded.version,
             additional_data = excluded.additional_data,
             stato = excluded.stato
+            id_struttura_registrazione = excluded.id_struttura_registrazione
         RETURNING id, data_creazione
 """
 upsert_persone_vedenti_and_delete_the_others = """
