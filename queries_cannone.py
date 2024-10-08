@@ -10,7 +10,6 @@ update_doc_by_id = """
         additional_data = %(additional_data)s,
         id_esterno = %(guid_documento)s,
         stato = %(stato)s,
-        data_registrazione = %(data_registrazione)s,
         id_struttura_registrante = %(id_struttura_registrazione)s
     WHERE d.id = %(id_doc)s
     RETURNING id, data_creazione
