@@ -278,7 +278,7 @@ upsert_related_and_delete_the_others="""
             origine,  descrizione,data_inserimento
         ) 
         SELECT DISTINCT %(id_doc)s,  id_persona_inserente::integer, tipo::scripta.tipo_related, 
-            origine::scripta.origine_related,  descrizione::text, data_inserimento::timestamptz
+            origine::scripta.origine_related,  descrizione::text,  TO_TIMESTAMP(REPLACE(data_inserimento::text, 'T', ' '), 'YYYY-MM-DD HH24:MI:SS')::timestamptz
         FROM (
         VALUES  
             {values}
