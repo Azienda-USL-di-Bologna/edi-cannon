@@ -59,8 +59,6 @@ def upsert_doc_list_data(codice_azienda, json_data, conn, id_azienda):
             'id_azienda': id_azienda,
             'guid_documento': json_data['guid_documento'],
             'tipologia': json_data['tipologia'],
-            'open_command': json_data['url'],
-            'command_type': "URL",
             'id_persona_responsabile_procedimento': json_data['id_persona_responsabile_procedimento'],
             'id_persona_redattrice': json_data['id_persona_redattrice'],
             'id_struttura_registrazione': json_data['id_struttura_registrazione'],
@@ -70,28 +68,20 @@ def upsert_doc_list_data(codice_azienda, json_data, conn, id_azienda):
             'anno_registrazione': json_data['anno_registrazione'],
             'data_creazione': json_data['data_creazione'],
             'data_registrazione': json_data['data_registrazione'],
-            'data_pubblicazione': json_data['data_pubblicazione'],
             'oggetto': json_data['oggetto'],
             'testo': json_data['testo'],
-            'firmatari': None if json_data['firmatari'] is None else Json(json_data['firmatari']),
-            'destinatari': None if json_data['destinatari'] is None else Json(json_data['destinatari']),
-            'mittente': json_data['mittente'],
             'stato': "ANNULLATO" if json_data['annullato'] != 0 else STATI[str(json_data['stato'])],
             'visibilita_limitata': True if json_data['visibilita_limitata'] != 0 else False,
             'riservato': True if json_data['riservato'] != 0 else False,
             'annullato': True if json_data['annullato'] != 0 else False,
             'protocollo_esterno': json_data['protocollo_esterno'],
             #'mail_collegio': json_data['mail_collegio'],
-            'stato_ufficio_atti': STATI_UFFICIO_ATTI[str(json_data['stato_ufficio_atti'])],
             'data_inserimento_riga': datetime.now(),
             #'persone_vedenti': None if json_data['persone_vedenti'] is None else Json(json_data['persone_vedenti']),
-            'id_mezzo_ricezione': json_data['id_mezzo_ricezione'],
-            'id_strutture_segreteria': json_data['id_strutture_segreteria'],
-            'sulla_scrivania_di': None if json_data['sulla_scrivania_di'] is None else Json(json_data['sulla_scrivania_di']),
+            #'id_mezzo_ricezione': json_data['id_mezzo_ricezione'],
             'id_applicazione': json_data['id_applicazione'],
             'version': json_data['version'],
             'additional_data': Json(json_data['additional_data']),
-            'conservazione': json_data['conservazione'],
             'id_pec_mittente': None if json_data['id_pec_mittente'] is None else json_data['id_pec_mittente'],
             'id_doc': id_doc
         })
@@ -107,11 +97,18 @@ def upsert_doc_list_data(codice_azienda, json_data, conn, id_azienda):
                     "id_message": json_data['id_message_shpeck'],
                     "id_doc": id_doc
                 })
-            else:
-                c.execute(qc.insert_messages_docs, {
+            elif json_data["tipologia"] == "PROTOCOLLO_IN_ENTRATA":
+                c.execute(qc.insert_messages_docs_pe, {
                     "id_message": json_data['id_message_shpeck'],
                     "id_doc": id_doc
                 })
+            elif json_data["tipologia"] == "PROTOCOLLO_IN_USCITA":
+                for message in json_data['id_message_shpeck']:
+                    c.execute(qc.insert_messages_docs_pu, {
+                        "id_message": message,
+                        "id_doc": id_doc
+                    })
+
 
         # OLD AGGIORNAMENTO DELLE PERSONE VEDENTI  - ORA LO FACCIO PIU SOTTO
         # now = time.time()
@@ -197,7 +194,8 @@ def upsert_doc_list_data(codice_azienda, json_data, conn, id_azienda):
                     {attore['idStruttura'] if attore['idStruttura'] is not None else 'null'}, 
                     {"'" + RUOLO_ATTORE[attore['ruolo']] + "'"}, 
                     {attore['ordinale'] if attore['ordinale'] is not None else 'null'},
-                    {attore["vedente"]}
+                    {attore["vedente"]},
+                    {attore["sulla_scrivania"]}
                 ),"""
         if len(values_attori) > 0:
             # Chiamo la upsert and delete
@@ -213,7 +211,59 @@ def upsert_doc_list_data(codice_azienda, json_data, conn, id_azienda):
         later = time.time()
         difference_attori = int(later - now)
 
+        #AGGIORNAMENTO DEI RELATED
+        values_related = ""
+        if json_data["related"] is not None and len(json_data['related']) > 0:
+            for related in json_data['related']:
+                # idStruttura può essere null solo perché nei vecchi attori non si riescie a fare il match con le strutture internuata
+                values_related = values_related + f"""(
+                    {related['id_persona_inserente'] if related['id_persona_inserente'] is not None else 1}, 
+                    {"'" + related['tipo'] + "'" },
+                    {"'" + related['origine'] + "'" },
+                    {"'" + related['descrizione'].replace("'", "''") + "'" if related['descrizione'] is not None else 'null'},
+                    {"'" + related['data_inserimento'] + "'" if related['data_inserimento'] is not None else str(json_data['data_creazione'])}
+                ),"""
+        if len(values_related) > 0:
+            # Chiamo la upsert and delete
+            values_related = values_related[:-1] # rimuovo l'ultima virgola
+            c.execute(qc.upsert_related_and_delete_the_others.format(values=values_related), {
+                "id_doc": id_doc
+            })
+        else:
+            # Faccio solo la delete
+            c.execute(qc.delete_related, {
+                "id_doc": id_doc
+            })
 
+        #INSERIMENTO SPEDIZIONI
+        if json_data["tipologia"] == "PROTOCOLLO_IN_ENTRATA":
+            if json_data['id_message_shpeck'] is not None:
+                if json_data['id_mezzo_ricezione'] == 'Email':
+                    json_data['id_mezzo_ricezione'] = 'Mail'
+                c.execute( qc.seleziona_id_mezzo,{
+                    "mezzo": json_data['id_mezzo_ricezione'] })
+                id_mezzo = c.fetchone()["id"];
+                c.execute(qc.upsert_spedizione, {
+                    "id_doc": id_doc,
+                    "id_message": json_data['id_message_shpeck'],
+                    "id_mezzo": id_mezzo
+                })
+            else:
+                c.execute(qc.delete_spedizione, {
+                "id_doc": id_doc
+                })
+        elif json_data["tipologia"] == "PROTOCOLLO_IN_USCITA":
+            if json_data["related"] is not None and len(json_data['related']) > 0:
+                for related in json_data['related']:
+                    if related['tipo'] == 'MITTENTE':
+                        c.execute(qc.seleziona_id_mezzo, {
+                            "mezzo": "Babel"})
+                        id_mezzo = c.fetchone()["id"];
+                        c.execute(qc.upsert_spedizione, {
+                            "id_doc": id_doc,
+                            "id_message": None,
+                            "id_mezzo": id_mezzo
+                        })
         # AGGIORNAMENTO DELLE PERSONE VEDENTI - DO L'INCARICO AL MASTERJOBS
         now = time.time()
         c.execute("""
@@ -360,7 +410,10 @@ def upsert_doc_list_data(codice_azienda, json_data, conn, id_azienda):
 
         later = time.time()
         difference_collegi_sindacali = int(later - now)
-
+        #AGGIORNAMENTO DELLA COLONNA ID STRUTTURE SEGRETERIA SU DOC DETAILS CHE VIENE CALCOLATO CON LA FUNZIONE
+        c.execute(qc.aggiorna_id_strutture_segreteria_su_docs_details, {
+            "id_doc": id_doc
+        })
         # DOCUMENTO AGGIORNATO. COMMITTO
         conn.commit()
         log.info(f"upsert_doc_list_data eseguita con successo per documento con guid: {json_data['guid_documento']}")
