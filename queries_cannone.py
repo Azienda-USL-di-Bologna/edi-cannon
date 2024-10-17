@@ -61,7 +61,8 @@ insert_doc = """
             version = excluded.version,
             additional_data = excluded.additional_data,
             stato = excluded.stato,
-            id_struttura_registrante = excluded.id_struttura_registrante
+            id_struttura_registrante = excluded.id_struttura_registrante,
+            data_registrazione = excluded.data_registrazione
         RETURNING id, data_creazione
 """
 upsert_persone_vedenti_and_delete_the_others = """
