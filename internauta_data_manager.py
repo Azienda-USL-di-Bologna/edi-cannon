@@ -238,7 +238,7 @@ def upsert_doc_list_data(codice_azienda, json_data, conn, id_azienda):
         #INSERIMENTO SPEDIZIONI
         if json_data["tipologia"] == "PROTOCOLLO_IN_ENTRATA":
             if json_data['id_message_shpeck'] is not None:
-                if json_data['id_mezzo_ricezione'] == 'Email':
+                if json_data['id_mezzo_ricezione'] == 'Email' or json_data['id_mezzo_ricezione'] is None:
                     json_data['id_mezzo_ricezione'] = 'Mail'
                 c.execute( qc.seleziona_id_mezzo,{
                     "mezzo": json_data['id_mezzo_ricezione'] })
