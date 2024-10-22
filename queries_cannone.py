@@ -57,12 +57,14 @@ insert_doc = """
             testo = excluded.testo,
             id_persona_creazione = excluded.id_persona_creazione,
             tipologia = excluded.tipologia,
+            visibilita = excluded.visibilita,
             id_pec_mittente = excluded.id_pec_mittente,
             version = excluded.version,
             additional_data = excluded.additional_data,
             stato = excluded.stato,
             id_struttura_registrante = excluded.id_struttura_registrante,
-            data_registrazione = excluded.data_registrazione
+            data_registrazione = excluded.data_registrazione,
+            data_creazione = excluded.data_creazione
         RETURNING id, data_creazione
 """
 upsert_persone_vedenti_and_delete_the_others = """
