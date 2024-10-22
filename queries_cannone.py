@@ -12,9 +12,9 @@ update_doc_by_id = """
         stato = %(stato)s,
         id_struttura_registrante = %(id_struttura_registrazione)s,
         visibilita = (CASE
-                WHEN  %(riservato)s is true
+                WHEN  %(riservato)s = true
                     THEN 'RISERVATO'::scripta.visibilita_doc
-                WHEN  %(visibilita_limitata)s is true
+                WHEN  %(visibilita_limitata)s = true
                     THEN 'LIMITATA'::scripta.visibilita_doc
                 else 'NORMALE'::scripta.visibilita_doc
             END)
@@ -45,9 +45,9 @@ insert_doc = """
             %(id_azienda)s,
             %(tipologia)s,
             CASE
-                WHEN  %(riservato)s is true
+                WHEN  %(riservato)s = true
                     THEN 'RISERVATO'::scripta.visibilita_doc
-                WHEN  %(visibilita_limitata)s is true
+                WHEN  %(visibilita_limitata)s = true
                     THEN 'LIMITATA'::scripta.visibilita_doc
                 else 'NORMALE'::scripta.visibilita_doc
             END,
