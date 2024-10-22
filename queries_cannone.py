@@ -45,9 +45,9 @@ insert_doc = """
             %(id_azienda)s,
             %(tipologia)s,
             CASE
-                WHEN %(riservato)s = true
+                WHEN %(riservato)s = -1
                     THEN 'RISERVATO'::scripta.visibilita_doc
-                WHEN %(visibilita_limitata)s  = true
+                WHEN %(visibilita_limitata)s  = -1
                     THEN 'LIMITATA'::scripta.visibilita_doc
                 else 'NORMALE'::scripta.visibilita_doc
             END,
