@@ -294,7 +294,7 @@ upsert_related_and_delete_the_others="""
             origine = EXCLUDED.origine,
             data_inserimento = EXCLUDED.data_inserimento,
             descrizione = EXCLUDED.descrizione,
-            id_esterno = EXCLUDED., id_esterno,
+            id_esterno = EXCLUDED.id_esterno,
             version = EXCLUDED.version
         RETURNING id
     )
