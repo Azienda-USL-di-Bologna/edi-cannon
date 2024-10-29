@@ -288,7 +288,7 @@ upsert_related_and_delete_the_others="""
         ) AS t ( id_persona_inserente, tipo, origine,  descrizione , data_inserimento, id_esterno)
         GROUP BY 
             id_persona_inserente, descrizione, tipo , origine,  data_inserimento, id_esterno
-        ON CONFLICT (id_doc, descrizione, tipo, , id_esterno ) DO UPDATE 
+        ON CONFLICT (id_doc, descrizione, tipo, id_esterno ) DO UPDATE 
         SET 
             id_persona_inserente = EXCLUDED.id_persona_inserente,
             origine = EXCLUDED.origine,
