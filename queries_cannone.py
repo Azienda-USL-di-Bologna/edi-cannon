@@ -306,7 +306,7 @@ upsert_spedizione="""
     INSERT INTO scripta.spedizioni (
         id_related, id_message, id_mezzo, indirizzo, id_smistamento, annullata, data_inserimento
     )
-    SELECT r.id , %(id_message)s, %(id_mezzo)s, jsonb_build_object('cap', null, 'via', null, 'civico', null, 'comune',null, 'nazione', null, 'provincia', null, 'completo', %(indirizzo)s)::jsonb, null, FALSE, r.data_inserimento
+    SELECT r.id , (SELECT id from shpeck.messages WHERE id = %(id_message)s limit 1) , %(id_mezzo)s, jsonb_build_object('cap', null, 'via', null, 'civico', null, 'comune',null, 'nazione', null, 'provincia', null, 'completo', %(indirizzo)s)::jsonb, null, FALSE, r.data_inserimento
     FROM scripta.related r
     JOIN scripta.docs d on r.id_doc = d.id
     WHERE r.id_esterno = %(id_esterno)s
