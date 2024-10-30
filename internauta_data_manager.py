@@ -410,7 +410,7 @@ def upsert_related(json_data, conn, id_azienda):
                         {"'" + related['tipo'] + "'"},
                         {"'" + related['origine'] + "'"},
                         {"'" + related['descrizione'].replace("'", "''") + "'" if related['descrizione'] is not None and related['descrizione']  != '' else "'" + related['indirizzo'].replace("'", "''") + "'"},
-                        {"'" + related['data_inserimento'] + "'" if related['data_inserimento'] is not None else "'" + str(json_data['data_creazione']) + "'"},
+                        {"'" + related['data_inserimento'] + "'"  },
                         {"'" + str(related['id_esterno']) + "'" if related['id_esterno'] is not None else 'null'}
                     ),"""
     if len(values_related) > 0:
@@ -437,8 +437,11 @@ def upsert_related(json_data, conn, id_azienda):
 
             if related['mezzo'] == 'Email' or related['mezzo'] is None:
                 related['mezzo'] = 'Mail'
-            if related['mezzo'] == 'Posta Ordinaria':
+            if related['mezzo'] == 'Posta Ordinaria' or related['mezzo'] == 'P. Ordin.':
                 related['mezzo'] = 'Posta ordinaria'
+            if related['mezzo'] == 'A Mano':
+                related['mezzo'] = 'A mano'
+
             log.info(f"questo è il mezzo che sto cercando: {related['mezzo']}" )
             c.execute(qc.seleziona_id_mezzo, {
                 "mezzo": related['mezzo']})
