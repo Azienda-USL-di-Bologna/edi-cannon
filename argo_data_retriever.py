@@ -12,10 +12,10 @@ mappa_stored_procedure = {
     "RGPICO": "get_registri_giornalieri_by_id",
     "RGDETE": "get_registri_giornalieri_by_id",
     "RGDELI": "get_registri_giornalieri_by_id",
-    "related_pe": "get_related_smistamenti_pe_by_guid",
-    "related_pu": "get_related_smistamenti_pu_by_guid",
-    "related_dete": "get_related_smistamenti_dete_by_guid",
-    "related_deli": "get_related_smistamenti_deli_by_guid"
+    "related_pe": "get_related_pe_by_guid",
+    "related_pu": "get_related_pu_by_guid",
+    "related_dete": "get_related_dete_by_guid",
+    "related_deli": "get_related_deli_by_guid"
 }
 
 """

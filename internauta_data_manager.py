@@ -431,25 +431,25 @@ def upsert_related(json_data, conn, id_azienda):
         })
 
     # INSERIMENTO SPEDIZIONI
-    if json_data['id_message_shpeck'] is not None:
-        if json_data["related"] is not None and len(json_data['related']) > 0:
-            for related in json_data['related']:
+    #if json_data['id_message_shpeck'] is not None:
+    if json_data["related"] is not None and len(json_data['related']) > 0:
+        for related in json_data['related']:
 
-                if related['id_mezzo'] == 'Email' or related['id_mezzo_ricezione'] is None:
-                    related['id_mezzo'] = 'Mail'
-                if related['id_mezzo'] == 'Posta Ordinaria':
-                    related['id_mezzo'] = 'Posta ordinaria'
+            if related['id_mezzo'] == 'Email' or related['id_mezzo_ricezione'] is None:
+                related['id_mezzo'] = 'Mail'
+            if related['id_mezzo'] == 'Posta Ordinaria':
+                related['id_mezzo'] = 'Posta ordinaria'
 
-                c.execute(qc.seleziona_id_mezzo, {
-                    "mezzo": related['id_mezzo']})
-                id_mezzo = c.fetchone()["id"];
-                c.execute(qc.upsert_spedizione, {
-                    "guid_doc": json_data["guid_documento"],
-                    "id_message": json_data['id_message_shpeck'],
-                    "id_mezzo": id_mezzo,
-                    "id_esterno": related["id_esterno"]
-                })
-
+            c.execute(qc.seleziona_id_mezzo, {
+                "mezzo": related['id_mezzo']})
+            id_mezzo = c.fetchone()["id"];
+            c.execute(qc.upsert_spedizione, {
+                "guid_doc": json_data["guid_documento"],
+                "id_message": json_data['id_message_shpeck'],
+                "id_mezzo": id_mezzo,
+                "indirizzo": json_data["indirizzo"],
+                "id_esterno": related["id_esterno"]
+            })
     else:
         c.execute(qc.delete_spedizione, {
             "guid_doc": json_data["guid_documento"]
