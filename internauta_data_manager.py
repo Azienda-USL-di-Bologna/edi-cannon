@@ -447,7 +447,7 @@ def upsert_related(json_data, conn, id_azienda):
                 "guid_doc": json_data["guid_documento"],
                 "id_message": json_data['id_message_shpeck'],
                 "id_mezzo": id_mezzo,
-                "indirizzo": json_data["indirizzo"],
+                "indirizzo": related["indirizzo"],
                 "id_esterno": related["id_esterno"]
             })
     else:
