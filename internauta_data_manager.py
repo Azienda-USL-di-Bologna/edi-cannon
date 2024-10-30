@@ -463,7 +463,7 @@ def upsert_related(json_data, conn, id_azienda):
                 else:
                     c.execute(qc.upsert_spedizione, {
                         "guid_doc": json_data["guid_documento"],
-                        "id_message": 'null',
+                        "id_message": None,
                         "id_mezzo": id_mezzo,
                         "indirizzo": related["indirizzo"],
                         "id_esterno": related["id_esterno"]
