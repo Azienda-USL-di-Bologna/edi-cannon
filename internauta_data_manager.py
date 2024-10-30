@@ -435,13 +435,13 @@ def upsert_related(json_data, conn, id_azienda):
     if json_data["related"] is not None and len(json_data['related']) > 0:
         for related in json_data['related']:
 
-            if related['id_mezzo'] == 'Email' or related['id_mezzo_ricezione'] is None:
-                related['id_mezzo'] = 'Mail'
-            if related['id_mezzo'] == 'Posta Ordinaria':
-                related['id_mezzo'] = 'Posta ordinaria'
+            if related['mezzo'] == 'Email' or related['mezzo'] is None:
+                related['mezzo'] = 'Mail'
+            if related['mezzo'] == 'Posta Ordinaria':
+                related['mezzo'] = 'Posta ordinaria'
 
             c.execute(qc.seleziona_id_mezzo, {
-                "mezzo": related['id_mezzo']})
+                "mezzo": related['mezzo']})
             id_mezzo = c.fetchone()["id"];
             c.execute(qc.upsert_spedizione, {
                 "guid_doc": json_data["guid_documento"],
