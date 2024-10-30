@@ -452,7 +452,7 @@ def upsert_related(json_data, conn, id_azienda):
                     "id_esterno": related["id_esterno"]
                 })
             else:
-                if related["id_spedizione_pec"] is not None:
+                if "id_spedizione_pec" in related:
                     c.execute(qc.upsert_spedizione, {
                         "guid_doc": json_data["guid_documento"],
                         "id_message": related["id_spedizione_pec"],
