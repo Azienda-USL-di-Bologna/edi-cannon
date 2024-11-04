@@ -90,24 +90,7 @@ def upsert_doc_list_data(codice_azienda, json_data, conn, id_azienda):
 
         id_doc = c.fetchone()["id"]
 
-        # AGGIORNO LA MESSAGES_DOCS
-        if "id_message_shpeck" in json_data:
-            if json_data["id_message_shpeck"] is None:
-                c.execute(qc.delete_messages_docs, {
-                    "id_message": json_data['id_message_shpeck'],
-                    "id_doc": id_doc
-                })
-            elif json_data["tipologia"] == "PROTOCOLLO_IN_ENTRATA":
-                c.execute(qc.insert_messages_docs_pe, {
-                    "id_message": json_data['id_message_shpeck'],
-                    "id_doc": id_doc
-                })
-            elif json_data["tipologia"] == "PROTOCOLLO_IN_USCITA":
-                for message in json_data['id_message_shpeck']:
-                    c.execute(qc.insert_messages_docs_pu, {
-                        "id_message": message,
-                        "id_doc": id_doc
-                    })
+
 
 
         # OLD AGGIORNAMENTO DELLE PERSONE VEDENTI  - ORA LO FACCIO PIU SOTTO
@@ -211,61 +194,7 @@ def upsert_doc_list_data(codice_azienda, json_data, conn, id_azienda):
         later = time.time()
         difference_attori = int(later - now)
 
-        #AGGIORNAMENTO DEI RELATED
-        values_related = ""
-        if json_data["related"] is not None and len(json_data['related']) > 0:
-            for related in json_data['related']:
-                # idStruttura può essere null solo perché nei vecchi attori non si riescie a fare il match con le strutture internuata
-                values_related = values_related + f"""(
-                    {related['id_persona_inserente'] if related['id_persona_inserente'] is not None else 1}, 
-                    {"'" + related['tipo'] + "'" },
-                    {"'" + related['origine'] + "'" },
-                    {"'" + related['descrizione'].replace("'", "''") + "'" if related['descrizione'] is not None else 'null'},
-                    {"'" + related['data_inserimento'] + "'" if related['data_inserimento'] is not None else "'" + str(json_data['data_creazione']) + "'"}
-                ),"""
-        if len(values_related) > 0:
-            # Chiamo la upsert and delete
-            values_related = values_related[:-1] # rimuovo l'ultima virgola
-            c.execute(qc.upsert_related_and_delete_the_others.format(values=values_related), {
-                "id_doc": id_doc
-            })
-        else:
-            # Faccio solo la delete
-            c.execute(qc.delete_related, {
-                "id_doc": id_doc
-            })
 
-        #INSERIMENTO SPEDIZIONI
-        if json_data["tipologia"] == "PROTOCOLLO_IN_ENTRATA":
-            if json_data['id_message_shpeck'] is not None:
-                if json_data['id_mezzo_ricezione'] == 'Email' or json_data['id_mezzo_ricezione'] is None:
-                    json_data['id_mezzo_ricezione'] = 'Mail'
-                if json_data['id_mezzo_ricezione'] == 'Posta Ordinaria':                   
-                    json_data['id_mezzo_ricezione'] = 'Posta ordinaria'
-                c.execute( qc.seleziona_id_mezzo,{
-                    "mezzo": json_data['id_mezzo_ricezione'] })
-                id_mezzo = c.fetchone()["id"];
-                c.execute(qc.upsert_spedizione, {
-                    "id_doc": id_doc,
-                    "id_message": json_data['id_message_shpeck'],
-                    "id_mezzo": id_mezzo
-                })
-            else:
-                c.execute(qc.delete_spedizione, {
-                "id_doc": id_doc
-                })
-        elif json_data["tipologia"] == "PROTOCOLLO_IN_USCITA":
-            if json_data["related"] is not None and len(json_data['related']) > 0:
-                for related in json_data['related']:
-                    if related['tipo'] == 'MITTENTE':
-                        c.execute(qc.seleziona_id_mezzo, {
-                            "mezzo": "Babel"})
-                        id_mezzo = c.fetchone()["id"];
-                        c.execute(qc.upsert_spedizione, {
-                            "id_doc": id_doc,
-                            "id_message": None,
-                            "id_mezzo": id_mezzo
-                        })
         # AGGIORNAMENTO DELLE PERSONE VEDENTI - DO L'INCARICO AL MASTERJOBS
         now = time.time()
         c.execute("""
@@ -443,3 +372,109 @@ def get_and_cache_collegio_sindacale_from_mail(conn, email, id_azienda):
         return map_collegi_sindcali[key_to_find]
     else:
         return None
+
+def upsert_related(json_data, conn, id_azienda):
+    c = conn.cursor(cursor_factory=psycopg2.extras.DictCursor)
+    # mi serve l'id_doc
+
+    c.execute(qc.select_id_doc_from_id_esterno, {
+        "guid_doc": json_data["guid_documento"],
+    })
+    id_doc = c.fetchone()["id"]
+
+    # AGGIORNO LA MESSAGES_DOCS
+    if "id_message_shpeck" in json_data:
+        if json_data["id_message_shpeck"] is None:
+            c.execute(qc.delete_messages_docs, {
+                "id_message": json_data['id_message_shpeck'],
+                "id_doc": id_doc
+            })
+        elif json_data["tipologia"] == "PROTOCOLLO_IN_ENTRATA":
+            c.execute(qc.insert_messages_docs_pe, {
+                "id_message": json_data['id_message_shpeck'],
+                "id_doc": id_doc
+            })
+        elif json_data["tipologia"] == "PROTOCOLLO_IN_USCITA":
+            for message in json_data['id_message_shpeck']:
+                c.execute(qc.insert_messages_docs_pu, {
+                    "id_message": message,
+                    "id_doc": id_doc
+                })
+    # AGGIORNAMENTO DEI RELATED
+    values_related = ""
+    if json_data["related"] is not None and len(json_data['related']) > 0:
+        for related in json_data['related']:
+            # idStruttura può essere null solo perché nei vecchi attori non si riescie a fare il match con le strutture internuata
+            values_related = values_related + f"""(
+                        {related['id_persona_inserente'] if related['id_persona_inserente'] is not None else 1}, 
+                        {"'" + related['tipo'] + "'"},
+                        {"'" + related['origine'] + "'"},
+                        {"'" + related['descrizione'].replace("'", "''") + "'" if related['descrizione'] is not None and related['descrizione']  != '' else "'" + related['indirizzo'].replace("'", "''") + "'"},
+                        {"'" + related['data_inserimento'] + "'"  },
+                        {"'" + str(related['id_esterno']) + "'" if related['id_esterno'] is not None else 'null'}
+                    ),"""
+    if len(values_related) > 0:
+
+        # Chiamo la upsert and delete
+        values_related = values_related[:-1]  # rimuovo l'ultima virgola
+        c.execute(qc.upsert_related_and_delete_the_others.format(values=values_related), {
+            "id_doc": id_doc
+        })
+    else:
+        c.execute(qc.select_id_doc_from_id_esterno, {
+            "guid_doc": json_data["guid_documento"],
+        })
+        id_doc = c.fetchone()["id"]
+        # Faccio solo la delete
+        c.execute(qc.delete_related, {
+            "id_doc": id_doc
+        })
+
+    # INSERIMENTO SPEDIZIONI
+    #if json_data['id_message_shpeck'] is not None:
+    if json_data["related"] is not None and len(json_data['related']) > 0:
+        for related in json_data['related']:
+
+            if related['mezzo'] == 'Email' or related['mezzo'] is None:
+                related['mezzo'] = 'Mail'
+            if related['mezzo'] == 'Posta Ordinaria' or related['mezzo'] == 'P. Ordin.':
+                related['mezzo'] = 'Posta ordinaria'
+            if related['mezzo'] == 'A Mano':
+                related['mezzo'] = 'A mano'
+            if related['mezzo'] == 'Racc' or related['mezzo'] == 'Racc. A/R':
+                related['mezzo'] = 'Raccomandata'
+
+            log.info(f"questo è il mezzo che sto cercando: {related['mezzo']}" )
+            c.execute(qc.seleziona_id_mezzo, {
+                "mezzo": related['mezzo']})
+            id_mezzo = c.fetchone()["id"];
+            if json_data["tipologia"] == "PROTOCOLLO_IN_ENTRATA" or json_data["tipologia"] == "DELIBERA" or json_data["tipologia"] == "DETERMINA":
+                c.execute(qc.upsert_spedizione, {
+                    "guid_doc": json_data["guid_documento"],
+                    "id_message": json_data['id_message_shpeck'],
+                    "id_mezzo": id_mezzo,
+                    "indirizzo": related["indirizzo"],
+                    "id_esterno": related["id_esterno"]
+                })
+            else:
+                if "id_spedizione_pec" in related:
+                    c.execute(qc.upsert_spedizione, {
+                        "guid_doc": json_data["guid_documento"],
+                        "id_message": related["id_spedizione_pec"],
+                        "id_mezzo": id_mezzo,
+                        "indirizzo": related["indirizzo"],
+                        "id_esterno": related["id_esterno"]
+                    })
+                else:
+                    c.execute(qc.upsert_spedizione, {
+                        "guid_doc": json_data["guid_documento"],
+                        "id_message": None,
+                        "id_mezzo": id_mezzo,
+                        "indirizzo": related["indirizzo"],
+                        "id_esterno": related["id_esterno"]
+                    })
+
+    else:
+        c.execute(qc.delete_spedizione, {
+            "guid_doc": json_data["guid_documento"]
+        })

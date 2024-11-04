@@ -189,6 +189,10 @@ def search_and_work(conn, codice_azienda, fascicoli_parlanti, conn_internauta, i
                             # Se il doc esiste dovrei avere dei dati, se è così vado a fare la upsert
                             if json_data is not None:
                                 idm.upsert_doc_list_data(codice_azienda, json_data, conn_internauta, id_azienda)
+                        elif r['tipo_oggetto'] in ["related_pe", "related_pu", "related_dete", "related_deli"]:
+                            json_data_related = argo_data_retriever.get_document_by_guid(conn, r['id_oggetto'], r['tipo_oggetto'])
+                            if json_data_related is not None:
+                                idm.upsert_related(json_data_related, conn_internauta, id_azienda)
                         elif r['tipo_oggetto'] == "fascicolo":
                             # Se l'oggetto è il fascicolo allora si tratta dell'update del nome
                             # nome = "" if fascicoli_parlanti else argo_data_retriever.get_nome_fascicolo(conn, r['id_oggetto'])
