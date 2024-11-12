@@ -413,6 +413,7 @@ def upsert_related(json_data, conn, id_azienda):
                         {"'" + related['data_inserimento'] + "'"  },
                         {"'" + str(related['id_esterno']) + "'" if related['id_esterno'] is not None else 'null'}
                     ),"""
+    log.info(f"QUESTI SONO I RELATED CHE VOGLIO INSERIRE: {values_related}")
     if len(values_related) > 0:
 
         # Chiamo la upsert and delete
