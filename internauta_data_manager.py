@@ -478,3 +478,4 @@ def upsert_related(json_data, conn, id_azienda):
         c.execute(qc.delete_spedizione, {
             "guid_doc": json_data["guid_documento"]
         })
+    conn.commit()
