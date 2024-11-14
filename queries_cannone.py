@@ -285,22 +285,23 @@ upsert_related_and_delete_the_others="""
     WITH id_da_tenere AS (
         INSERT INTO scripta.related (
             id_doc,  id_persona_inserente, tipo, 
-            origine,  descrizione,data_inserimento
+            origine,  descrizione,data_inserimento, id_esterno
         ) 
         SELECT DISTINCT ON (descrizione, tipo) %(id_doc)s,  id_persona_inserente::integer, tipo::scripta.tipo_related, 
-            origine::scripta.origine_related,  descrizione::text, TO_TIMESTAMP(REPLACE(data_inserimento::text, 'T', ' '),'YYYY-MM-DD HH24:MI:SS')::timestamptz
+            origine::scripta.origine_related,  descrizione::text, TO_TIMESTAMP(REPLACE(data_inserimento::text, 'T', ' '),'YYYY-MM-DD HH24:MI:SS')::timestamptz, id_esterno::text
         FROM (
         VALUES  
             {values}
-        ) AS t ( id_persona_inserente, tipo, origine,  descrizione , data_inserimento)
+        ) AS t ( id_persona_inserente, tipo, origine,  descrizione , data_inserimento, id_esterno)
         GROUP BY 
-            id_persona_inserente, descrizione, tipo , origine,  data_inserimento
-        ON CONFLICT (id_doc, descrizione, tipo ) DO UPDATE 
+            id_persona_inserente, descrizione, tipo , origine,  data_inserimento, id_esterno
+        ON CONFLICT (id_doc, descrizione, tipo, id_esterno ) DO UPDATE 
         SET 
             id_persona_inserente = EXCLUDED.id_persona_inserente,
             origine = EXCLUDED.origine,
             data_inserimento = EXCLUDED.data_inserimento,
             descrizione = EXCLUDED.descrizione,
+            id_esterno = EXCLUDED.id_esterno,
             version = EXCLUDED.version
         RETURNING id
     )
@@ -312,10 +313,11 @@ upsert_spedizione="""
     INSERT INTO scripta.spedizioni (
         id_related, id_message, id_mezzo, indirizzo, id_smistamento, annullata, data_inserimento
     )
-    SELECT r.id , %(id_message)s, %(id_mezzo)s, jsonb_build_object('cap', null, 'via', null, 'civico', null, 'comune',null, 'nazione', null, 'provincia', null, 'indirizzo', r.descrizione)::jsonb, null, FALSE, r.data_inserimento
+    SELECT r.id , (SELECT id from shpeck.messages WHERE id = %(id_message)s limit 1) , %(id_mezzo)s, jsonb_build_object('cap', null, 'via', null, 'civico', null, 'comune',null, 'nazione', null, 'provincia', null, 'completo', %(indirizzo)s)::jsonb, null, FALSE, r.data_inserimento
     FROM scripta.related r
-    WHERE r.tipo = 'MITTENTE'::scripta.tipo_related
-    AND r.id_doc = %(id_doc)s
+    JOIN scripta.docs d on r.id_doc = d.id
+    WHERE r.id_esterno = %(id_esterno)s
+    AND d.id_esterno = %(guid_doc)s
     ON CONFLICT (id_related, id_message ) DO UPDATE 
     SET id_mezzo = EXCLUDED.id_mezzo,
         indirizzo = EXCLUDED.indirizzo,
@@ -326,7 +328,13 @@ upsert_spedizione="""
 """
 delete_spedizione="""
     DELETE FROM scripta.spedizioni
-    WHERE id_related in (SELECT r.id FROM scripta.related r WHERE r.tipo = 'MITTENTE'::scripta.tipo_related  AND r.id_doc = %(id_doc)s)
+    WHERE id_related in (
+        SELECT r.id 
+        FROM scripta.related r 
+        JOIN scripta.docs d ON d.id = r.id_doc
+        WHERE r.tipo = 'MITTENTE'::scripta.tipo_related  
+        AND d.id_esterno = %(guid_doc)s
+        )
 """
 seleziona_id_mezzo="""
     SELECT id FROM scripta.mezzi WHERE descrizione = %(mezzo)s
@@ -393,4 +401,7 @@ get_collegi_sindacali = """
 """
 aggiorna_id_strutture_segreteria_su_docs_details = """
     SELECT * FROM scripta.aggiorna_id_strutture_segreteria_su_docs_details(%(id_doc)s)
+"""
+select_id_doc_from_id_esterno = """
+    SELECT id FROM scripta.docs WHERE id_esterno = %(guid_doc)s
 """
