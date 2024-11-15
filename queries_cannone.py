@@ -10,7 +10,14 @@ update_doc_by_id = """
         additional_data = %(additional_data)s,
         id_esterno = %(guid_documento)s,
         stato = %(stato)s,
-        id_struttura_registrante = %(id_struttura_registrazione)s
+        id_struttura_registrante = %(id_struttura_registrazione)s,
+        visibilita = (CASE
+                WHEN  %(riservato)s = true
+                    THEN 'RISERVATO'::scripta.visibilita_doc
+                WHEN  %(visibilita_limitata)s = true
+                    THEN 'LIMITATA'::scripta.visibilita_doc
+                else 'NORMALE'::scripta.visibilita_doc
+            END)
     WHERE d.id = %(id_doc)s
     RETURNING id, data_creazione
 """
