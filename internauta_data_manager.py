@@ -409,7 +409,7 @@ def upsert_related(json_data, conn, id_azienda):
                         {related['id_persona_inserente'] if related['id_persona_inserente'] is not None else 1}, 
                         {"'" + related['tipo'] + "'"},
                         {"'" + related['origine'] + "'"},
-                        {"'" + related['descrizione'].replace("'", "''").replace('%','%%') + "'" if related['descrizione'] is not None and related['descrizione'].replace('%','%%')  != '' else "'" + related['indirizzo'].replace("'", "''").replace('%','%%') + "'"},
+                        {"$$" + related['descrizione'] + "$$" if related['descrizione'] is not None and related['descrizione']  != '' else "$$" + related['indirizzo'] + "$$"},
                         {"'" + related['data_inserimento'] + "'"  },
                         {"'" + str(related['id_esterno']) + "'" if related['id_esterno'] is not None else 'null'}
                     ),"""
