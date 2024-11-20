@@ -444,6 +444,8 @@ def upsert_related(json_data, conn, id_azienda):
                 related['mezzo'] = 'A mano'
             if related['mezzo'] == 'Racc' or related['mezzo'] == 'Racc. A/R':
                 related['mezzo'] = 'Raccomandata'
+            if related['mezzo'] == 'Tel' or related['mezzo'] == 'telefono':
+                related['mezzo'] = 'Telefono'
 
             log.info(f"questo è il mezzo che sto cercando: {related['mezzo']}" )
             c.execute(qc.seleziona_id_mezzo, {
