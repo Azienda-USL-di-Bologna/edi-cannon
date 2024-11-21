@@ -403,5 +403,5 @@ aggiorna_id_strutture_segreteria_su_docs_details = """
     SELECT * FROM scripta.aggiorna_id_strutture_segreteria_su_docs_details(%(id_doc)s)
 """
 select_id_doc_from_id_esterno = """
-    SELECT id FROM scripta.docs WHERE id_esterno = %(guid_doc)s
+    SELECT id FROM scripta.docs WHERE id_esterno = %(guid_doc)s and id_azienda = %(id_azienda)s
 """
