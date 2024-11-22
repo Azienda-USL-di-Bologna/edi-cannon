@@ -379,7 +379,11 @@ def upsert_related(json_data, conn, id_azienda):
 
     c.execute(qc.select_id_doc_from_id_esterno, {
         "guid_doc": json_data["guid_documento"],
+        "id_azienda": id_azienda
     })
+    if c.rowcount == 0:
+        log.info("Il documento non esiste, non devo fare nulla")
+        return
     id_doc = c.fetchone()["id"]
 
     # AGGIORNO LA MESSAGES_DOCS
@@ -409,11 +413,11 @@ def upsert_related(json_data, conn, id_azienda):
                         {related['id_persona_inserente'] if related['id_persona_inserente'] is not None else 1}, 
                         {"'" + related['tipo'] + "'"},
                         {"'" + related['origine'] + "'"},
-                        {"'" + related['descrizione'].replace("'", "''").replace('%','%%') + "'" if related['descrizione'] is not None and related['descrizione'].replace('%','%%')  != '' else "'" + related['indirizzo'].replace("'", "''").replace('%','%%') + "'"},
+                        {"$$" + related['descrizione'] + "$$" if related['descrizione'] is not None and related['descrizione']  != '' else "$$" + related['indirizzo'] + "$$"},
                         {"'" + related['data_inserimento'] + "'"  },
                         {"'" + str(related['id_esterno']) + "'" if related['id_esterno'] is not None else 'null'}
                     ),"""
-    log.info(f"QUESTI SONO I RELATED CHE VOGLIO INSERIRE: {values_related}")
+    # log.info(f"QUESTI SONO I RELATED CHE VOGLIO INSERIRE: {values_related}")
     if len(values_related) > 0:
 
         # Chiamo la upsert and delete
@@ -422,10 +426,6 @@ def upsert_related(json_data, conn, id_azienda):
             "id_doc": id_doc
         })
     else:
-        c.execute(qc.select_id_doc_from_id_esterno, {
-            "guid_doc": json_data["guid_documento"],
-        })
-        id_doc = c.fetchone()["id"]
         # Faccio solo la delete
         c.execute(qc.delete_related, {
             "id_doc": id_doc

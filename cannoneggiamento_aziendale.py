@@ -174,7 +174,7 @@ def search_and_work(conn, codice_azienda, fascicoli_parlanti, conn_internauta, i
                     """, {'ids': r['ids']})
                     
                     log.info("Tipologia %s" % r['tipo_oggetto'])
-                    if "DELETE" in r["operazioni"]:
+                    if "DELETE" in r["operazioni"] and not r['tipo_oggetto'] in ["related_pe", "related_pu", "related_dete", "related_deli"]:
                         # Devo cancellare questo oggetto (è previsto che sia un pico/dete/deli), lo cancello e poi posso eliminare tutte le righe corrispondenti
                         log.info("Delete del guid: %s, tipo: %s, azienda: %s" % (r['id_oggetto'], r["tipo_oggetto"], codice_azienda))
                         now = time.time()
