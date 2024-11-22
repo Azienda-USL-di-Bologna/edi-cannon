@@ -173,7 +173,7 @@ def upsert_doc_list_data(codice_azienda, json_data, conn, id_azienda):
             for attore in json_data['attori']:
                 # idStruttura può essere null solo perché nei vecchi attori non si riescie a fare il match con le strutture internuata
                 values_attori = values_attori + f"""(
-                    {attore["idPersona"]}, 
+                    {attore["idPersona"] if attore['idPersona'] is not None else 'null'}, 
                     {attore['idStruttura'] if attore['idStruttura'] is not None else 'null'}, 
                     {"'" + RUOLO_ATTORE[attore['ruolo']] + "'"}, 
                     {attore['ordinale'] if attore['ordinale'] is not None else 'null'},
