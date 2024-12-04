@@ -310,21 +310,27 @@ upsert_related_and_delete_the_others="""
     AND id NOT IN (SELECT id FROM id_da_tenere)
 """
 upsert_spedizione="""
-    INSERT INTO scripta.spedizioni (
-        id_related, id_message, id_mezzo, indirizzo, id_smistamento, annullata, data_inserimento
+    WITH id_da_tenere AS (
+        INSERT INTO scripta.spedizioni (
+            id_related, id_message, id_mezzo, indirizzo, id_smistamento, annullata, data_inserimento
+        )
+        SELECT r.id , (SELECT id from shpeck.messages WHERE id = %(id_message)s limit 1) , %(id_mezzo)s, jsonb_build_object('cap', null, 'via', null, 'civico', null, 'comune',null, 'nazione', null, 'provincia', null, 'completo', %(indirizzo)s)::jsonb, null, FALSE, r.data_inserimento
+        FROM scripta.related r
+        JOIN scripta.docs d on r.id_doc = d.id
+        WHERE r.id_esterno = %(id_esterno)s
+        AND d.id_esterno = %(guid_doc)s
+        ON CONFLICT (id_related, id_message ) DO UPDATE 
+        SET id_mezzo = EXCLUDED.id_mezzo,
+            indirizzo = EXCLUDED.indirizzo,
+            id_smistamento = EXCLUDED.id_smistamento,
+            annullata = EXCLUDED.annullata,
+            data_inserimento = EXCLUDED.data_inserimento,
+            version = EXCLUDED.version
+        RETURNING id, id_related
     )
-    SELECT r.id , (SELECT id from shpeck.messages WHERE id = %(id_message)s limit 1) , %(id_mezzo)s, jsonb_build_object('cap', null, 'via', null, 'civico', null, 'comune',null, 'nazione', null, 'provincia', null, 'completo', %(indirizzo)s)::jsonb, null, FALSE, r.data_inserimento
-    FROM scripta.related r
-    JOIN scripta.docs d on r.id_doc = d.id
-    WHERE r.id_esterno = %(id_esterno)s
-    AND d.id_esterno = %(guid_doc)s
-    ON CONFLICT (id_related, id_message ) DO UPDATE 
-    SET id_mezzo = EXCLUDED.id_mezzo,
-        indirizzo = EXCLUDED.indirizzo,
-        id_smistamento = EXCLUDED.id_smistamento,
-        annullata = EXCLUDED.annullata,
-        data_inserimento = EXCLUDED.data_inserimento,
-        version = EXCLUDED.version
+    DELETE FROM scripta.spedizioni 
+    WHERE id_related = (SELECT id_related FROM id_da_tenere)
+    AND id != (SELECT id FROM id_da_tenere)
 """
 delete_spedizione="""
     DELETE FROM scripta.spedizioni
