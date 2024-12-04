@@ -373,10 +373,11 @@ def get_and_cache_collegio_sindacale_from_mail(conn, email, id_azienda):
     else:
         return None
 
+
 def upsert_related(json_data, conn, id_azienda):
     c = conn.cursor(cursor_factory=psycopg2.extras.DictCursor)
-    # mi serve l'id_doc
 
+    # PRENDO L'ID DEL DOC
     c.execute(qc.select_id_doc_from_id_esterno, {
         "guid_doc": json_data["guid_documento"],
         "id_azienda": id_azienda
@@ -404,7 +405,8 @@ def upsert_related(json_data, conn, id_azienda):
                     "id_message": message,
                     "id_doc": id_doc
                 })
-    # AGGIORNAMENTO DEI RELATED
+
+    # AGGIORNO I RELATED
     values_related = ""
     if json_data["related"] is not None and len(json_data['related']) > 0:
         for related in json_data['related']:
