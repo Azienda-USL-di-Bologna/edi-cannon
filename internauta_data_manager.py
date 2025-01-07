@@ -205,7 +205,7 @@ def upsert_doc_list_data(codice_azienda, json_data, conn, id_azienda):
                     {firmatario['id_persona'] if firmatario['id_persona'] is not None else 'null'},
                     {firmatario['tipologia_firma']},
                     {firmatario['codice_versione']},
-                    {str(firmatario['ts_firma'])  if firmatario['ts_firma'] is not None else 'null'},
+                    {"'" + firmatario['ts_firma'] + "'" },
                     {firmatario['stato']}
                     ),
                 """
@@ -348,7 +348,7 @@ def upsert_doc_list_data(codice_azienda, json_data, conn, id_azienda):
                             {firmatario_allegato['id_allegato']},
                             {firmatario_allegato['tipologia_firma']},
                             {firmatario_allegato['firmato']},
-                            {firmatario_allegato['ts_firma'] if firmatario_allegato['ts_firma'] is not None else 'null'},
+                            {"'" + firmatario_allegato['ts_firma'] + "'"},
                             {firmatario_allegato['dettaglio_firmato']}
                             ),
                         """
