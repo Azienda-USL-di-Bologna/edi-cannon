@@ -205,7 +205,7 @@ def upsert_doc_list_data(codice_azienda, json_data, conn, id_azienda):
                     {firmatario['id_persona'] if firmatario['id_persona'] is not None else 'null'},
                     {firmatario['tipologia_firma']},
                     {firmatario['codice_versione']},
-                    {firmatario['ts_firma'] if firmatario['ts_firma'] is not None else 'null'},
+                    {firmatario['ts_firma'] + '::timestamptz' if firmatario['ts_firma'] is not None else 'null'},
                     {firmatario['stato']}
                     ),
                 """
