@@ -194,6 +194,29 @@ def upsert_doc_list_data(codice_azienda, json_data, conn, id_azienda):
         later = time.time()
         difference_attori = int(later - now)
 
+        #AGGIORNAMENTO DEI FIRMATARI
+        values_firmatari = ""
+        c.execute(qc.delete_firmatari, {
+            "id_doc": id_doc
+        })
+        if json_data['firmatari'] is not None and len(json_data['firmatari']) > 0:
+            for firmatario in json_data['firmatari']:
+                values_firmatari = values_firmatari + f"""(
+                    {firmatario['id_persona'] if firmatario['id_persona'] is not None else 'null'},
+                    {firmatario['tipologia_firma']},
+                    {firmatario['codice_versione']},
+                    {firmatario['ts_firma'] if firmatario['ts_firma'] is not None else 'null'},
+                    {firmatario['stato']}
+                    ),
+                """
+
+
+        if len(values_firmatari) > 0:
+            values_firmatari = values_firmatari[:-1] # rimuovo l'ultima virgola
+            c.execute(qc.insert_firmatari.format(values=values_firmatari), {
+                "id_doc": id_doc
+            })
+
 
         # AGGIORNAMENTO DELLE PERSONE VEDENTI - DO L'INCARICO AL MASTERJOBS
         now = time.time()
@@ -313,6 +336,28 @@ def upsert_doc_list_data(codice_azienda, json_data, conn, id_azienda):
             })
         later = time.time()
         difference_allegati = int(later - now)
+
+        # AGGIORNAMENTO FIRMATARI ALLEGATI
+        values_firmatari_allegati = ""
+        c.execute(qc.delete_firmatari_allegati, {
+                "id_doc": id_doc
+            })
+        if json_data['firmatari_allegati'] is not None and len(json_data['firmatari_allegati']) > 0:
+            for firmatario_allegato in json_data['firmatari_allegati']:
+                values_firmatari_allegati = values_firmatari_allegati + f"""(
+                            {firmatario_allegato['id_allegato']},
+                            {firmatario_allegato['tipologia_firma']},
+                            {firmatario_allegato['firmato']},
+                            {firmatario_allegato['ts_firma'] if firmatario_allegato['ts_firma'] is not None else 'null'},
+                            {firmatario_allegato['dettaglio_firmato']}
+                            ),
+                        """
+
+        if len(values_firmatari_allegati) > 0:
+            values_firmatari_allegati = values_firmatari_allegati[:-1]  # rimuovo l'ultima virgola
+            c.execute(qc.insert_firmatari_allegati.format(values=values_firmatari_allegati), {
+                "id_doc": id_doc
+            })
 
         # AGGIORNAMENTO COLLEGI SINDACALI
         now = time.time()
