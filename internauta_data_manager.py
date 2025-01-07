@@ -207,9 +207,7 @@ def upsert_doc_list_data(codice_azienda, json_data, conn, id_azienda):
                     { firmatario['codice_versione'] },
                     {"'" + firmatario['ts_firma'] + "'" if firmatario['ts_firma'] is not None else 'null'},
                     {"'" + firmatario['stato'] + "'::scripta.stati_firmatario" }
-                    ),
-                """
-
+                    ),"""
 
         if len(values_firmatari) > 0:
             values_firmatari = values_firmatari[:-1] # rimuovo l'ultima virgola
@@ -348,10 +346,9 @@ def upsert_doc_list_data(codice_azienda, json_data, conn, id_azienda):
                             {firmatario_allegato['id_allegato']},
                             {"'" + firmatario_allegato['tipologia_firma']+ "'::scripta.tipologie_firma"},
                             {firmatario_allegato['firmato']},
-                            {"'" + firmatario_allegato['ts_firma'] + "'"if firmatario_allegato['ts_firma'] is not None else 'null'},
+                            {"'" + firmatario_allegato['ts_firma'] + "'" if firmatario_allegato['ts_firma'] is not None else 'null'},
                             {"'" + firmatario_allegato['dettaglio_firmato']+ "'::scripta.tipi_dettagli_allegati"}
-                            ),
-                        """
+                            ),"""
 
         if len(values_firmatari_allegati) > 0:
             values_firmatari_allegati = values_firmatari_allegati[:-1]  # rimuovo l'ultima virgola
