@@ -293,9 +293,9 @@ insert_firmatari = """
     INSERT INTO scripta.firmatari (id, id_persona, id_doc, stato, documento_visto, tipologia_firma, ts_firma, codice_versione)
     SELECT DISTINCT id_attori.id, t.id_persona, %(id_doc)s, t.stato::scripta.stati_firmatario, false, t.tipologia_firma::scripta.tipologie_firma, t.ts_firma::timestamptz, t.codice_versione
     FROM (
-        VALUES (
+        VALUES 
             {values}
-        )) AS t (id_persona, tipologia_firma, codice_versione, ts_firma, stato)
+        ) AS t (id_persona, tipologia_firma, codice_versione, ts_firma, stato)
     JOIN id_attori on id_attori.id_persona = t.id_persona
     ON CONFLICT DO NOTHING
 """
@@ -319,9 +319,9 @@ insert_firmatari_allegati = """
     INSERT INTO scripta.firmatari_allegati (id, id_allegato, id_attore, id_persona_inserente, firmato, tipologia_firma, ts_firma, metadati_firma, mezzo_firma_usato, codice_versione, now(), tipo_dettaglio_firmato)
     SELECT DISTINCT id_allegati.id, id_attori.id, 1 , t.firmato, t.tipologia_firma::scripta.tipologie_firma, t.ts_firma::timestamptz,null,  0, t.tipo_dettaglio_firmato::scripta.tipi_dettagli_allegati
     FROM (
-        VALUES  (
+        VALUES  
             {values}
-        )) AS t (id_allegato, tipologia_firma, firmato, ts_firma, dettaglio_firmato)
+        ) AS t (id_allegato, tipologia_firma, firmato, ts_firma, dettaglio_firmato)
     JOIN id_allegati on id_allegati.id_esterno = t.id_allegato
     JOIN id_attori on id_attori.id_persona = t.id_persona_attore
     ON CONFLICT DO NOTHING
