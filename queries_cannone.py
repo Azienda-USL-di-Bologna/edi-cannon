@@ -288,7 +288,7 @@ insert_firmatari = """
     with id_attori AS (
         SELECT id , id_persona
         FROM scripta.attori_docs 
-        WHERE id_doc = %(id_doc)s and ruolo = 'FIRMA'::scripta.ruolo_attore_doc
+        WHERE id_doc = %(id_doc)s and ruolo in ('FIRMA', 'DIRETTORE_GENERALE','DIRETTORE_SANITARIO','DIRETTORE_SCIENTIFICO','DIRETTORE_AMMINISTRATIVO')
     )
     INSERT INTO scripta.firmatari (id, id_persona, id_doc, stato, documento_visto, tipologia_firma, ts_firma, codice_versione)
     SELECT DISTINCT id_attori.id, t.id_persona, %(id_doc)s, t.stato::scripta.stati_firmatario, false, t.tipologia_firma::scripta.tipologie_firma, t.ts_firma::timestamptz, t.codice_versione
