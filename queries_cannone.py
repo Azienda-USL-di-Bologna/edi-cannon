@@ -311,7 +311,7 @@ insert_firmatari_allegati = """
         FROM scripta.allegati 
         WHERE id_doc = %(id_doc)s 
     ),
-    with id_attori AS (
+    id_attori AS (
         SELECT id , id_persona
         FROM scripta.attori_docs 
         WHERE id_doc = %(id_doc)s and ruolo = 'FIRMA'::scripta.ruolo_attore_doc
