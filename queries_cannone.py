@@ -321,7 +321,7 @@ insert_firmatari_allegati = """
     FROM (
         VALUES  
             {values}
-        ) AS t (id_allegato, tipologia_firma, firmato, ts_firma, dettaglio_firmato)
+        ) AS t (id_allegato, id_persona_attore, tipologia_firma, firmato, ts_firma, dettaglio_firmato)
     JOIN id_allegati on id_allegati.id_esterno = t.id_allegato
     JOIN id_attori on id_attori.id_persona = t.id_persona_attore
     ON CONFLICT DO NOTHING
