@@ -310,7 +310,7 @@ insert_firmatari_allegati = """
         SELECT id , id_esterno
         FROM scripta.allegati 
         WHERE id_doc = %(id_doc)s 
-    )
+    ),
     with id_attori AS (
         SELECT id , id_persona
         FROM scripta.attori_docs 
