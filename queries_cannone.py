@@ -317,7 +317,7 @@ insert_firmatari_allegati = """
         WHERE id_doc = %(id_doc)s and ruolo = 'FIRMA'::scripta.ruolo_attore_doc
     ) 
     INSERT INTO scripta.firmatari_allegati ( id_allegato, id_attore, id_persona_inserente, firmato, tipologia_firma, ts_firma, metadati_firma, mezzo_firma_usato, codice_versione, data_inserimento, tipo_dettaglio_firmato)
-    SELECT DISTINCT id_allegati.id, id_attori.id, 1 , t.firmato, t.tipologia_firma::scripta.tipologie_firma, t.ts_firma::timestamptz,null,  0, now(), t.dettaglio_firmato::scripta.tipi_dettagli_allegati
+    SELECT DISTINCT id_allegati.id, id_attori.id, 1 , t.firmato, t.tipologia_firma::scripta.tipologie_firma, t.ts_firma::timestamptz,null, null,  0, now(), t.dettaglio_firmato::scripta.tipi_dettagli_allegati
     FROM (
         VALUES  
             {values}
