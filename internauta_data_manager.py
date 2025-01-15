@@ -173,7 +173,7 @@ def upsert_doc_list_data(codice_azienda, json_data, conn, id_azienda):
             for attore in json_data['attori']:
                 # idStruttura può essere null solo perché nei vecchi attori non si riescie a fare il match con le strutture internuata
                 values_attori = values_attori + f"""(
-                    {attore["idPersona"]}, 
+                    {attore["idPersona"] if attore['idPersona'] is not None else 'null'}, 
                     {attore['idStruttura'] if attore['idStruttura'] is not None else 'null'}, 
                     {"'" + RUOLO_ATTORE[attore['ruolo']] + "'"}, 
                     {attore['ordinale'] if attore['ordinale'] is not None else 'null'},
@@ -193,6 +193,27 @@ def upsert_doc_list_data(codice_azienda, json_data, conn, id_azienda):
             })
         later = time.time()
         difference_attori = int(later - now)
+
+        #AGGIORNAMENTO DEI FIRMATARI
+        values_firmatari = ""
+        c.execute(qc.delete_firmatari, {
+            "id_doc": id_doc
+        })
+        if json_data['firmatari'] is not None and len(json_data['firmatari']) > 0:
+            for firmatario in json_data['firmatari']:
+                values_firmatari = values_firmatari + f"""(
+                    {firmatario['id_persona'] if firmatario['id_persona'] is not None else 'null'},
+                    {"'" + firmatario['tipologia_firma']+ "'::scripta.tipologie_firma" },
+                    { firmatario['codice_versione'] },
+                    {"'" + firmatario['ts_firma'] + "'" if firmatario['ts_firma'] is not None else 'null'},
+                    {"'" + firmatario['stato'] + "'::scripta.stati_firmatario" }
+                    ),"""
+
+        if len(values_firmatari) > 0:
+            values_firmatari = values_firmatari[:-1] # rimuovo l'ultima virgola
+            c.execute(qc.insert_firmatari.format(values=values_firmatari), {
+                "id_doc": id_doc
+            })
 
 
         # AGGIORNAMENTO DELLE PERSONE VEDENTI - DO L'INCARICO AL MASTERJOBS
@@ -313,6 +334,28 @@ def upsert_doc_list_data(codice_azienda, json_data, conn, id_azienda):
             })
         later = time.time()
         difference_allegati = int(later - now)
+
+        # AGGIORNAMENTO FIRMATARI ALLEGATI
+        values_firmatari_allegati = ""
+        c.execute(qc.delete_firmatari_allegati, {
+                "id_doc": id_doc
+            })
+        if json_data['firmatari_allegati'] is not None and len(json_data['firmatari_allegati']) > 0:
+            for firmatario_allegato in json_data['firmatari_allegati']:
+                values_firmatari_allegati = values_firmatari_allegati + f"""(
+                            {"'" + firmatario_allegato['id_allegato'] + "'"},
+                            { firmatario_allegato['id_persona_attore']   if firmatario_allegato['id_persona_attore'] is not None else 'null'},
+                            {"'" + firmatario_allegato['tipologia_firma']+ "'::scripta.tipologie_firma"},
+                            {firmatario_allegato['firmato']},
+                            {"'" + firmatario_allegato['ts_firma'] + "'" if firmatario_allegato['ts_firma'] is not None else 'null'},
+                            {"'" + firmatario_allegato['dettaglio_firmato']+ "'::scripta.tipi_dettagli_allegati"}
+                            ),"""
+
+        if len(values_firmatari_allegati) > 0:
+            values_firmatari_allegati = values_firmatari_allegati[:-1]  # rimuovo l'ultima virgola
+            c.execute(qc.insert_firmatari_allegati.format(values=values_firmatari_allegati), {
+                "id_doc": id_doc
+            })
 
         # AGGIORNAMENTO COLLEGI SINDACALI
         now = time.time()
@@ -440,7 +483,7 @@ def upsert_related(json_data, conn, id_azienda):
 
             if related['mezzo'] == 'Email' or related['mezzo'] is None:
                 related['mezzo'] = 'Mail'
-            if related['mezzo'] == 'Posta Ordinaria' or related['mezzo'] == 'P. Ordin.':
+            if related['mezzo'] == 'Posta Ordinaria' or related['mezzo'] == 'P. Ordin.' or related['mezzo'] == 'Posta':
                 related['mezzo'] = 'Posta ordinaria'
             if related['mezzo'] == 'A Mano':
                 related['mezzo'] = 'A mano'
@@ -448,6 +491,8 @@ def upsert_related(json_data, conn, id_azienda):
                 related['mezzo'] = 'Raccomandata'
             if related['mezzo'] == 'Tel' or related['mezzo'] == 'telefono':
                 related['mezzo'] = 'Telefono'
+            if related['mezzo'] == 'PEC':
+                related['mezzo'] = 'Pec'
 
             log.info(f"questo è il mezzo che sto cercando: {related['mezzo']}" )
             c.execute(qc.seleziona_id_mezzo, {

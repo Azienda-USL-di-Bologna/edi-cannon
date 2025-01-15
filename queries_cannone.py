@@ -280,6 +280,52 @@ upsert_attori_and_delete_the_others = """
     WHERE id_doc = %(id_doc)s
     AND id NOT IN (SELECT id FROM id_da_tenere)
 """
+delete_firmatari = """
+    delete from scripta.firmatari
+    where id_doc = %(id_doc)s
+"""
+insert_firmatari = """
+    with id_attori AS (
+        SELECT id , id_persona
+        FROM scripta.attori_docs 
+        WHERE id_doc = %(id_doc)s and ruolo in ('FIRMA', 'DIRETTORE_GENERALE','DIRETTORE_SANITARIO','DIRETTORE_SCIENTIFICO','DIRETTORE_AMMINISTRATIVO')
+    )
+    INSERT INTO scripta.firmatari (id, id_persona, id_doc, stato, documento_visto, tipologia_firma, ts_firma, codice_versione)
+    SELECT DISTINCT id_attori.id, t.id_persona, %(id_doc)s, t.stato::scripta.stati_firmatario, false, t.tipologia_firma::scripta.tipologie_firma, t.ts_firma::timestamptz, t.codice_versione
+    FROM (
+        VALUES 
+            {values}
+        ) AS t (id_persona, tipologia_firma, codice_versione, ts_firma, stato)
+    JOIN id_attori on id_attori.id_persona = t.id_persona
+    ON CONFLICT DO NOTHING
+"""
+delete_firmatari_allegati = """
+    delete from scripta.firmatari_allegati
+    where id_allegato in (
+        select id from scripta.allegati where id_doc = %(id_doc)s
+    )
+"""
+insert_firmatari_allegati = """
+    with id_allegati AS (
+        SELECT id , id_esterno
+        FROM scripta.allegati 
+        WHERE id_doc = %(id_doc)s 
+    ),
+    id_attori AS (
+        SELECT id , id_persona
+        FROM scripta.attori_docs 
+        WHERE id_doc = %(id_doc)s and ruolo = 'FIRMA'::scripta.ruolo_attore_doc
+    ) 
+    INSERT INTO scripta.firmatari_allegati ( id_allegato, id_attore, id_persona_inserente, firmato, tipologia_firma, ts_firma, codice_versione, data_inserimento, tipo_dettaglio_firmato)
+    SELECT DISTINCT id_allegati.id, id_attori.id, 1 , t.firmato, t.tipologia_firma::scripta.tipologie_firma, t.ts_firma::timestamptz, 0, now(), t.dettaglio_firmato::scripta.tipi_dettagli_allegati
+    FROM (
+        VALUES  
+            {values}
+        ) AS t (id_allegato, id_persona_attore, tipologia_firma, firmato, ts_firma, dettaglio_firmato)
+    JOIN id_allegati on id_allegati.id_esterno = t.id_allegato
+    JOIN id_attori on id_attori.id_persona = t.id_persona_attore
+    ON CONFLICT DO NOTHING
+"""
 
 upsert_related_and_delete_the_others="""
     WITH id_da_tenere AS (
