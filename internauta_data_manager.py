@@ -12,6 +12,7 @@ import traceback
 import sys
 import cannoneggiamento_aziendale
 import time
+import re
 
 log = logging.getLogger("cannoneggiamento_aziendale")
 map_collegi_sindcali = {}
@@ -454,12 +455,17 @@ def upsert_related(json_data, conn, id_azienda):
     if json_data["related"] is not None and len(json_data['related']) > 0:
         for related in json_data['related']:
             # idStruttura può essere null solo perché nei vecchi attori non si riescie a fare il match con le strutture internuata
+            #faccio escape dei caratteri speciali e replace degli apostrofi, aggiungo il replace dei percento perchè psycopg è psico e sennò fa confusione coi parametri,
+            #gli altri caratteri non danno problemi
+            descrizione = related['descrizione'].replace("'", "''").replace("%", "%%")
+            indirizzo = related['indirizzo'].replace("'", "''").replace("%", "%%")
+
             values_related = values_related + f"""(
                         {related['id_persona_inserente'] if related['id_persona_inserente'] is not None else 1}, 
                         {"'" + related['tipo'] + "'"},
                         {"'" + related['origine'] + "'"},
-                        {"$$" + related['descrizione'] + "$$" if related['descrizione'] is not None and related['descrizione']  != '' else "$$" + related['indirizzo'] + "$$"},
-                        {"'" + related['data_inserimento'] + "'"  },
+                        {"'" + descrizione + "'" if descrizione is not None and descrizione  != '' else "'" + indirizzo + "'"},
+                        {"'" + related['data_inserimento'] + "'"},
                         {"'" + str(related['id_esterno']) + "'" if related['id_esterno'] is not None else 'null'}
                     ),"""
     # log.info(f"QUESTI SONO I RELATED CHE VOGLIO INSERIRE: {values_related}")
@@ -467,6 +473,9 @@ def upsert_related(json_data, conn, id_azienda):
 
         # Chiamo la upsert and delete
         values_related = values_related[:-1]  # rimuovo l'ultima virgola
+        string = qc.upsert_related_and_delete_the_others.format(values=values_related)
+        log.info(
+            f"mi da fastidio sto coso: {string}")
         c.execute(qc.upsert_related_and_delete_the_others.format(values=values_related), {
             "id_doc": id_doc
         })
