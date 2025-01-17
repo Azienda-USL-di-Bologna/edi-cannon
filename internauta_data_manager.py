@@ -456,8 +456,8 @@ def upsert_related(json_data, conn, id_azienda):
         for related in json_data['related']:
             # idStruttura può essere null solo perché nei vecchi attori non si riescie a fare il match con le strutture internuata
             #faccio escape dei caratteri speciali e replace degli apostrofi
-            descrizione = related['descrizione'].replace("'", "''")
-            indirizzo = related['indirizzo'].replace("'", "''")
+            descrizione = related['descrizione'].replace("'", "''").replace("%", "%%")
+            indirizzo = related['indirizzo'].replace("'", "''").replace("%", "%%")
             log.info(
                 f"mi da fastidio sto coso: {descrizione}")
             values_related = values_related + f"""(
