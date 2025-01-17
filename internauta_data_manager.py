@@ -470,12 +470,12 @@ def upsert_related(json_data, conn, id_azienda):
                     ),"""
     # log.info(f"QUESTI SONO I RELATED CHE VOGLIO INSERIRE: {values_related}")
     if len(values_related) > 0:
+
+        # Chiamo la upsert and delete
+        values_related = values_related[:-1]  # rimuovo l'ultima virgola
         string = qc.upsert_related_and_delete_the_others.format(values=values_related)
         log.info(
             f"mi da fastidio sto coso: {string}")
-        # Chiamo la upsert and delete
-        values_related = values_related[:-1]  # rimuovo l'ultima virgola
-
         c.execute(qc.upsert_related_and_delete_the_others.format(values=values_related), {
             "id_doc": id_doc
         })
