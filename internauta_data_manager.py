@@ -455,10 +455,11 @@ def upsert_related(json_data, conn, id_azienda):
     if json_data["related"] is not None and len(json_data['related']) > 0:
         for related in json_data['related']:
             # idStruttura può essere null solo perché nei vecchi attori non si riescie a fare il match con le strutture internuata
-            log.info(
-                f"mi da fastidio sto coso: {re.escape(related['descrizione'])}")
+
             descrizione = re.escape(related['descrizione'])
             indirizzo = re.escape(related['indirizzo'])
+            log.info(
+                f"mi da fastidio sto coso: {descrizione}")
             values_related = values_related + f"""(
                         {related['id_persona_inserente'] if related['id_persona_inserente'] is not None else 1}, 
                         {"'" + related['tipo'] + "'"},
