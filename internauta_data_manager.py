@@ -464,15 +464,18 @@ def upsert_related(json_data, conn, id_azienda):
                         {related['id_persona_inserente'] if related['id_persona_inserente'] is not None else 1}, 
                         {"'" + related['tipo'] + "'"},
                         {"'" + related['origine'] + "'"},
-                        {"'" + descrizione + "'" if descrizione is not None and descrizione  != '' else "'" + indirizzo  + "'"},
+                        {"'" + descrizione + "'" if descrizione is not None and descrizione  != '' else "'" + indirizzo + "'"},
                         {"'" + related['data_inserimento'] + "'"  },
                         {"'" + str(related['id_esterno']) + "'" if related['id_esterno'] is not None else 'null'}
                     ),"""
     # log.info(f"QUESTI SONO I RELATED CHE VOGLIO INSERIRE: {values_related}")
     if len(values_related) > 0:
-
+        string = qc.upsert_related_and_delete_the_others.format(values=values_related)
+        log.info(
+            f"mi da fastidio sto coso: {string}")
         # Chiamo la upsert and delete
         values_related = values_related[:-1]  # rimuovo l'ultima virgola
+
         c.execute(qc.upsert_related_and_delete_the_others.format(values=values_related), {
             "id_doc": id_doc
         })
