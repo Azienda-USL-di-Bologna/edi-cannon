@@ -12,6 +12,7 @@ import traceback
 import sys
 import cannoneggiamento_aziendale
 import time
+import re
 
 log = logging.getLogger("cannoneggiamento_aziendale")
 map_collegi_sindcali = {}
@@ -458,7 +459,7 @@ def upsert_related(json_data, conn, id_azienda):
                         {related['id_persona_inserente'] if related['id_persona_inserente'] is not None else 1}, 
                         {"'" + related['tipo'] + "'"},
                         {"'" + related['origine'] + "'"},
-                        {"$$" + related['descrizione'] + "$$" if related['descrizione'] is not None and related['descrizione']  != '' else "$$" + related['indirizzo'] + "$$"},
+                        {"'" + re.escape(related['descrizione']) + "'" if related['descrizione'] is not None and related['descrizione']  != '' else "'" + re.escape(related['indirizzo'])  + "'"},
                         {"'" + related['data_inserimento'] + "'"  },
                         {"'" + str(related['id_esterno']) + "'" if related['id_esterno'] is not None else 'null'}
                     ),"""
