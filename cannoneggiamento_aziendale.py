@@ -213,7 +213,7 @@ def search_and_work(conn, codice_azienda, fascicoli_parlanti, conn_internauta, i
                     set_guids_in_error(r, conn, codice_azienda, errore, r['id_oggetto'])
 
             # Se il masterjobs è sottopressione voglio mettermi a dormire
-            sleep_until_masterjobs_is_free(conn, 0)
+            sleep_until_masterjobs_is_free(conn_internauta, 0)
 
             offset += 1
             curs.execute(select_cannoneggiamenti, {'offset': offset})
