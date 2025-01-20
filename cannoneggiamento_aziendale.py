@@ -170,6 +170,8 @@ def search_and_work(conn, codice_azienda, fascicoli_parlanti, conn_internauta, i
         curs.execute(select_cannoneggiamenti, {'offset': offset})
         while curs.rowcount == 1:
             r = curs.fetchone()
+            if not massima_priorita and r["priority"] == 1:
+                massima_priorita = True
             log.info('Trovato cannoneggiamento da eseguire, provo a prendere il lock')
             if utils.try_lock_all_guid(conn, r['id_oggetto'], r['tipo_oggetto']):
                 log.info('Lock preso, eseguo il cannoneggiamento')
