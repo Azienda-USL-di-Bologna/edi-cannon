@@ -145,7 +145,7 @@ def get_minirepo_conn():
 """
 
 
-def search_and_work(conn, codice_azienda, fascicoli_parlanti, conn_internauta, id_azienda):
+def search_and_work(conn, codice_azienda, fascicoli_parlanti, conn_internauta, id_azienda, massima_priorita = True):
     log.info("Eseguo search_and_work....")
     curs = conn.cursor(cursor_factory=psycopg2.extras.DictCursor)
     try:
@@ -154,11 +154,18 @@ def search_and_work(conn, codice_azienda, fascicoli_parlanti, conn_internauta, i
             FROM esportazioni.cannoneggiamenti e
             WHERE not e.in_esecuzione
             AND not in_error
+            {}
             GROUP BY id_oggetto, tipo_oggetto
             ORDER BY priority ASC 
             LIMIT 1 
             OFFSET %(offset)s
         '''
+        where_condtion_priorita_massima = "AND priority = 1 "
+        where_condtion_qualsiasi_priorita = ""
+        if massima_priorita is True:
+            select_cannoneggiamenti = select_cannoneggiamenti.format(where_condtion_priorita_massima)
+        else:
+            select_cannoneggiamenti = select_cannoneggiamenti.format(where_condtion_qualsiasi_priorita)
         offset = 0
         curs.execute(select_cannoneggiamenti, {'offset': offset})
         while curs.rowcount == 1:
@@ -217,7 +224,8 @@ def search_and_work(conn, codice_azienda, fascicoli_parlanti, conn_internauta, i
 
             offset += 1
             curs.execute(select_cannoneggiamenti, {'offset': offset})
-
+        if massima_priorita:
+            search_and_work(conn, codice_azienda, fascicoli_parlanti, conn_internauta, id_azienda, False)
     except Exception as ex:
         log.error("SEARCH_AND_WORK errore nel reperimento delle righe o del parametro nome parlante")
         log.error(curs.query)
