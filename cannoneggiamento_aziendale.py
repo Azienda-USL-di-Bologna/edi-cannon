@@ -212,6 +212,9 @@ def search_and_work(conn, codice_azienda, fascicoli_parlanti, conn_internauta, i
                     errore = ex.args[0]
                     set_guids_in_error(r, conn, codice_azienda, errore, r['id_oggetto'])
 
+            # Se il masterjobs è sottopressione voglio mettermi a dormire
+            sleep_until_masterjobs_is_free(conn, 0)
+
             offset += 1
             curs.execute(select_cannoneggiamenti, {'offset': offset})
 
@@ -221,6 +224,25 @@ def search_and_work(conn, codice_azienda, fascicoli_parlanti, conn_internauta, i
         log.error(ex)
         raise ex
 
+
+def sleep_until_masterjobs_is_free(conn, index):
+    if index == 100: # Con questo controllo mi assicuro che ogni quarto d'ora circa va avanti di un cannoneggiamento anche se il masterjobs è pieno.
+        return
+    index += 1
+    curs = conn.cursor(cursor_factory=psycopg2.extras.DictCursor)
+    curs.execute("""
+        SELECT 
+            (select count(1) from masterjobs.jobs where name in ('CalcolaPersoneVedentiDocJobWorker', 'InsertOrUpdateDocDetailJobWorker')) as jobs_count,
+            (SELECT count(1) FROM masterjobs.jobs_notified j where job_name in ('CalcolaPersoneVedentiDocJobWorker', 'InsertOrUpdateDocDetailJobWorker')) as jobs_notified_count
+    """)
+    count_job = curs.fetchone()
+    if count_job["jobs_count"] > 1000 or count_job["jobs_notified_count"] > 1000:
+        curs.close()
+        time.sleep(10)
+        sleep_until_masterjobs_is_free(conn, index)
+    else:
+        curs.close()
+        
 
 def setta_log(azienda):
     filename = "log/edi_cannon_" + str(azienda) + ".log"
