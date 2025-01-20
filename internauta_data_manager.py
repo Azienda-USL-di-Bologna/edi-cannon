@@ -229,7 +229,7 @@ def upsert_doc_list_data(codice_azienda, json_data, conn, id_azienda):
                     '@class', 'it.bologna.ausl.internauta.utils.masterjobs.workers.jobs.calcolapersonevedentidoc.CalcolaPersoneVedentiDocJobWorkerData',
                     'idDoc', %(id_doc)s
                 ), false, %(id_doc)s, 
-                'archivio', 'scripta', FALSE, 'NORMAL', 
+                'archivio', 'scripta', TRUE, 'NORMAL', 
                 now(), FALSE
             )
         """, {

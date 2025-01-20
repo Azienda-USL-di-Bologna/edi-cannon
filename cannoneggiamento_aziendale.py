@@ -150,11 +150,12 @@ def search_and_work(conn, codice_azienda, fascicoli_parlanti, conn_internauta, i
     curs = conn.cursor(cursor_factory=psycopg2.extras.DictCursor)
     try:
         select_cannoneggiamenti = '''
-            SELECT id_oggetto, tipo_oggetto, array_agg(operazione) AS operazioni, array_agg(id) as ids
+            SELECT id_oggetto, tipo_oggetto, array_agg(operazione) AS operazioni, array_agg(id) as ids, min(priority) AS priority
             FROM esportazioni.cannoneggiamenti e
             WHERE not e.in_esecuzione
             AND not in_error
             GROUP BY id_oggetto, tipo_oggetto
+            ORDER BY priority ASC 
             LIMIT 1 
             OFFSET %(offset)s
         '''
