@@ -149,7 +149,7 @@ def search_and_work(conn, codice_azienda, fascicoli_parlanti, conn_internauta, i
     log.info("Eseguo search_and_work....")
     curs = conn.cursor(cursor_factory=psycopg2.extras.DictCursor)
     try:
-        select_cannoneggiamenti = '''
+        select_cannoneggiamenti_base_query = '''
             SELECT id_oggetto, tipo_oggetto, array_agg(operazione) AS operazioni, array_agg(id) as ids, min(priority) AS priority
             FROM esportazioni.cannoneggiamenti e
             WHERE not e.in_esecuzione
@@ -163,14 +163,15 @@ def search_and_work(conn, codice_azienda, fascicoli_parlanti, conn_internauta, i
         where_condtion_priorita_massima = "AND priority = 1 "
         where_condtion_qualsiasi_priorita = ""
         if massima_priorita is True:
-            select_cannoneggiamenti = select_cannoneggiamenti.format(where_condtion_priorita_massima)
+            select_cannoneggiamenti = select_cannoneggiamenti_base_query.format(where_condtion_priorita_massima)
         else:
-            select_cannoneggiamenti = select_cannoneggiamenti.format(where_condtion_qualsiasi_priorita)
+            select_cannoneggiamenti = select_cannoneggiamenti_base_query.format(where_condtion_qualsiasi_priorita)
         offset = 0
         curs.execute(select_cannoneggiamenti, {'offset': offset})
         while curs.rowcount == 1:
             r = curs.fetchone()
             if not massima_priorita and r["priority"] == 1:
+                select_cannoneggiamenti = select_cannoneggiamenti_base_query.format(where_condtion_priorita_massima)
                 massima_priorita = True
             log.info('Trovato cannoneggiamento da eseguire, provo a prendere il lock')
             if utils.try_lock_all_guid(conn, r['id_oggetto'], r['tipo_oggetto']):
