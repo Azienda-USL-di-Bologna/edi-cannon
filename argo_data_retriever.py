@@ -37,8 +37,6 @@ def get_document_by_guid(conn, guid, tipo_documento):
         raise ex
 
 
-
-
 """
     Torno il nome del fascicolo
 """
