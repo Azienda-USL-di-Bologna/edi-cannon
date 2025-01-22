@@ -151,7 +151,7 @@ def search_and_work(conn, codice_azienda, fascicoli_parlanti, conn_internauta, i
     try:
         select_cannoneggiamenti_base_query = '''
             SELECT id_oggetto, tipo_oggetto, array_agg(operazione) AS operazioni, array_agg(id) as ids, min(priority) AS priority,
-                (select true from esportazioni.cannoneggiamenti can where can.priority = 1 and not can.in_esecuzione AND not can.in_error AND can.id != e.id limit 1) as max_priority_exists
+                (select true from esportazioni.cannoneggiamenti can where can.priority = 1 and not can.in_esecuzione AND not can.in_error limit 1) as max_priority_exists
             FROM esportazioni.cannoneggiamenti e
             WHERE not e.in_esecuzione
             AND not in_error
