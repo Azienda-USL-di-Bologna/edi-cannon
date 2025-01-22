@@ -150,7 +150,8 @@ def search_and_work(conn, codice_azienda, fascicoli_parlanti, conn_internauta, i
     curs = conn.cursor(cursor_factory=psycopg2.extras.DictCursor)
     try:
         select_cannoneggiamenti_base_query = '''
-            SELECT id_oggetto, tipo_oggetto, array_agg(operazione) AS operazioni, array_agg(id) as ids, min(priority) AS priority
+            SELECT id_oggetto, tipo_oggetto, array_agg(operazione) AS operazioni, array_agg(id) as ids, min(priority) AS priority,
+                (select true from esportazioni.cannoneggiamenti can where can.priority = 1 and not can.in_esecuzione AND not can.in_error AND can.id != e.id limit 1) as max_priority_exists
             FROM esportazioni.cannoneggiamenti e
             WHERE not e.in_esecuzione
             AND not in_error
@@ -170,9 +171,7 @@ def search_and_work(conn, codice_azienda, fascicoli_parlanti, conn_internauta, i
         curs.execute(select_cannoneggiamenti, {'offset': offset})
         while curs.rowcount == 1:
             r = curs.fetchone()
-            if not massima_priorita and r["priority"] == 1:
-                select_cannoneggiamenti = select_cannoneggiamenti_base_query.format(where_condtion_priorita_massima)
-                massima_priorita = True
+            
             log.info('Trovato cannoneggiamento da eseguire, provo a prendere il lock')
             if utils.try_lock_all_guid(conn, r['id_oggetto'], r['tipo_oggetto']):
                 log.info('Lock preso, eseguo il cannoneggiamento')
@@ -226,6 +225,10 @@ def search_and_work(conn, codice_azienda, fascicoli_parlanti, conn_internauta, i
             sleep_until_masterjobs_is_free(conn_internauta, 0)
 
             offset += 1
+            if not massima_priorita and r["max_priority_exists"] is True:
+                select_cannoneggiamenti = select_cannoneggiamenti_base_query.format(where_condtion_priorita_massima)
+                massima_priorita = True
+                offset = 0
             curs.execute(select_cannoneggiamenti, {'offset': offset})
         if massima_priorita:
             search_and_work(conn, codice_azienda, fascicoli_parlanti, conn_internauta, id_azienda, False)
