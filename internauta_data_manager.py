@@ -495,7 +495,7 @@ def upsert_related(json_data, conn, id_azienda):
 
             if related['mezzo'] == 'Email' or related['mezzo'] is None:
                 related['mezzo'] = 'Mail'
-            if related['mezzo'] == 'Posta Ordinaria' or related['mezzo'] == 'P. Ordin.' or related['mezzo'] == 'Posta':
+            if related['mezzo'] == 'Posta Ordinaria' or related['mezzo'] == 'P. Ordin.' or related['mezzo'] == 'Posta' or related['mezzo'] == 'Corriere':
                 related['mezzo'] = 'Posta ordinaria'
             if related['mezzo'] == 'A Mano':
                 related['mezzo'] = 'A mano'
