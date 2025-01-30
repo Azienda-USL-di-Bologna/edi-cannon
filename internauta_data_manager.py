@@ -42,12 +42,12 @@ def disable_enable_trigger_update_doc_detail(dst_conn, action):
     
     # Template della query
     query = """
-        ALTER TABLE scripta.docs {action} TRIGGER update_doc_detail;
+        --ALTER TABLE scripta.docs {action} TRIGGER update_doc_detail;
         ALTER TABLE scripta.attori_docs {action} TRIGGER update_doc_detail;
-        ALTER TABLE scripta.collegi_sindacali_docs {action} TRIGGER update_doc_detail;
-        ALTER TABLE scripta.registri_docs {action} TRIGGER update_doc_detail;
-        ALTER TABLE scripta.related {action} TRIGGER update_doc_detail;
-        ALTER TABLE scripta.spedizioni {action} TRIGGER update_doc_detail;
+        --ALTER TABLE scripta.collegi_sindacali_docs {action} TRIGGER update_doc_detail;
+        --ALTER TABLE scripta.registri_docs {action} TRIGGER update_doc_detail;
+        --ALTER TABLE scripta.related {action} TRIGGER update_doc_detail;
+        --ALTER TABLE scripta.spedizioni {action} TRIGGER update_doc_detail;
     """
     
     # Formatta la query sostituendo {action} con ENABLE o DISABLE
@@ -75,7 +75,7 @@ def upsert_doc_list_data(codice_azienda, json_data, conn, id_azienda):
         query_to_use = qc.insert_doc
         id_doc = None
 
-        disable_enable_trigger_update_doc_detail(conn, "DISABLE")
+        
 
         if 'id_doc' in json_data and json_data['id_doc'] is not None:
             query_to_use = qc.update_doc_by_id
@@ -192,64 +192,6 @@ def upsert_doc_list_data(codice_azienda, json_data, conn, id_azienda):
             later = time.time()
             difference_registrazioni = int(later - now)
 
-        # AGGIORNAMENTO DEGLI ATTORI
-        now = time.time()
-        values_attori = ""
-        if json_data['attori'] is not None and len(json_data['attori']) > 0:
-            for attore in json_data['attori']:
-                # idStruttura può essere null solo perché nei vecchi attori non si riescie a fare il match con le strutture internuata
-                values_attori = values_attori + f"""(
-                    {attore["idPersona"] if attore['idPersona'] is not None else 'null'}, 
-                    {attore['idStruttura'] if attore['idStruttura'] is not None else 'null'}, 
-                    {"'" + RUOLO_ATTORE[attore['ruolo']] + "'"}, 
-                    {attore['ordinale'] if attore['ordinale'] is not None else 'null'},
-                    {attore["vedente"]},
-                    {attore["sulla_scrivania"]}
-                ),"""
-        if len(values_attori) > 0:
-            # Chiamo la upsert and delete
-            values_attori = values_attori[:-1] # rimuovo l'ultima virgola
-            now_query_attori = time.time()
-            c.execute(qc.upsert_attori_and_delete_the_others.format(values=values_attori), {
-                "id_doc": id_doc
-            })
-            later_query_attori = time.time()
-            difference_query_attori = int(later_query_attori - now_query_attori)
-            if difference_query_attori > 10:
-                log.info(f"query attori: {difference_query_attori}")
-                log.info(c.query)
-        else:
-            # Faccio solo la delete
-            c.execute(qc.delete_attori, {
-                "id_doc": id_doc
-            })
-        later = time.time()
-        difference_attori = int(later - now)
-
-        #AGGIORNAMENTO DEI FIRMATARI
-        now = time.time()
-        values_firmatari = ""
-        c.execute(qc.delete_firmatari, {
-            "id_doc": id_doc
-        })
-        if json_data['firmatari'] is not None and len(json_data['firmatari']) > 0:
-            for firmatario in json_data['firmatari']:
-                values_firmatari = values_firmatari + f"""(
-                    {firmatario['id_persona'] if firmatario['id_persona'] is not None else 'null'},
-                    {"'" + firmatario['tipologia_firma']+ "'::scripta.tipologie_firma" },
-                    { firmatario['codice_versione'] },
-                    {"'" + firmatario['ts_firma'] + "'" if firmatario['ts_firma'] is not None else 'null'},
-                    {"'" + firmatario['stato'] + "'::scripta.stati_firmatario" }
-                    ),"""
-
-        if len(values_firmatari) > 0:
-            values_firmatari = values_firmatari[:-1] # rimuovo l'ultima virgola
-            c.execute(qc.insert_firmatari.format(values=values_firmatari), {
-                "id_doc": id_doc
-            })
-        later = time.time()
-        difference_firmatari = int(later - now)
-
         # AGGIORNAMENTO DEGLI ALLEGATI
         now = time.time()
         id_allegati_da_tenere = []
@@ -348,31 +290,6 @@ def upsert_doc_list_data(codice_azienda, json_data, conn, id_azienda):
         later = time.time()
         difference_allegati = int(later - now)
 
-        # AGGIORNAMENTO FIRMATARI ALLEGATI
-        now = time.time()
-        values_firmatari_allegati = ""
-        c.execute(qc.delete_firmatari_allegati, {
-                "id_doc": id_doc
-            })
-        if json_data['firmatari_allegati'] is not None and len(json_data['firmatari_allegati']) > 0:
-            for firmatario_allegato in json_data['firmatari_allegati']:
-                values_firmatari_allegati = values_firmatari_allegati + f"""(
-                            {"'" + firmatario_allegato['id_allegato'] + "'"},
-                            { firmatario_allegato['id_persona_attore']   if firmatario_allegato['id_persona_attore'] is not None else 'null'},
-                            {"'" + firmatario_allegato['tipologia_firma']+ "'::scripta.tipologie_firma"},
-                            {firmatario_allegato['firmato']},
-                            {"'" + firmatario_allegato['ts_firma'] + "'" if firmatario_allegato['ts_firma'] is not None else 'null'},
-                            {"'" + firmatario_allegato['dettaglio_firmato']+ "'::scripta.tipi_dettagli_allegati"}
-                            ),"""
-
-        if len(values_firmatari_allegati) > 0:
-            values_firmatari_allegati = values_firmatari_allegati[:-1]  # rimuovo l'ultima virgola
-            c.execute(qc.insert_firmatari_allegati.format(values=values_firmatari_allegati), {
-                "id_doc": id_doc
-            })
-        later = time.time()
-        difference_firmatari_allegati = int(later - now)
-
         # AGGIORNAMENTO COLLEGI SINDACALI
         now = time.time()
         values_collegio_sindacale = ""
@@ -400,10 +317,89 @@ def upsert_doc_list_data(codice_azienda, json_data, conn, id_azienda):
         later = time.time()
         difference_collegi_sindacali = int(later - now)
 
-        #AGGIORNAMENTO DELLA COLONNA ID STRUTTURE SEGRETERIA SU DOC DETAILS CHE VIENE CALCOLATO CON LA FUNZIONE
-        # c.execute(qc.aggiorna_id_strutture_segreteria_su_docs_details, {
-        #     "id_doc": id_doc
-        # })
+        # AGGIORNAMENTO DEGLI ATTORI
+        disable_enable_trigger_update_doc_detail(conn, "DISABLE")
+        now = time.time()
+        values_attori = ""
+        if json_data['attori'] is not None and len(json_data['attori']) > 0:
+            for attore in json_data['attori']:
+                # idStruttura può essere null solo perché nei vecchi attori non si riescie a fare il match con le strutture internuata
+                values_attori = values_attori + f"""(
+                    {attore["idPersona"] if attore['idPersona'] is not None else 'null'}, 
+                    {attore['idStruttura'] if attore['idStruttura'] is not None else 'null'}, 
+                    {"'" + RUOLO_ATTORE[attore['ruolo']] + "'"}, 
+                    {attore['ordinale'] if attore['ordinale'] is not None else 'null'},
+                    {attore["vedente"]},
+                    {attore["sulla_scrivania"]}
+                ),"""
+        if len(values_attori) > 0:
+            # Chiamo la upsert and delete
+            values_attori = values_attori[:-1] # rimuovo l'ultima virgola
+            now_query_attori = time.time()
+            c.execute(qc.upsert_attori_and_delete_the_others.format(values=values_attori), {
+                "id_doc": id_doc
+            })
+            later_query_attori = time.time()
+            difference_query_attori = int(later_query_attori - now_query_attori)
+            if difference_query_attori > 10:
+                log.info(f"query attori: {difference_query_attori}")
+                log.info(c.query)
+        else:
+            # Faccio solo la delete
+            c.execute(qc.delete_attori, {
+                "id_doc": id_doc
+            })
+        later = time.time()
+        difference_attori = int(later - now)
+
+        #AGGIORNAMENTO DEI FIRMATARI
+        now = time.time()
+        values_firmatari = ""
+        c.execute(qc.delete_firmatari, {
+            "id_doc": id_doc
+        })
+        if json_data['firmatari'] is not None and len(json_data['firmatari']) > 0:
+            for firmatario in json_data['firmatari']:
+                values_firmatari = values_firmatari + f"""(
+                    {firmatario['id_persona'] if firmatario['id_persona'] is not None else 'null'},
+                    {"'" + firmatario['tipologia_firma']+ "'::scripta.tipologie_firma" },
+                    { firmatario['codice_versione'] },
+                    {"'" + firmatario['ts_firma'] + "'" if firmatario['ts_firma'] is not None else 'null'},
+                    {"'" + firmatario['stato'] + "'::scripta.stati_firmatario" }
+                    ),"""
+
+        if len(values_firmatari) > 0:
+            values_firmatari = values_firmatari[:-1] # rimuovo l'ultima virgola
+            c.execute(qc.insert_firmatari.format(values=values_firmatari), {
+                "id_doc": id_doc
+            })
+        later = time.time()
+        difference_firmatari = int(later - now)
+
+        # AGGIORNAMENTO FIRMATARI ALLEGATI
+        now = time.time()
+        values_firmatari_allegati = ""
+        c.execute(qc.delete_firmatari_allegati, {
+                "id_doc": id_doc
+            })
+        if json_data['firmatari_allegati'] is not None and len(json_data['firmatari_allegati']) > 0:
+            for firmatario_allegato in json_data['firmatari_allegati']:
+                values_firmatari_allegati = values_firmatari_allegati + f"""(
+                            {"'" + firmatario_allegato['id_allegato'] + "'"},
+                            { firmatario_allegato['id_persona_attore']   if firmatario_allegato['id_persona_attore'] is not None else 'null'},
+                            {"'" + firmatario_allegato['tipologia_firma']+ "'::scripta.tipologie_firma"},
+                            {firmatario_allegato['firmato']},
+                            {"'" + firmatario_allegato['ts_firma'] + "'" if firmatario_allegato['ts_firma'] is not None else 'null'},
+                            {"'" + firmatario_allegato['dettaglio_firmato']+ "'::scripta.tipi_dettagli_allegati"}
+                            ),"""
+
+        if len(values_firmatari_allegati) > 0:
+            values_firmatari_allegati = values_firmatari_allegati[:-1]  # rimuovo l'ultima virgola
+            c.execute(qc.insert_firmatari_allegati.format(values=values_firmatari_allegati), {
+                "id_doc": id_doc
+            })
+        later = time.time()
+        difference_firmatari_allegati = int(later - now)
 
         # AGGIORNAMENTO DEL DOC DETAILS -  DO L'INCARICO AL MASTERJOBS
         c.execute(qc.insert_job_upsert_doc_detail, {
@@ -473,7 +469,7 @@ def upsert_related(json_data, conn, id_azienda):
         return
     id_doc = c.fetchone()["id"]
 
-    disable_enable_trigger_update_doc_detail(conn, "DISABLE")
+    #disable_enable_trigger_update_doc_detail(conn, "DISABLE")
 
     # AGGIORNO LA MESSAGES_DOCS
     if "id_message_shpeck" in json_data:
@@ -587,5 +583,5 @@ def upsert_related(json_data, conn, id_azienda):
             "guid_doc": json_data["guid_documento"]
         })
 
-    disable_enable_trigger_update_doc_detail(conn, "ENABLE")
+    #disable_enable_trigger_update_doc_detail(conn, "ENABLE")
     conn.commit()
