@@ -473,6 +473,8 @@ def upsert_related(json_data, conn, id_azienda):
         return
     id_doc = c.fetchone()["id"]
 
+    disable_enable_trigger_update_doc_detail(conn, "DISABLE")
+
     # AGGIORNO LA MESSAGES_DOCS
     if "id_message_shpeck" in json_data:
         if json_data["id_message_shpeck"] is None:
@@ -584,4 +586,6 @@ def upsert_related(json_data, conn, id_azienda):
         c.execute(qc.delete_spedizione, {
             "guid_doc": json_data["guid_documento"]
         })
+
+    disable_enable_trigger_update_doc_detail(conn, "ENABLE")
     conn.commit()
