@@ -184,9 +184,15 @@ def upsert_doc_list_data(codice_azienda, json_data, conn, id_azienda):
         if len(values_attori) > 0:
             # Chiamo la upsert and delete
             values_attori = values_attori[:-1] # rimuovo l'ultima virgola
+            now_query_attori = time.time()
             c.execute(qc.upsert_attori_and_delete_the_others.format(values=values_attori), {
                 "id_doc": id_doc
             })
+            later_query_attori = time.time()
+            difference_query_attori = int(later_query_attori - now_query_attori)
+            if difference_query_attori > 10:
+                log.info(f"query attori: {difference_query_attori}")
+                log.info(c.query)
         else:
             # Faccio solo la delete
             c.execute(qc.delete_attori, {
@@ -196,6 +202,7 @@ def upsert_doc_list_data(codice_azienda, json_data, conn, id_azienda):
         difference_attori = int(later - now)
 
         #AGGIORNAMENTO DEI FIRMATARI
+        now = time.time()
         values_firmatari = ""
         c.execute(qc.delete_firmatari, {
             "id_doc": id_doc
@@ -215,6 +222,8 @@ def upsert_doc_list_data(codice_azienda, json_data, conn, id_azienda):
             c.execute(qc.insert_firmatari.format(values=values_firmatari), {
                 "id_doc": id_doc
             })
+        later = time.time()
+        difference_firmatari = int(later - now)
 
 
         # AGGIORNAMENTO DELLE PERSONE VEDENTI - DO L'INCARICO AL MASTERJOBS
@@ -337,6 +346,7 @@ def upsert_doc_list_data(codice_azienda, json_data, conn, id_azienda):
         difference_allegati = int(later - now)
 
         # AGGIORNAMENTO FIRMATARI ALLEGATI
+        now = time.time()
         values_firmatari_allegati = ""
         c.execute(qc.delete_firmatari_allegati, {
                 "id_doc": id_doc
@@ -357,6 +367,8 @@ def upsert_doc_list_data(codice_azienda, json_data, conn, id_azienda):
             c.execute(qc.insert_firmatari_allegati.format(values=values_firmatari_allegati), {
                 "id_doc": id_doc
             })
+        later = time.time()
+        difference_firmatari_allegati = int(later - now)
 
         # AGGIORNAMENTO COLLEGI SINDACALI
         now = time.time()
@@ -382,17 +394,29 @@ def upsert_doc_list_data(codice_azienda, json_data, conn, id_azienda):
             c.execute(qc.delete_collegi_sindacali, {
                 "id_doc": id_doc
             })
-
         later = time.time()
         difference_collegi_sindacali = int(later - now)
+
         #AGGIORNAMENTO DELLA COLONNA ID STRUTTURE SEGRETERIA SU DOC DETAILS CHE VIENE CALCOLATO CON LA FUNZIONE
         c.execute(qc.aggiorna_id_strutture_segreteria_su_docs_details, {
             "id_doc": id_doc
         })
+
         # DOCUMENTO AGGIORNATO. COMMITTO
         conn.commit()
         log.info(f"upsert_doc_list_data eseguita con successo per documento con guid: {json_data['guid_documento']}")
-        log.info("%s secondi upsert, %s secondi pers.vedenti, %s secondi allegati, %s secondi difference_attori, %s secondi difference_collegi_sindacali" % (str(difference_upsert), str(difference_persone_vedenti), str(difference_allegati), str(difference_attori), str(difference_collegi_sindacali)))
+        # log.info("%s secondi upsert, %s secondi pers.vedenti, %s secondi allegati, %s secondi difference_attori, %s secondi difference_collegi_sindacali. %s secondi difference_firmatari, %s secondi difference_firmatari_allegati" 
+        #          % (str(difference_upsert), str(difference_persone_vedenti), str(difference_allegati), str(difference_attori), str(difference_collegi_sindacali), str(difference_firmatari), str(difference_firmatari_allegati)))
+        log.info(f"""
+            Tempi di elaborazione:
+            {difference_upsert} secondi upsert
+            {difference_persone_vedenti} secondi persone vedenti
+            {difference_allegati} secondi allegati
+            {difference_attori} secondi attori
+            {difference_collegi_sindacali} secondi collegi sindacali
+            {difference_firmatari} secondi firmatari
+            {difference_firmatari_allegati} secondi firmatari allegati
+        """)
     except Exception as ex:
         conn.rollback()
         log.error(f"errore in upsert_doc_list_data per guid {json_data['guid_documento']}")

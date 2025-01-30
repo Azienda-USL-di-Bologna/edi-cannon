@@ -272,7 +272,6 @@ upsert_attori_and_delete_the_others = """
         ON CONFLICT (id_doc, id_persona, id_struttura, ruolo) DO UPDATE 
         SET sulla_scrivania = EXCLUDED.sulla_scrivania,
             ordinale = EXCLUDED.ordinale,
-            version = EXCLUDED.version,
             vedente = EXCLUDED.vedente
         RETURNING id
     )

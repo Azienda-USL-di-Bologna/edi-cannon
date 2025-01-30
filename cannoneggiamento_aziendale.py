@@ -157,7 +157,7 @@ def search_and_work(conn, codice_azienda, fascicoli_parlanti, conn_internauta, i
             AND not in_error
             {}
             GROUP BY id_oggetto, tipo_oggetto
-            ORDER BY priority ASC 
+            -- ORDER BY priority ASC -- questo ordinamento non serve perché uso la where condition per prendere la priorità massima o una qualsiasi
             LIMIT 1 
             OFFSET %(offset)s
         '''
@@ -168,7 +168,11 @@ def search_and_work(conn, codice_azienda, fascicoli_parlanti, conn_internauta, i
         else:
             select_cannoneggiamenti = select_cannoneggiamenti_base_query.format(where_condtion_qualsiasi_priorita)
         offset = 0
+        now = time.time()
         curs.execute(select_cannoneggiamenti, {'offset': offset})
+        later = time.time()
+        difference = int(later - now)
+        log.info("Select eseguita in %s secondi" % str(difference))
         while curs.rowcount == 1:
             r = curs.fetchone()
             
@@ -229,7 +233,12 @@ def search_and_work(conn, codice_azienda, fascicoli_parlanti, conn_internauta, i
                 select_cannoneggiamenti = select_cannoneggiamenti_base_query.format(where_condtion_priorita_massima)
                 massima_priorita = True
                 offset = 0
+                log.info("Reimposto la ricerca con priorità massima")
+            now = time.time()
             curs.execute(select_cannoneggiamenti, {'offset': offset})
+            later = time.time()
+            difference = int(later - now)
+            log.info("Select eseguita in %s secondi" % str(difference))
         if massima_priorita:
             search_and_work(conn, codice_azienda, fascicoli_parlanti, conn_internauta, id_azienda, False)
     except Exception as ex:
@@ -251,6 +260,7 @@ def sleep_until_masterjobs_is_free(conn, index):
     """)
     count_job = curs.fetchone()
     if count_job["jobs_count"] > 1000 or count_job["jobs_notified_count"] > 1000:
+        log.info("Dormo 10 secondi")
         curs.close()
         time.sleep(10)
         sleep_until_masterjobs_is_free(conn, index)
