@@ -456,3 +456,20 @@ aggiorna_id_strutture_segreteria_su_docs_details = """
 select_id_doc_from_id_esterno = """
     SELECT id FROM scripta.docs WHERE id_esterno = %(guid_doc)s and id_azienda = %(id_azienda)s
 """
+insert_job_calcola_persone_vedenti = """
+    INSERT INTO masterjobs.jobs_notified (
+        job_name, job_data, "deferred", object_id,
+        object_type, app, wait_object, priority,
+        insert_ts, skip_if_already_present
+    ) VALUES (
+        'CalcolaPersoneVedentiDocJobWorker', json_build_object(
+            '@class', 'it.bologna.ausl.internauta.utils.masterjobs.workers.jobs.calcolapersonevedentidoc.CalcolaPersoneVedentiDocJobWorkerData',
+            'idDoc', %(id_doc)s
+        ), false, %(id_doc)s, 
+        'scripta.docs', 'scripta', TRUE, 'NORMAL', 
+        now(), FALSE
+    )
+"""
+insert_job_upsert_doc_detail = """
+    SELECT scripta.insert_update_doc_detail_job(%(id_doc)s)
+"""

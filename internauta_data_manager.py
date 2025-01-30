@@ -35,6 +35,28 @@ def delete_doc_by_guid_and_azienda(guid_documento, conn, id_azienda):
         raise ex
 
 
+def disable_enable_trigger_update_doc_detail(dst_conn, action):
+    c = dst_conn.cursor(cursor_factory=psycopg2.extras.DictCursor)
+    
+    log.info(f"{action} dei trigger")
+    
+    # Template della query
+    query = """
+        ALTER TABLE scripta.docs {action} TRIGGER update_doc_detail;
+        ALTER TABLE scripta.attori_docs {action} TRIGGER update_doc_detail;
+        ALTER TABLE scripta.collegi_sindacali_docs {action} TRIGGER update_doc_detail;
+        ALTER TABLE scripta.registri_docs {action} TRIGGER update_doc_detail;
+        ALTER TABLE scripta.related {action} TRIGGER update_doc_detail;
+        ALTER TABLE scripta.spedizioni {action} TRIGGER update_doc_detail;
+    """
+    
+    # Formatta la query sostituendo {action} con ENABLE o DISABLE
+    formatted_query = query.format(action=action)
+    
+    c.execute(formatted_query)
+    c.close()
+
+
 """
     A partire da un grosso json che contiene i dati del documento effettua la upsert per il documento
     Dopodiche aggiorna persone vedenti e allegati. Per questi ultimi si connette a minio
@@ -52,6 +74,9 @@ def upsert_doc_list_data(codice_azienda, json_data, conn, id_azienda):
         now = time.time()
         query_to_use = qc.insert_doc
         id_doc = None
+
+        disable_enable_trigger_update_doc_detail(conn, "DISABLE")
+
         if 'id_doc' in json_data and json_data['id_doc'] is not None:
             query_to_use = qc.update_doc_by_id
             id_doc = json_data['id_doc']
@@ -91,7 +116,7 @@ def upsert_doc_list_data(codice_azienda, json_data, conn, id_azienda):
 
         id_doc = c.fetchone()["id"]
 
-
+        
 
 
         # OLD AGGIORNAMENTO DELLE PERSONE VEDENTI  - ORA LO FACCIO PIU SOTTO
@@ -224,28 +249,6 @@ def upsert_doc_list_data(codice_azienda, json_data, conn, id_azienda):
             })
         later = time.time()
         difference_firmatari = int(later - now)
-
-
-        # AGGIORNAMENTO DELLE PERSONE VEDENTI - DO L'INCARICO AL MASTERJOBS
-        now = time.time()
-        c.execute("""
-            INSERT INTO masterjobs.jobs_notified (
-                job_name, job_data, "deferred", object_id,
-                object_type, app, wait_object, priority,
-                insert_ts, skip_if_already_present
-            ) VALUES (
-                'CalcolaPersoneVedentiDocJobWorker', json_build_object(
-                    '@class', 'it.bologna.ausl.internauta.utils.masterjobs.workers.jobs.calcolapersonevedentidoc.CalcolaPersoneVedentiDocJobWorkerData',
-                    'idDoc', %(id_doc)s
-                ), false, %(id_doc)s, 
-                'scripta.docs', 'scripta', TRUE, 'NORMAL', 
-                now(), FALSE
-            )
-        """, {
-            "id_doc": id_doc
-        })
-        later = time.time()
-        difference_persone_vedenti = int(later - now)
 
         # AGGIORNAMENTO DEGLI ALLEGATI
         now = time.time()
@@ -398,9 +401,24 @@ def upsert_doc_list_data(codice_azienda, json_data, conn, id_azienda):
         difference_collegi_sindacali = int(later - now)
 
         #AGGIORNAMENTO DELLA COLONNA ID STRUTTURE SEGRETERIA SU DOC DETAILS CHE VIENE CALCOLATO CON LA FUNZIONE
-        c.execute(qc.aggiorna_id_strutture_segreteria_su_docs_details, {
+        # c.execute(qc.aggiorna_id_strutture_segreteria_su_docs_details, {
+        #     "id_doc": id_doc
+        # })
+
+        # AGGIORNAMENTO DEL DOC DETAILS -  DO L'INCARICO AL MASTERJOBS
+        c.execute(qc.insert_job_upsert_doc_detail, {
             "id_doc": id_doc
         })
+
+        # AGGIORNAMENTO DELLE PERSONE VEDENTI - DO L'INCARICO AL MASTERJOBS
+        now = time.time()
+        c.execute(qc.insert_job_calcola_persone_vedenti, {
+            "id_doc": id_doc
+        })
+        later = time.time()
+        difference_persone_vedenti = int(later - now)
+
+        disable_enable_trigger_update_doc_detail(conn, "ENABLE")
 
         # DOCUMENTO AGGIORNATO. COMMITTO
         conn.commit()
