@@ -318,7 +318,7 @@ def upsert_doc_list_data(codice_azienda, json_data, conn, id_azienda):
         difference_collegi_sindacali = int(later - now)
 
         # AGGIORNAMENTO DEGLI ATTORI
-        disable_enable_trigger_update_doc_detail(conn, "DISABLE")
+        
         now = time.time()
         values_attori = ""
         if json_data['attori'] is not None and len(json_data['attori']) > 0:
@@ -335,15 +335,17 @@ def upsert_doc_list_data(codice_azienda, json_data, conn, id_azienda):
         if len(values_attori) > 0:
             # Chiamo la upsert and delete
             values_attori = values_attori[:-1] # rimuovo l'ultima virgola
-            now_query_attori = time.time()
+            # now_query_attori = time.time()
+            disable_enable_trigger_update_doc_detail(conn, "DISABLE")
             c.execute(qc.upsert_attori_and_delete_the_others.format(values=values_attori), {
                 "id_doc": id_doc
             })
-            later_query_attori = time.time()
-            difference_query_attori = int(later_query_attori - now_query_attori)
-            if difference_query_attori > 10:
-                log.info(f"query attori: {difference_query_attori}")
-                log.info(c.query)
+            disable_enable_trigger_update_doc_detail(conn, "ENABLE")
+            # later_query_attori = time.time()
+            # difference_query_attori = int(later_query_attori - now_query_attori)
+            # if difference_query_attori > 10:
+            #     log.info(f"query attori: {difference_query_attori}")
+            #     log.info(c.query)
         else:
             # Faccio solo la delete
             c.execute(qc.delete_attori, {
@@ -413,8 +415,6 @@ def upsert_doc_list_data(codice_azienda, json_data, conn, id_azienda):
         })
         later = time.time()
         difference_persone_vedenti = int(later - now)
-
-        disable_enable_trigger_update_doc_detail(conn, "ENABLE")
 
         # DOCUMENTO AGGIORNATO. COMMITTO
         conn.commit()
