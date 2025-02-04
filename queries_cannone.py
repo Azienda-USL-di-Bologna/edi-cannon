@@ -488,7 +488,7 @@ insert_info_annullamento = """
         ) nota (id_doc, testo, tipo, data_inserimento_riga, id_persona_inserente)
         WHERE %(motivazione)s is not null
         returning id
-    ),
+    )
     INSERT INTO scripta.docs_annullati (
         tipo,"data",id_doc,id_persona_annullante,
         id_nota, id_doc_annullamento, id_struttura_annullante
