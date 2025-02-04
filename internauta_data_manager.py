@@ -328,7 +328,7 @@ def upsert_doc_list_data(codice_azienda, json_data, conn, id_azienda):
                 "id_doc": id_doc,
                 "motivazione": json_data['annullato']["motivazione"],
                 "data_annullamento": json_data['annullato']["data_annullamento"] if json_data['annullato']["data_annullamento"] is not None else json_data['data_creazione'],
-                "id_persona_annullante": json_data['annullato']["id_persona_annullante"],
+                "id_persona_annullante": json_data['annullato']["id_persona_annullante"] if json_data['annullato']["id_persona_annullante"] is not None else 1, #se non c'è metto l'utente bds. preferisco tenere il constaint not null sulla colonna
                 "tipo_annullamento": json_data['annullato']["stato"],
                 "id_esterno_documento_annullamento": json_data['annullato']["id_esterno_documento_annullamento"],
                 "id_struttura_annullante": json_data['annullato']["id_struttura_annullante"]
