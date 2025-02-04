@@ -327,7 +327,7 @@ def upsert_doc_list_data(codice_azienda, json_data, conn, id_azienda):
             c.execute(qc.insert_info_annullamento, { 
                 "id_doc": id_doc,
                 "motivazione": json_data['annullato']["motivazione"],
-                "data_annullamento": json_data['annullato']["data_annullamento"],
+                "data_annullamento": json_data['annullato']["data_annullamento"] if json_data['annullato']["data_annullamento"] is not None else json_data['data_creazione'],
                 "id_persona_annullante": json_data['annullato']["id_persona_annullante"],
                 "tipo_annullamento": json_data['annullato']["stato"],
                 "id_esterno_documento_annullamento": json_data['annullato']["id_esterno_documento_annullamento"],
