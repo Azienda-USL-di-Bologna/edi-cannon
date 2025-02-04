@@ -482,7 +482,7 @@ delete_nota_doc_annullamento = """
 insert_info_annullamento = """
     with insert_nota_doc AS (
         INSERT INTO scripta.note_doc (id_doc, testo, tipo, data_inserimento_riga, id_persona_inserente)
-        SELECT id_doc, testo, tipo::scripta.tipo_nota_doc, data_inserimento_riga::timestamptz, id_persona_inserente 
+        SELECT id_doc, testo, tipo::scripta.tipo_nota_doc, data_inserimento_riga::timestamptz, id_persona_inserente::integer
         FROM (
             VALUES (%(id_doc)s, %(motivazione)s, 'ANNULLAMENTO', %(data_annullamento)s, %(id_persona_annullante)s)
         ) nota (id_doc, testo, tipo, data_inserimento_riga, id_persona_inserente)
