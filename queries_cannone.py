@@ -473,3 +473,27 @@ insert_job_calcola_persone_vedenti = """
 insert_job_upsert_doc_detail = """
     SELECT scripta.insert_update_doc_detail_job(%(id_doc)s)
 """
+delete_from_docs_annullati = """
+    DELETE FROM scripta.docs_annullati WHERE id_doc = %(id_doc)s and tipo IN ('ANNULLATO', 'PRE_ANNULLATO')
+"""
+delete_nota_doc_annullamento = """
+    DELETE FROM scripta.note_doc WHERE id_doc = %(id_doc)s and tipo = 'ANNULLAMENTO'
+"""
+insert_info_annullamento = """
+    with insert_nota_doc AS (
+        INSERT INTO scripta.note_doc (id_doc, testo, tipo, data_inserimento_riga, id_persona_inserente)
+        SELECT id_doc, testo, tipo::scripta.tipo_nota_doc, data_inserimento_riga::timestamptz, id_persona_inserente::integer
+        FROM (
+            VALUES (%(id_doc)s, %(motivazione)s, 'ANNULLAMENTO', %(data_annullamento)s, %(id_persona_annullante)s)
+        ) nota (id_doc, testo, tipo, data_inserimento_riga, id_persona_inserente)
+        WHERE %(motivazione)s is not null
+        returning id
+    )
+    INSERT INTO scripta.docs_annullati (
+        tipo,"data",id_doc,id_persona_annullante,
+        id_nota, id_doc_annullamento, id_struttura_annullante
+    ) VALUES (
+        %(tipo_annullamento)s::scripta."tipo_annullamento", %(data_annullamento)s::timestamptz, %(id_doc)s, %(id_persona_annullante)s, 
+        (select id from insert_nota_doc), (select id from scripta.docs d where d.id_esterno = %(id_esterno_documento_annullamento)s), %(id_struttura_annullante)s
+    )
+"""

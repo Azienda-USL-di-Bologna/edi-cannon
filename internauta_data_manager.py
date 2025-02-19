@@ -42,13 +42,16 @@ def disable_enable_trigger_update_doc_detail(dst_conn, action):
     
     # Template della query
     query = """
-        --ALTER TABLE scripta.docs {action} TRIGGER update_doc_detail;
         ALTER TABLE scripta.attori_docs {action} TRIGGER update_doc_detail;
-        --ALTER TABLE scripta.collegi_sindacali_docs {action} TRIGGER update_doc_detail;
-        --ALTER TABLE scripta.registri_docs {action} TRIGGER update_doc_detail;
-        --ALTER TABLE scripta.related {action} TRIGGER update_doc_detail;
-        --ALTER TABLE scripta.spedizioni {action} TRIGGER update_doc_detail;
     """
+    # query = """
+    #     --ALTER TABLE scripta.docs {action} TRIGGER update_doc_detail;
+    #     ALTER TABLE scripta.attori_docs {action} TRIGGER update_doc_detail;
+    #     --ALTER TABLE scripta.collegi_sindacali_docs {action} TRIGGER update_doc_detail;
+    #     --ALTER TABLE scripta.registri_docs {action} TRIGGER update_doc_detail;
+    #     --ALTER TABLE scripta.related {action} TRIGGER update_doc_detail;
+    #     --ALTER TABLE scripta.spedizioni {action} TRIGGER update_doc_detail;
+    # """
     
     # Formatta la query sostituendo {action} con ENABLE o DISABLE
     formatted_query = query.format(action=action)
@@ -96,10 +99,10 @@ def upsert_doc_list_data(codice_azienda, json_data, conn, id_azienda):
             'data_registrazione': json_data['data_registrazione'],
             'oggetto': json_data['oggetto'],
             'testo': json_data['testo'],
-            'stato': "ANNULLATO" if json_data['annullato'] else STATI[str(json_data['stato'])],
+            'stato': "ANNULLATO" if json_data['annullato'] is not None else STATI[str(json_data['stato'])],
             'visibilita_limitata': json_data['visibilita_limitata'],
             'riservato': json_data['riservato'],
-            'annullato': json_data['annullato'],
+            'annullato': json_data['annullato'] is not None,
             'protocollo_esterno': json_data['protocollo_esterno'],
             #'mail_collegio': json_data['mail_collegio'],
             'data_inserimento_riga': datetime.now(),
@@ -317,8 +320,21 @@ def upsert_doc_list_data(codice_azienda, json_data, conn, id_azienda):
         later = time.time()
         difference_collegi_sindacali = int(later - now)
 
+        # AGGIORNAMENTO INFO ANNULLAMENTO
+        c.execute(qc.delete_from_docs_annullati, { "id_doc": id_doc })
+        c.execute(qc.delete_nota_doc_annullamento, { "id_doc": id_doc })
+        if json_data['annullato'] is not None:
+            c.execute(qc.insert_info_annullamento, { 
+                "id_doc": id_doc,
+                "motivazione": json_data['annullato']["motivazione"],
+                "data_annullamento": json_data['annullato']["data_annullamento"] if json_data['annullato']["data_annullamento"] is not None else json_data['data_creazione'],
+                "id_persona_annullante": json_data['annullato']["id_persona_annullante"] if json_data['annullato']["id_persona_annullante"] is not None else 1, #se non c'è metto l'utente bds. preferisco tenere il constaint not null sulla colonna
+                "tipo_annullamento": json_data['annullato']["stato"],
+                "id_esterno_documento_annullamento": json_data['annullato']["id_esterno_documento_annullamento"],
+                "id_struttura_annullante": json_data['annullato']["id_struttura_annullante"]
+            })
+
         # AGGIORNAMENTO DEGLI ATTORI
-        
         now = time.time()
         values_attori = ""
         if json_data['attori'] is not None and len(json_data['attori']) > 0:
