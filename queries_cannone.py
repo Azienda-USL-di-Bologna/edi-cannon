@@ -173,7 +173,7 @@ insert_registri_docproposte = """
 			OR (%(tipologia)s = 'DELIBERA' AND r.codice ='PROP_DELI' ))
 	on conflict (id_registro, id_doc)
 	do update 
-	set numero = EXCLUDED.numero , anno = EXCLUDED.anno
+	set numero = EXCLUDED.numero , anno = EXCLUDED.anno, id_persona_registrante = EXCLUDED.id_persona_registrante, id_struttura_registrante = EXCLUDED.id_struttura_registrante
 """
 insert_registri_doc_registrati = """INSERT INTO scripta.registri_docs (
      id_registro, id_doc, numero, anno, id_persona_registrante, id_struttura_registrante, data_registrazione
