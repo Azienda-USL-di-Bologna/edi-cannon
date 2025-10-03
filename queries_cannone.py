@@ -244,6 +244,17 @@ delete_allegati_tutti = """
     DELETE FROM scripta.allegati aa
     WHERE aa.id_doc = %(id_doc)s
 """
+set_estraibile_flag_su_allegati = """
+    UPDATE scripta.allegati aa
+    SET estraibile = TRUE
+    WHERE  id IN (
+        SELECT ap.id 
+        FROM scripta.allegati af 
+        JOIN scripta.allegati ap ON ap.id = af.id_allegato_padre
+        WHERE af.id_allegato_padre IS NOT NULL AND not ap.estraibile
+        AND ap.id_doc = %(id_doc)s
+    )
+"""
 query_minio = """
     SELECT jsonb_object_agg(mongo_uuid, jsonb_build_object(
         'idRepository', file_id, 

@@ -286,6 +286,9 @@ def upsert_doc_list_data(codice_azienda, json_data, conn, id_azienda):
                 "id_allegati_da_tenere": id_allegati_da_tenere,
                 "id_doc": id_doc
             })
+            c.execute(qc.set_estraibile_flag_su_allegati, {
+                "id_doc": id_doc
+            })
         else:
             c.execute(qc.delete_allegati_tutti, {
                 "id_doc": id_doc
