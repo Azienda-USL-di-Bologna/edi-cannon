@@ -156,32 +156,32 @@ def upsert_doc_list_data(codice_azienda, json_data, conn, id_azienda):
         #AGGIORNAMENTO REGISTRAZIONI
         if(json_data['numero_registrazione'] is None):
             now = time.time()
-            c.execute(qc.insert_registri_docproposte, {
-                    "id_doc": id_doc,
-                    "numero_proposta": json_data["numero_proposta"],
-                    "anno_proposta": json_data["anno_proposta"],
-                    "id_persona_registrazione": json_data["id_persona_registrazione"],
-                    "id_struttura_registrazione": json_data["id_struttura_registrazione"],
-                    "data_creazione": json_data["data_creazione"],
-                    "tipologia": json_data["tipologia"],
-                    "id_azienda": id_azienda
-                }
-            )
+            #c.execute(qc.insert_registri_docproposte, {
+            #        "id_doc": id_doc,
+            #        "numero_proposta": json_data["numero_proposta"],
+            #        "anno_proposta": json_data["anno_proposta"],
+            #        "id_persona_registrazione": json_data["id_persona_registrazione"],
+            #        "id_struttura_registrazione": json_data["id_struttura_registrazione"],
+            #        "data_creazione": json_data["data_creazione"],
+            #        "tipologia": json_data["tipologia"],
+            #        "id_azienda": id_azienda
+            #    }
+            #)
             later = time.time()
             difference_registrazioni = int(later - now)
         else:
             now = time.time()
-            c.execute(qc.insert_registri_docproposte, {
-                "id_doc": id_doc,
-                "numero_proposta": json_data["numero_proposta"],
-                "anno_proposta": json_data["anno_proposta"],
-                "id_persona_registrazione": json_data["id_persona_registrazione"],
-                "id_struttura_registrazione": json_data["id_struttura_registrazione"],
-                "data_creazione": json_data["data_creazione"],
-                "tipologia": json_data["tipologia"],
-                "id_azienda": id_azienda
-            }
-            )
+            #c.execute(qc.insert_registri_docproposte, {
+            #    "id_doc": id_doc,
+            #    "numero_proposta": json_data["numero_proposta"],
+            #    "anno_proposta": json_data["anno_proposta"],
+            #    "id_persona_registrazione": json_data["id_persona_registrazione"],
+            #    "id_struttura_registrazione": json_data["id_struttura_registrazione"],
+            #    "data_creazione": json_data["data_creazione"],
+            #    "tipologia": json_data["tipologia"],
+            #    "id_azienda": id_azienda
+            #}
+            #)
             c.execute(qc.insert_registri_doc_registrati, {
                 "id_doc": id_doc,
                 "numero_registrazione": json_data["numero_registrazione"],
