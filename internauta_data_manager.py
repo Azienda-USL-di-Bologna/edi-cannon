@@ -357,12 +357,12 @@ def upsert_doc_list_data(codice_azienda, json_data, conn, id_azienda):
             # Chiamo la upsert and delete
             values_attori = values_attori[:-1] # rimuovo l'ultima virgola
             # now_query_attori = time.time()
-            disable_enable_trigger_update_doc_detail(conn, "DISABLE")
-            log.info(f"disable del trigger effettuato, ora inserisco {count_attori} attori")
+            #disable_enable_trigger_update_doc_detail(conn, "DISABLE")
+            #log.info(f"disable del trigger effettuato, ora inserisco {count_attori} attori")
             c.execute(qc.upsert_attori_and_delete_the_others.format(values=values_attori), {
                 "id_doc": id_doc
             })
-            disable_enable_trigger_update_doc_detail(conn, "ENABLE")
+            #disable_enable_trigger_update_doc_detail(conn, "ENABLE")
             # later_query_attori = time.time()
             # difference_query_attori = int(later_query_attori - now_query_attori)
             # if difference_query_attori > 10:
