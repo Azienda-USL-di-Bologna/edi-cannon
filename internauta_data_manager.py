@@ -340,6 +340,7 @@ def upsert_doc_list_data(codice_azienda, json_data, conn, id_azienda):
         # AGGIORNAMENTO DEGLI ATTORI
         now = time.time()
         values_attori = ""
+        count_attori = 0
         if json_data['attori'] is not None and len(json_data['attori']) > 0:
             for attore in json_data['attori']:
                 # idStruttura può essere null solo perché nei vecchi attori non si riescie a fare il match con le strutture internuata
@@ -351,11 +352,13 @@ def upsert_doc_list_data(codice_azienda, json_data, conn, id_azienda):
                     {attore["vedente"]},
                     {attore["sulla_scrivania"]}
                 ),"""
+                count_attori += 1
         if len(values_attori) > 0:
             # Chiamo la upsert and delete
             values_attori = values_attori[:-1] # rimuovo l'ultima virgola
             # now_query_attori = time.time()
             disable_enable_trigger_update_doc_detail(conn, "DISABLE")
+            log.info(f"disable del trigger effettuato, ora inserisco {count_attori} attori")
             c.execute(qc.upsert_attori_and_delete_the_others.format(values=values_attori), {
                 "id_doc": id_doc
             })
