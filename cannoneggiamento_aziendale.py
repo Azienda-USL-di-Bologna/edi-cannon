@@ -259,7 +259,7 @@ def sleep_until_masterjobs_is_free(conn, index):
             (SELECT count(1) FROM masterjobs.jobs_notified j where job_name in ('CalcolaPersoneVedentiDocJobWorker', 'InsertOrUpdateDocDetailJobWorker')) as jobs_notified_count
     """)
     count_job = curs.fetchone()
-    if count_job["jobs_count"] > 1000 or count_job["jobs_notified_count"] > 1000:
+    if count_job["jobs_count"] > 10000 or count_job["jobs_notified_count"] > 10000:
         log.info("Dormo 10 secondi")
         curs.close()
         time.sleep(10)
