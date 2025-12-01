@@ -362,8 +362,8 @@ upsert_related_real_id_gruppo ="""
                 END
             )
         )
-        WHERE r1.is_gruppo
-        AND r1.id_gruppo IS NOT NULL
+        WHERE r1.is_gruppo = false
+        AND r1.id_gruppo IS NULL
         AND r1.id_doc = %(id_doc)s;
     """
 
