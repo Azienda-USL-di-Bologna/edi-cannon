@@ -541,8 +541,8 @@ def upsert_related(json_data, conn, id_azienda):
                         {"'" + related['origine'] + "'"},
                         {"'" + descrizione + "'" if descrizione is not None and descrizione  != '' else "'" + indirizzo + "'"},
                         {"'" + related['data_inserimento'] + "'"},
-                        {"'" + str(related['id_esterno']) + "'" if related['id_esterno'] is not None else 'null'}, #colonna id_esterno
-                        {related['is_gruppo']}  #colonna is_gruppo
+                        {"'" + str(related['id_esterno']) + "'" if related['id_esterno'] is not None else 'null'}, 
+                        {related['is_gruppo']} 
                     ),"""
     # log.info(f"QUESTI SONO I RELATED CHE VOGLIO INSERIRE: {values_related}")
     if len(values_related) > 0:
@@ -563,9 +563,13 @@ def upsert_related(json_data, conn, id_azienda):
         case_statement = " ".join(case_conditions)
 
         # eseguo query di update
+        print(qc.upsert_related_real_id_gruppo.format(case_statement=case_statement), {
+            "id_doc": id_doc
+        })
         c.execute(qc.upsert_related_real_id_gruppo.format(case_statement=case_statement), {
             "id_doc": id_doc
         })
+
     else:
         # Faccio solo la delete
         c.execute(qc.delete_related, {
