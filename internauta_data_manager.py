@@ -423,7 +423,11 @@ def upsert_doc_list_data(codice_azienda, json_data, conn, id_azienda):
             })
         later = time.time()
         difference_firmatari_allegati = int(later - now)
-
+        # AGGIORNAMENTO ALLEGATO FIRMATO - DO L'INCARICO AL MASTERJOBS
+        c.execute(qc.insert_job_calcola_firmato, {
+            "id_doc": id_doc
+        })
+        
         # AGGIORNAMENTO DEL DOC DETAILS -  DO L'INCARICO AL MASTERJOBS
         c.execute(qc.insert_job_upsert_doc_detail, {
             "id_doc": id_doc

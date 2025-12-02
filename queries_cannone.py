@@ -511,6 +511,21 @@ insert_job_calcola_persone_vedenti = """
         now(), FALSE
     )
 """
+insert_job_calcola_firmato = """
+    INSERT INTO masterjobs.jobs_notified (
+        job_name, job_data, "deferred", object_id,
+        object_type, app, wait_object, priority,
+        insert_ts, skip_if_already_present
+    ) VALUES (
+        'SetAllegatoFirmatoJobWorker', json_build_object(
+            '@class', 'it.bologna.ausl.internauta.utils.masterjobs.workers.jobs.setallegatofirmato.SetAllegatoFirmatoWorkerData',
+            'idDoc', %(id_doc)s,
+            'idAllegato',null
+        ), false, %(id_doc)s, 
+        'scripta.docs', 'scripta', TRUE, 'NORMAL', 
+        now(), FALSE
+    )
+"""
 insert_job_upsert_doc_detail = """
     SELECT scripta.insert_update_doc_detail_job(%(id_doc)s)
 """
