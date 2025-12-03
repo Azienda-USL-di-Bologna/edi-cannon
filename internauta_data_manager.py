@@ -559,20 +559,21 @@ def upsert_related(json_data, conn, id_azienda):
             "id_doc": id_doc
         })
 
-        # Aggiorno anche id_gruppo
-        # calcolo la condizione (CASE WHEN THEN) dinamica da mettere nella query per l'update
-        case_conditions = []
-        for idContattoFiglio, idContattoGruppo in idContattoMembro_idContattoGruppo.items():
-            case_conditions.append(f"WHEN '{idContatto_idEsterno[idContattoFiglio]}' THEN '{idContatto_idEsterno[idContattoGruppo]}'")
-        case_statement = " ".join(case_conditions)
+        if len(idContattoMembro_idContattoGruppo) > 0:
+            # Aggiorno anche id_gruppo
+            # calcolo la condizione (CASE WHEN THEN) dinamica da mettere nella query per l'update
+            case_conditions = []
+            for idContattoFiglio, idContattoGruppo in idContattoMembro_idContattoGruppo.items():
+                case_conditions.append(f"WHEN '{idContatto_idEsterno[idContattoFiglio]}' THEN '{idContatto_idEsterno[idContattoGruppo]}'")
+            case_statement = " ".join(case_conditions)
 
-        # eseguo query di update
-        print(qc.upsert_related_real_id_gruppo.format(case_statement=case_statement), {
-            "id_doc": id_doc
-        })
-        c.execute(qc.upsert_related_real_id_gruppo.format(case_statement=case_statement), {
-            "id_doc": id_doc
-        })
+            # eseguo query di update
+            print(qc.upsert_related_real_id_gruppo.format(case_statement=case_statement), {
+                "id_doc": id_doc
+            })
+            c.execute(qc.upsert_related_real_id_gruppo.format(case_statement=case_statement), {
+                "id_doc": id_doc
+            })
 
     else:
         # Faccio solo la delete
