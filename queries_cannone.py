@@ -337,20 +337,50 @@ insert_firmatari_allegati = """
     ON CONFLICT DO NOTHING
 """
 
+upsert_related_real_id_gruppo2 = """
+        UPDATE related r1
+        SET r1.id_gruppo = (
+            SELECT id 
+            FROM related r2
+            WHERE r2.id_doc = %(id_doc)s
+            AND r2.id_contatto = x
+            )
+        WHERE r1.is_gruppo
+        AND r1.id_gruppo IS NOT NULL
+        AND r1.id_doc = %(id_doc)s;
+    """
+
+upsert_related_real_id_gruppo ="""
+        UPDATE scripta.related r1
+        SET id_gruppo = (
+            SELECT id 
+            FROM scripta.related r2
+            WHERE r2.id_doc = %(id_doc)s
+            AND r2.id_esterno = (
+                CASE r1.id_esterno
+                    {case_statement}
+                END
+            )
+        )
+        WHERE r1.is_gruppo = false
+        AND r1.id_gruppo IS NULL
+        AND r1.id_doc = %(id_doc)s;
+    """
+
 upsert_related_and_delete_the_others="""
     WITH id_da_tenere AS (
         INSERT INTO scripta.related (
-            id_doc,  id_persona_inserente, tipo, 
-            origine,  descrizione,data_inserimento, id_esterno
+            id_doc, id_contatto, id_persona_inserente, tipo, 
+            origine, descrizione, data_inserimento, id_esterno, is_gruppo
         ) 
-        SELECT DISTINCT ON (descrizione, tipo) %(id_doc)s,  id_persona_inserente::integer, tipo::scripta.tipo_related, 
-            origine::scripta.origine_related,  descrizione::text, TO_TIMESTAMP(REPLACE(data_inserimento::text, 'T', ' '),'YYYY-MM-DD HH24:MI:SS')::timestamptz, id_esterno::text
+        SELECT DISTINCT ON (descrizione, tipo) %(id_doc)s, id_contatto::integer, id_persona_inserente::integer, tipo::scripta.tipo_related, 
+            origine::scripta.origine_related,  descrizione::text, TO_TIMESTAMP(REPLACE(data_inserimento::text, 'T', ' '),'YYYY-MM-DD HH24:MI:SS')::timestamptz, id_esterno::text, is_gruppo::boolean
         FROM (
         VALUES  
             {values}
-        ) AS t ( id_persona_inserente, tipo, origine,  descrizione , data_inserimento, id_esterno)
+        ) AS t (  id_contatto, id_persona_inserente, tipo, origine,  descrizione , data_inserimento, id_esterno, is_gruppo)
         GROUP BY 
-            id_persona_inserente, descrizione, tipo , origine,  data_inserimento, id_esterno
+             id_contatto, id_persona_inserente, descrizione, tipo, origine, data_inserimento, id_esterno, is_gruppo
         ON CONFLICT (id_doc, descrizione, tipo, id_esterno ) DO UPDATE 
         SET 
             id_persona_inserente = EXCLUDED.id_persona_inserente,
@@ -476,6 +506,21 @@ insert_job_calcola_persone_vedenti = """
         'CalcolaPersoneVedentiDocJobWorker', json_build_object(
             '@class', 'it.bologna.ausl.internauta.utils.masterjobs.workers.jobs.calcolapersonevedentidoc.CalcolaPersoneVedentiDocJobWorkerData',
             'idDoc', %(id_doc)s
+        ), false, %(id_doc)s, 
+        'scripta.docs', 'scripta', TRUE, 'NORMAL', 
+        now(), FALSE
+    )
+"""
+insert_job_calcola_firmato = """
+    INSERT INTO masterjobs.jobs_notified (
+        job_name, job_data, "deferred", object_id,
+        object_type, app, wait_object, priority,
+        insert_ts, skip_if_already_present
+    ) VALUES (
+        'SetAllegatoFirmatoJobWorker', json_build_object(
+            '@class', 'it.bologna.ausl.internauta.utils.masterjobs.workers.jobs.setallegatofirmato.SetAllegatoFirmatoWorkerData',
+            'idDoc', %(id_doc)s,
+            'idAllegato',null
         ), false, %(id_doc)s, 
         'scripta.docs', 'scripta', TRUE, 'NORMAL', 
         now(), FALSE
