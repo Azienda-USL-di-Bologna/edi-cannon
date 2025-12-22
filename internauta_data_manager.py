@@ -527,7 +527,18 @@ def upsert_related(json_data, conn, id_azienda):
             #gli altri caratteri non danno problemi
             descrizione = ''
             indirizzo = ''
+            id_contatto = ''
             id_contatto_gruppo = ''
+            if related['id_contatto'] != '' and related['id_contatto'] is not None:
+                id_contatto = related['id_contatto']
+            elif related['id_contatto_2'] != '' and related['id_contatto_2'] is not None:
+                porzioni = related['id_contatto_2'].split('_')
+                esclusi = {'g', 'c', 'd', 'internauta','0'}
+                for porzione in porzioni:
+                    if porzione not in esclusi:
+                        id_contatto = porzione
+                        break
+                #id_contatto = related['id_contatto_2']
             if related['descrizione'] is not None:
                 descrizione = related['descrizione'].replace("'", "''").replace("%", "%%")
             if related['indirizzo'] is not None:
@@ -538,12 +549,12 @@ def upsert_related(json_data, conn, id_azienda):
                 for porzione in porzioni:
                     if porzione not in esclusi:
                         id_contatto_gruppo = porzione
-                        break  # se vuoi solo il primo
+                        break
                 #id_contatto_gruppo = related['id_gruppo'].replace("g_", "")
             if id_contatto_gruppo != '' and id_contatto_gruppo is not None:
-                idContattoMembro_idContattoGruppo[str(related['id_contatto'])] = id_contatto_gruppo
+                idContattoMembro_idContattoGruppo[str(id_contatto)] = id_contatto_gruppo
             if related['id_esterno'] is not None:
-               idContatto_idEsterno[str(related['id_contatto'])] = related['id_esterno']
+               idContatto_idEsterno[str(id_contatto)] = related['id_esterno']
             values_related = values_related + f"""(
                         {related['id_contatto'] if related['id_contatto'] is not None else 'null'},
                         {related['id_persona_inserente'] if related['id_persona_inserente'] is not None else 1}, 
