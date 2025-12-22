@@ -533,7 +533,13 @@ def upsert_related(json_data, conn, id_azienda):
             if related['indirizzo'] is not None:
                 indirizzo = related['indirizzo'].replace("'", "''").replace("%", "%%")
             if related['id_gruppo'] != '' and related['id_gruppo'] is not None:
-                id_contatto_gruppo = related['id_gruppo'].replace("g_", "")
+                porzioni = related['id_gruppo'].split('_')
+                esclusi = {'g', 'c', 'd', 'internauta','0'}
+                for porzione in porzioni:
+                    if porzione not in esclusi:
+                        id_contatto_gruppo = porzione
+                        break  # se vuoi solo il primo
+                #id_contatto_gruppo = related['id_gruppo'].replace("g_", "")
             if id_contatto_gruppo != '' and id_contatto_gruppo is not None:
                 idContattoMembro_idContattoGruppo[str(related['id_contatto'])] = id_contatto_gruppo
             if related['id_esterno'] is not None:
