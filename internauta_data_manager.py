@@ -156,32 +156,32 @@ def upsert_doc_list_data(codice_azienda, json_data, conn, id_azienda):
         #AGGIORNAMENTO REGISTRAZIONI
         if(json_data['numero_registrazione'] is None):
             now = time.time()
-            c.execute(qc.insert_registri_docproposte, {
-                    "id_doc": id_doc,
-                    "numero_proposta": json_data["numero_proposta"],
-                    "anno_proposta": json_data["anno_proposta"],
-                    "id_persona_registrazione": json_data["id_persona_registrazione"],
-                    "id_struttura_registrazione": json_data["id_struttura_registrazione"],
-                    "data_creazione": json_data["data_creazione"],
-                    "tipologia": json_data["tipologia"],
-                    "id_azienda": id_azienda
-                }
-            )
+            #c.execute(qc.insert_registri_docproposte, {
+            #        "id_doc": id_doc,
+            #        "numero_proposta": json_data["numero_proposta"],
+            #        "anno_proposta": json_data["anno_proposta"],
+            #        "id_persona_registrazione": json_data["id_persona_registrazione"],
+            #        "id_struttura_registrazione": json_data["id_struttura_registrazione"],
+            #        "data_creazione": json_data["data_creazione"],
+            #        "tipologia": json_data["tipologia"],
+            #        "id_azienda": id_azienda
+            #    }
+            #)
             later = time.time()
             difference_registrazioni = int(later - now)
         else:
             now = time.time()
-            c.execute(qc.insert_registri_docproposte, {
-                "id_doc": id_doc,
-                "numero_proposta": json_data["numero_proposta"],
-                "anno_proposta": json_data["anno_proposta"],
-                "id_persona_registrazione": json_data["id_persona_registrazione"],
-                "id_struttura_registrazione": json_data["id_struttura_registrazione"],
-                "data_creazione": json_data["data_creazione"],
-                "tipologia": json_data["tipologia"],
-                "id_azienda": id_azienda
-            }
-          )
+            #c.execute(qc.insert_registri_docproposte, {
+            #    "id_doc": id_doc,
+            #    "numero_proposta": json_data["numero_proposta"],
+            #    "anno_proposta": json_data["anno_proposta"],
+            #    "id_persona_registrazione": json_data["id_persona_registrazione"],
+            #    "id_struttura_registrazione": json_data["id_struttura_registrazione"],
+            #    "data_creazione": json_data["data_creazione"],
+            #    "tipologia": json_data["tipologia"],
+            #    "id_azienda": id_azienda
+            #}
+            #)
             c.execute(qc.insert_registri_doc_registrati, {
                 "id_doc": id_doc,
                 "numero_registrazione": json_data["numero_registrazione"],
@@ -286,6 +286,9 @@ def upsert_doc_list_data(codice_azienda, json_data, conn, id_azienda):
                 "id_allegati_da_tenere": id_allegati_da_tenere,
                 "id_doc": id_doc
             })
+            c.execute(qc.set_estraibile_flag_su_allegati, {
+                "id_doc": id_doc
+            })
         else:
             c.execute(qc.delete_allegati_tutti, {
                 "id_doc": id_doc
@@ -337,6 +340,7 @@ def upsert_doc_list_data(codice_azienda, json_data, conn, id_azienda):
         # AGGIORNAMENTO DEGLI ATTORI
         now = time.time()
         values_attori = ""
+        count_attori = 0
         if json_data['attori'] is not None and len(json_data['attori']) > 0:
             for attore in json_data['attori']:
                 # idStruttura può essere null solo perché nei vecchi attori non si riescie a fare il match con le strutture internuata
@@ -348,15 +352,17 @@ def upsert_doc_list_data(codice_azienda, json_data, conn, id_azienda):
                     {attore["vedente"]},
                     {attore["sulla_scrivania"]}
                 ),"""
+                count_attori += 1
         if len(values_attori) > 0:
             # Chiamo la upsert and delete
             values_attori = values_attori[:-1] # rimuovo l'ultima virgola
             # now_query_attori = time.time()
-            disable_enable_trigger_update_doc_detail(conn, "DISABLE")
+            #disable_enable_trigger_update_doc_detail(conn, "DISABLE")
+            #log.info(f"disable del trigger effettuato, ora inserisco {count_attori} attori")
             c.execute(qc.upsert_attori_and_delete_the_others.format(values=values_attori), {
                 "id_doc": id_doc
             })
-            disable_enable_trigger_update_doc_detail(conn, "ENABLE")
+            #disable_enable_trigger_update_doc_detail(conn, "ENABLE")
             # later_query_attori = time.time()
             # difference_query_attori = int(later_query_attori - now_query_attori)
             # if difference_query_attori > 10:
@@ -381,7 +387,6 @@ def upsert_doc_list_data(codice_azienda, json_data, conn, id_azienda):
                 values_firmatari = values_firmatari + f"""(
                     {firmatario['id_persona'] if firmatario['id_persona'] is not None else 'null'},
                     {"'" + firmatario['tipologia_firma']+ "'::scripta.tipologie_firma" },
-                    { firmatario['codice_versione'] },
                     {"'" + firmatario['ts_firma'] + "'" if firmatario['ts_firma'] is not None else 'null'},
                     {"'" + firmatario['stato'] + "'::scripta.stati_firmatario" }
                     ),"""
@@ -418,7 +423,11 @@ def upsert_doc_list_data(codice_azienda, json_data, conn, id_azienda):
             })
         later = time.time()
         difference_firmatari_allegati = int(later - now)
-
+        # AGGIORNAMENTO ALLEGATO FIRMATO - DO L'INCARICO AL MASTERJOBS
+        # c.execute(qc.insert_job_calcola_firmato, {
+        #     "id_doc": id_doc
+        # })
+        
         # AGGIORNAMENTO DEL DOC DETAILS -  DO L'INCARICO AL MASTERJOBS
         c.execute(qc.insert_job_upsert_doc_detail, {
             "id_doc": id_doc
@@ -508,25 +517,53 @@ def upsert_related(json_data, conn, id_azienda):
 
     # AGGIORNO I RELATED
     values_related = ""
+    idContattoMembro_idContattoGruppo = {}
+    idContatto_idEsterno = {}
     if json_data["related"] is not None and len(json_data['related']) > 0:
+        
         for related in json_data['related']:
             # idStruttura può essere null solo perché nei vecchi attori non si riescie a fare il match con le strutture internuata
             #faccio escape dei caratteri speciali e replace degli apostrofi, aggiungo il replace dei percento perchè psycopg è psico e sennò fa confusione coi parametri,
             #gli altri caratteri non danno problemi
             descrizione = ''
             indirizzo = ''
+            id_contatto = ''
+            id_contatto_gruppo = ''
+            if related['id_contatto'] != '' and related['id_contatto'] is not None:
+                id_contatto = related['id_contatto']
+            elif related['id_contatto_2'] != '' and related['id_contatto_2'] is not None:
+                porzioni = related['id_contatto_2'].split('_')
+                esclusi = {'g', 'c', 'd', 'internauta','0'}
+                for porzione in porzioni:
+                    if porzione not in esclusi:
+                        id_contatto = porzione
+                        break
+                #id_contatto = related['id_contatto_2']
             if related['descrizione'] is not None:
                 descrizione = related['descrizione'].replace("'", "''").replace("%", "%%")
             if related['indirizzo'] is not None:
                 indirizzo = related['indirizzo'].replace("'", "''").replace("%", "%%")
-
+            if related['id_gruppo'] != '' and related['id_gruppo'] is not None:
+                porzioni = related['id_gruppo'].split('_')
+                esclusi = {'g', 'c', 'd', 'internauta','0'}
+                for porzione in porzioni:
+                    if porzione not in esclusi:
+                        id_contatto_gruppo = porzione
+                        break
+                #id_contatto_gruppo = related['id_gruppo'].replace("g_", "")
+            if id_contatto_gruppo != '' and id_contatto_gruppo is not None:
+                idContattoMembro_idContattoGruppo[str(id_contatto)] = id_contatto_gruppo
+            if related['id_esterno'] is not None:
+               idContatto_idEsterno[str(id_contatto)] = related['id_esterno']
             values_related = values_related + f"""(
+                        {related['id_contatto'] if related['id_contatto'] is not None else 'null'},
                         {related['id_persona_inserente'] if related['id_persona_inserente'] is not None else 1}, 
                         {"'" + related['tipo'] + "'"},
                         {"'" + related['origine'] + "'"},
                         {"'" + descrizione + "'" if descrizione is not None and descrizione  != '' else "'" + indirizzo + "'"},
                         {"'" + related['data_inserimento'] + "'"},
-                        {"'" + str(related['id_esterno']) + "'" if related['id_esterno'] is not None else 'null'}
+                        {"'" + str(related['id_esterno']) + "'" if related['id_esterno'] is not None else 'null'}, 
+                        {related['is_gruppo']} 
                     ),"""
     # log.info(f"QUESTI SONO I RELATED CHE VOGLIO INSERIRE: {values_related}")
     if len(values_related) > 0:
@@ -538,6 +575,23 @@ def upsert_related(json_data, conn, id_azienda):
         c.execute(qc.upsert_related_and_delete_the_others.format(values=values_related), {
             "id_doc": id_doc
         })
+
+        if len(idContattoMembro_idContattoGruppo) > 0:
+            # Aggiorno anche id_gruppo
+            # calcolo la condizione (CASE WHEN THEN) dinamica da mettere nella query per l'update
+            case_conditions = []
+            for idContattoFiglio, idContattoGruppo in idContattoMembro_idContattoGruppo.items():
+                case_conditions.append(f"WHEN '{idContatto_idEsterno[idContattoFiglio]}' THEN '{idContatto_idEsterno[idContattoGruppo]}'")
+            case_statement = " ".join(case_conditions)
+
+            # eseguo query di update
+            print(qc.upsert_related_real_id_gruppo.format(case_statement=case_statement), {
+                "id_doc": id_doc
+            })
+            c.execute(qc.upsert_related_real_id_gruppo.format(case_statement=case_statement), {
+                "id_doc": id_doc
+            })
+
     else:
         # Faccio solo la delete
         c.execute(qc.delete_related, {
@@ -567,32 +621,33 @@ def upsert_related(json_data, conn, id_azienda):
             log.info(f"questo è il mezzo che sto cercando: {related['mezzo']}" )
             c.execute(qc.seleziona_id_mezzo, {
                 "mezzo": related['mezzo']})
-            id_mezzo = c.fetchone()["id"];
-            if json_data["tipologia"] == "PROTOCOLLO_IN_ENTRATA" or json_data["tipologia"] == "DELIBERA" or json_data["tipologia"] == "DETERMINA":
-                c.execute(qc.upsert_spedizione, {
-                    "guid_doc": json_data["guid_documento"],
-                    "id_message": json_data['id_message_shpeck'],
-                    "id_mezzo": id_mezzo,
-                    "indirizzo": related["indirizzo"],
-                    "id_esterno": related["id_esterno"]
-                })
-            else:
-                if "id_spedizione_pec" in related:
+            id_mezzo = c.fetchone()["id"]
+            if related['is_gruppo'] == False : #se non è un gruppo allora inserirsco la spedizione
+                if json_data["tipologia"] == "PROTOCOLLO_IN_ENTRATA" or json_data["tipologia"] == "DELIBERA" or json_data["tipologia"] == "DETERMINA":
                     c.execute(qc.upsert_spedizione, {
                         "guid_doc": json_data["guid_documento"],
-                        "id_message": related["id_spedizione_pec"],
+                        "id_message": json_data['id_message_shpeck'],
                         "id_mezzo": id_mezzo,
                         "indirizzo": related["indirizzo"],
                         "id_esterno": related["id_esterno"]
                     })
                 else:
-                    c.execute(qc.upsert_spedizione, {
-                        "guid_doc": json_data["guid_documento"],
-                        "id_message": None,
-                        "id_mezzo": id_mezzo,
-                        "indirizzo": related["indirizzo"],
-                        "id_esterno": related["id_esterno"]
-                    })
+                    if "id_spedizione_pec" in related:
+                        c.execute(qc.upsert_spedizione, {
+                            "guid_doc": json_data["guid_documento"],
+                            "id_message": related["id_spedizione_pec"],
+                            "id_mezzo": id_mezzo,
+                            "indirizzo": related["indirizzo"],
+                            "id_esterno": related["id_esterno"]
+                        })
+                    else:
+                        c.execute(qc.upsert_spedizione, {
+                            "guid_doc": json_data["guid_documento"],
+                            "id_message": None,
+                            "id_mezzo": id_mezzo,
+                            "indirizzo": related["indirizzo"],
+                            "id_esterno": related["id_esterno"]
+                        })
 
     else:
         c.execute(qc.delete_spedizione, {

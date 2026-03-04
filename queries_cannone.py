@@ -173,7 +173,7 @@ insert_registri_docproposte = """
 			OR (%(tipologia)s = 'DELIBERA' AND r.codice ='PROP_DELI' ))
 	on conflict (id_registro, id_doc)
 	do update 
-	set numero = EXCLUDED.numero , anno = EXCLUDED.anno
+	set numero = EXCLUDED.numero , anno = EXCLUDED.anno, id_struttura_registrante = EXCLUDED.id_struttura_registrante 
 """
 insert_registri_doc_registrati = """INSERT INTO scripta.registri_docs (
      id_registro, id_doc, numero, anno, id_persona_registrante, id_struttura_registrante, data_registrazione
@@ -193,7 +193,7 @@ SELECT r.id , %(id_doc)s , %(numero_registrazione)s, %(anno_registrazione)s,  %(
   (%(tipologia)s = 'RGDELI' AND r.codice = 'RGDELI')
 )	on conflict (id_registro, id_doc)
 do update 
-	set numero = EXCLUDED.numero , anno = EXCLUDED.anno """
+	set numero = EXCLUDED.numero , anno = EXCLUDED.anno , id_persona_registrante = EXCLUDED.id_persona_registrante, id_struttura_registrante = EXCLUDED.id_struttura_registrante """
 insert_allegati_doc = """
     INSERT INTO scripta.allegati (
         nome, tipo, principale, firmato, 
@@ -244,6 +244,17 @@ delete_allegati_tutti = """
     DELETE FROM scripta.allegati aa
     WHERE aa.id_doc = %(id_doc)s
 """
+set_estraibile_flag_su_allegati = """
+    UPDATE scripta.allegati aa
+    SET estraibile = TRUE
+    WHERE  id IN (
+        SELECT ap.id 
+        FROM scripta.allegati af 
+        JOIN scripta.allegati ap ON ap.id = af.id_allegato_padre
+        WHERE af.id_allegato_padre IS NOT NULL AND not ap.estraibile
+        AND ap.id_doc = %(id_doc)s
+    )
+"""
 query_minio = """
     SELECT jsonb_object_agg(mongo_uuid, jsonb_build_object(
         'idRepository', file_id, 
@@ -289,12 +300,12 @@ insert_firmatari = """
         FROM scripta.attori_docs 
         WHERE id_doc = %(id_doc)s and ruolo in ('FIRMA', 'DIRETTORE_GENERALE','DIRETTORE_SANITARIO','DIRETTORE_SCIENTIFICO','DIRETTORE_AMMINISTRATIVO')
     )
-    INSERT INTO scripta.firmatari (id, id_persona, id_doc, stato, documento_visto, tipologia_firma, ts_firma, codice_versione)
-    SELECT DISTINCT id_attori.id, t.id_persona, %(id_doc)s, t.stato::scripta.stati_firmatario, false, t.tipologia_firma::scripta.tipologie_firma, t.ts_firma::timestamptz, t.codice_versione
+    INSERT INTO scripta.firmatari (id, id_persona, id_doc, stato, documento_visto, tipologia_firma, ts_firma)
+    SELECT DISTINCT id_attori.id, t.id_persona, %(id_doc)s, t.stato::scripta.stati_firmatario, false, t.tipologia_firma::scripta.tipologie_firma, t.ts_firma::timestamptz
     FROM (
         VALUES 
             {values}
-        ) AS t (id_persona, tipologia_firma, codice_versione, ts_firma, stato)
+        ) AS t (id_persona, tipologia_firma, ts_firma, stato)
     JOIN id_attori on id_attori.id_persona = t.id_persona
     ON CONFLICT DO NOTHING
 """
@@ -315,8 +326,8 @@ insert_firmatari_allegati = """
         FROM scripta.attori_docs 
         WHERE id_doc = %(id_doc)s and ruolo = 'FIRMA'::scripta.ruolo_attore_doc
     ) 
-    INSERT INTO scripta.firmatari_allegati ( id_allegato, id_attore, id_persona_inserente, firmato, tipologia_firma, ts_firma, codice_versione, data_inserimento, tipo_dettaglio_firmato)
-    SELECT DISTINCT id_allegati.id, id_attori.id, 1 , t.firmato, t.tipologia_firma::scripta.tipologie_firma, t.ts_firma::timestamptz, 0, now(), t.dettaglio_firmato::scripta.tipi_dettagli_allegati
+    INSERT INTO scripta.firmatari_allegati ( id_allegato, id_attore, id_persona_inserente, firmato, tipologia_firma, ts_firma, data_inserimento, tipo_dettaglio_firmato)
+    SELECT DISTINCT id_allegati.id, id_attori.id, 1 , t.firmato, t.tipologia_firma::scripta.tipologie_firma, t.ts_firma::timestamptz, now(), t.dettaglio_firmato::scripta.tipi_dettagli_allegati
     FROM (
         VALUES  
             {values}
@@ -326,20 +337,50 @@ insert_firmatari_allegati = """
     ON CONFLICT DO NOTHING
 """
 
+upsert_related_real_id_gruppo2 = """
+        UPDATE related r1
+        SET r1.id_gruppo = (
+            SELECT id 
+            FROM related r2
+            WHERE r2.id_doc = %(id_doc)s
+            AND r2.id_contatto = x
+            )
+        WHERE r1.is_gruppo
+        AND r1.id_gruppo IS NOT NULL
+        AND r1.id_doc = %(id_doc)s;
+    """
+
+upsert_related_real_id_gruppo ="""
+        UPDATE scripta.related r1
+        SET id_gruppo = (
+            SELECT id 
+            FROM scripta.related r2
+            WHERE r2.id_doc = %(id_doc)s
+            AND r2.id_esterno = (
+                CASE r1.id_esterno
+                    {case_statement}
+                END
+            )
+        )
+        WHERE r1.is_gruppo = false
+        AND r1.id_gruppo IS NULL
+        AND r1.id_doc = %(id_doc)s;
+    """
+
 upsert_related_and_delete_the_others="""
     WITH id_da_tenere AS (
         INSERT INTO scripta.related (
-            id_doc,  id_persona_inserente, tipo, 
-            origine,  descrizione,data_inserimento, id_esterno
+            id_doc, id_contatto, id_persona_inserente, tipo, 
+            origine, descrizione, data_inserimento, id_esterno, is_gruppo
         ) 
-        SELECT DISTINCT ON (descrizione, tipo) %(id_doc)s,  id_persona_inserente::integer, tipo::scripta.tipo_related, 
-            origine::scripta.origine_related,  descrizione::text, TO_TIMESTAMP(REPLACE(data_inserimento::text, 'T', ' '),'YYYY-MM-DD HH24:MI:SS')::timestamptz, id_esterno::text
+        SELECT DISTINCT ON (descrizione, tipo) %(id_doc)s, id_contatto::integer, id_persona_inserente::integer, tipo::scripta.tipo_related, 
+            origine::scripta.origine_related,  descrizione::text, TO_TIMESTAMP(REPLACE(data_inserimento::text, 'T', ' '),'YYYY-MM-DD HH24:MI:SS')::timestamptz, id_esterno::text, is_gruppo::boolean
         FROM (
         VALUES  
             {values}
-        ) AS t ( id_persona_inserente, tipo, origine,  descrizione , data_inserimento, id_esterno)
+        ) AS t (  id_contatto, id_persona_inserente, tipo, origine,  descrizione , data_inserimento, id_esterno, is_gruppo)
         GROUP BY 
-            id_persona_inserente, descrizione, tipo , origine,  data_inserimento, id_esterno
+             id_contatto, id_persona_inserente, descrizione, tipo, origine, data_inserimento, id_esterno, is_gruppo
         ON CONFLICT (id_doc, descrizione, tipo, id_esterno ) DO UPDATE 
         SET 
             id_persona_inserente = EXCLUDED.id_persona_inserente,
@@ -465,6 +506,21 @@ insert_job_calcola_persone_vedenti = """
         'CalcolaPersoneVedentiDocJobWorker', json_build_object(
             '@class', 'it.bologna.ausl.internauta.utils.masterjobs.workers.jobs.calcolapersonevedentidoc.CalcolaPersoneVedentiDocJobWorkerData',
             'idDoc', %(id_doc)s
+        ), false, %(id_doc)s, 
+        'scripta.docs', 'scripta', TRUE, 'NORMAL', 
+        now(), FALSE
+    )
+"""
+insert_job_calcola_firmato = """
+    INSERT INTO masterjobs.jobs_notified (
+        job_name, job_data, "deferred", object_id,
+        object_type, app, wait_object, priority,
+        insert_ts, skip_if_already_present
+    ) VALUES (
+        'SetAllegatoFirmatoJobWorker', json_build_object(
+            '@class', 'it.bologna.ausl.internauta.utils.masterjobs.workers.jobs.setallegatofirmato.SetAllegatoFirmatoWorkerData',
+            'idDoc', %(id_doc)s,
+            'idAllegato',null
         ), false, %(id_doc)s, 
         'scripta.docs', 'scripta', TRUE, 'NORMAL', 
         now(), FALSE
