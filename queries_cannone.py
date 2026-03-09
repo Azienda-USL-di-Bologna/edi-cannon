@@ -269,18 +269,18 @@ query_minio = """
 upsert_attori_and_delete_the_others = """
     WITH id_da_tenere AS (
         INSERT INTO scripta.attori_docs (
-            id_doc, id_persona, id_struttura, ruolo, 
+            id_doc, id_persona, id_struttura, id_step, --ruolo, 
              ordinale, vedente, sulla_scrivania
         ) 
-        SELECT DISTINCT %(id_doc)s, id_persona::integer, id_struttura::integer, ruolo::scripta.ruolo_attore_doc, 
+        SELECT DISTINCT %(id_doc)s, id_persona::integer, id_struttura::integer, id_step, --ruolo::scripta.ruolo_attore_doc, 
              MIN(ordinale::integer), bool_or(vedente), bool_or(sulla_scrivania)
         FROM (
         VALUES  
             {values}
-        ) AS t (id_persona, id_struttura, ruolo, ordinale, vedente , sulla_scrivania)
+        ) AS t (id_persona, id_struttura, id_step, ordinale, vedente , sulla_scrivania)
         GROUP BY 
-            id_persona, id_struttura, ruolo 
-        ON CONFLICT (id_doc, id_persona, id_struttura, ruolo) DO UPDATE 
+            id_persona, id_struttura, id_step 
+        ON CONFLICT (id_doc, id_persona, id_struttura, id_step) DO UPDATE 
         SET sulla_scrivania = EXCLUDED.sulla_scrivania,
             ordinale = EXCLUDED.ordinale,
             vedente = EXCLUDED.vedente
@@ -298,7 +298,7 @@ insert_firmatari = """
     with id_attori AS (
         SELECT id , id_persona
         FROM scripta.attori_docs 
-        WHERE id_doc = %(id_doc)s and ruolo in ('FIRMA', 'DIRETTORE_GENERALE','DIRETTORE_SANITARIO','DIRETTORE_SCIENTIFICO','DIRETTORE_AMMINISTRATIVO')
+        WHERE id_doc = %(id_doc)s and id_step in ('FIRMA', 'APPORVAZIONE', 'DIRETTORE_GENERALE','DIRETTORE_SANITARIO','DIRETTORE_SCIENTIFICO','DIRETTORE_AMMINISTRATIVO')
     )
     INSERT INTO scripta.firmatari (id, id_persona, id_doc, stato, documento_visto, tipologia_firma, ts_firma)
     SELECT DISTINCT id_attori.id, t.id_persona, %(id_doc)s, t.stato::scripta.stati_firmatario, false, t.tipologia_firma::scripta.tipologie_firma, t.ts_firma::timestamptz
@@ -324,7 +324,7 @@ insert_firmatari_allegati = """
     id_attori AS (
         SELECT id , id_persona
         FROM scripta.attori_docs 
-        WHERE id_doc = %(id_doc)s and ruolo = 'FIRMA'::scripta.ruolo_attore_doc
+        WHERE id_doc = %(id_doc)s and id_step = 'FIRMA'--ruolo = 'FIRMA'::scripta.ruolo_attore_doc
     ) 
     INSERT INTO scripta.firmatari_allegati ( id_allegato, id_attore, id_persona_inserente, firmato, tipologia_firma, ts_firma, data_inserimento, tipo_dettaglio_firmato)
     SELECT DISTINCT id_allegati.id, id_attori.id, 1 , t.firmato, t.tipologia_firma::scripta.tipologie_firma, t.ts_firma::timestamptz, now(), t.dettaglio_firmato::scripta.tipi_dettagli_allegati
