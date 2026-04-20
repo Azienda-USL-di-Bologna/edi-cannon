@@ -373,14 +373,15 @@ upsert_related_and_delete_the_others="""
             id_doc, id_contatto, id_persona_inserente, tipo, 
             origine, descrizione, data_inserimento, id_esterno, is_gruppo
         ) 
-        SELECT DISTINCT ON (descrizione, tipo) %(id_doc)s, id_contatto::integer, id_persona_inserente::integer, tipo::scripta.tipo_related, 
-            origine::scripta.origine_related,  descrizione::text, TO_TIMESTAMP(REPLACE(data_inserimento::text, 'T', ' '),'YYYY-MM-DD HH24:MI:SS')::timestamptz, id_esterno::text, is_gruppo::boolean
+        SELECT DISTINCT ON (descrizione, tipo) %(id_doc)s, contatto.id, t.id_persona_inserente::integer, t.tipo::scripta.tipo_related, 
+            t.origine::scripta.origine_related,  t.descrizione::text, TO_TIMESTAMP(REPLACE(data_inserimento::text, 'T', ' '),'YYYY-MM-DD HH24:MI:SS')::timestamptz, t.id_esterno::text, t.is_gruppo::boolean
         FROM (
         VALUES  
             {values}
         ) AS t (  id_contatto, id_persona_inserente, tipo, origine,  descrizione , data_inserimento, id_esterno, is_gruppo)
+        LEFT JOIN rubrica.contatti contatto ON contatto.id = t.id_contatto::integer
         GROUP BY 
-             id_contatto, id_persona_inserente, descrizione, tipo, origine, data_inserimento, id_esterno, is_gruppo
+             contatto.id, t.id_persona_inserente, t.descrizione, t.tipo, t.origine, t.data_inserimento, t.id_esterno, t.is_gruppo
         ON CONFLICT (id_doc, descrizione, tipo, id_esterno ) DO UPDATE 
         SET 
             id_persona_inserente = EXCLUDED.id_persona_inserente,
