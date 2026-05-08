@@ -17,7 +17,13 @@ update_doc_by_id = """
                 WHEN  %(visibilita_limitata)s = true
                     THEN 'LIMITATA'::scripta.visibilita_doc
                 else 'NORMALE'::scripta.visibilita_doc
-            END)
+            END),
+        id_applicazione = CASE 
+                WHEN %(tipologia)s in ('PROTOCOLLO_IN_USCITA' , 'PROTOCOLLO_IN_ENTRATA') THEN 'procton'
+                WHEN %(tipologia)s = 'DETERMINA'::scripta.tipologie_docs THEN 'dete'
+                WHEN %(tipologia)s = 'DELIBERA'::scripta.tipologie_docs THEN 'deli'
+                ELSE NULL 
+            END
     WHERE d.id = %(id_doc)s
     RETURNING id, data_creazione
 """
@@ -36,7 +42,8 @@ insert_doc = """
             additional_data,
             stato,
             data_registrazione,
-            id_struttura_registrante
+            id_struttura_registrante,
+            id_applicazione
             ) VALUES (
             %(oggetto)s,
             %(testo)s,
@@ -57,7 +64,13 @@ insert_doc = """
             %(additional_data)s,
             %(stato)s,
             %(data_registrazione)s,
-            %(id_struttura_registrazione)s
+            %(id_struttura_registrazione)s,
+            CASE 
+                WHEN %(tipologia)s in ('PROTOCOLLO_IN_USCITA' , 'PROTOCOLLO_IN_ENTRATA') THEN 'procton'
+                WHEN %(tipologia)s = 'DETERMINA'::scripta.tipologie_docs THEN 'dete'
+                WHEN %(tipologia)s = 'DELIBERA'::scripta.tipologie_docs THEN 'deli'
+                ELSE NULL 
+            END
         ) ON conflict (id_azienda, id_esterno)
         do UPDATE
         set oggetto = excluded.oggetto,
@@ -71,7 +84,8 @@ insert_doc = """
             stato = excluded.stato,
             id_struttura_registrante = excluded.id_struttura_registrante,
             data_registrazione = excluded.data_registrazione,
-            data_creazione = excluded.data_creazione
+            data_creazione = excluded.data_creazione,
+            id_applicazione = excluded.id_applicazione
         RETURNING id, data_creazione
 """
 upsert_persone_vedenti_and_delete_the_others = """
